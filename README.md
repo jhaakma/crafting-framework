@@ -3,20 +3,27 @@ A crafting framework for Morrowind, allowing other mods to register recipes, cra
 
 Recipes are registered to a RecipeList, which is usually associated with a crafting station. 
 
+| Method | Params | Description | 
+| ------ | ------ | ----------- |
+| registerManager | Table: CraftingManager config | Registers a new Crafting Manager. |
+| knowsRecipe | String: Id of crafted object | Returns true if the player currently knows the recipe for this object. |
+| learnRecipe | String: Id of crafted object | Learn a Recipe for a crafted object. |
+| unlearnRecipe | String: Id of crafted object | Unearn a Recipe for a crafted object. |
+
 ## Crafting Manager
 
 A crafting manager is an object that is used to manage a specific set of crafting stations and the recipes assigned to them.
 
-| Methods | Description |
-| ------- | ----------- |
-| addRecipe(newRecipe) | Add a new recipe to the manager. |
-| addOnEquipStation(newStationId) | Add a new equippable crafting station to the manager. | 
-| addOnActivateStation(newStationId) | Add a new activatable crafting station to the manager. |
-| addCustomTrigger(triggerId) | Add a new trigger event to the manager. |
+| Method | Params | Description |
+| ------ | ------ | ----------- |
+| addRecipe | Table: Recipe config | Add a new recipe to the manager. 
+| addOnEquipStation | String: Object Id | Add a new equippable crafting station to the manager. | 
+| addOnActivateStation | String: Object Id | Add a new activatable crafting station to the manager. | 
+| addCustomTrigger | String: Event Id | Add a new trigger event to the manager. |
 
 ### Registering a Crafting Manager
 
-Register a new Crafting Manager with `crafting.registerCraftingManager()`:
+Register a new Crafting Manager with `crafting.registerManager()`:
 
 | Parameter | Description |
 | --------- | ----------- |
@@ -97,6 +104,7 @@ manager:addRecipe(recipe)
 ### Learning a Recipe
 
 A recipe can be known by default by passing `known=true` when registering the recipe. Otherwise, you can trigger when the player learns the recipe by calling `crafting.learnRecipe(craftedObjectId)`. Similarly, you can unlearn the recipe by called `crafting.unlearnRecipe(crafedObjectId)`. Recipes are learned and unlearned globally, not tied to specific crafting stations. 
+
 
 ## Crafting Materials
 
