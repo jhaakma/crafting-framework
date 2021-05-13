@@ -23,9 +23,9 @@ Register a new Crafting Manager with `crafting.registerCraftingManager()`:
 | id | Id of the crafting manager. Retrieve an existing crafting manager with `crafting.getManager(id)`. |
 | name | Name that appears on the Crafting Menu when this manager is used. |
 | recipes   | A list of recipes that will appear (if known) when the menu is activated. |
-| onEquipStations | A list of keys of object ids. Equipping these items will trigger the crafting menu. Crafting stations activated from within your inventory should be registered here. |
-| onActivateStations | A list of keys of object ids. Activating these items will trigger the crafting menu. Placed activator crafting stations should be registered here. |
-| customTrigger | A string of an event id, allowing you to call the menu for this recipeList by calling `event.trigger("eventId")`. |
+| equipStationIds | A list of keys of object ids. Equipping these items will trigger the crafting menu. Crafting stations activated from within your inventory should be registered here. |
+| activateStationIds | A list of keys of object ids. Activating these items will trigger the crafting menu. Placed activator crafting stations should be registered here. |
+| triggers | A ilst of event ids, allowing you to call the menu for this recipeList by calling `event.trigger("eventId")`. |
 
 ### Example:
 
@@ -89,7 +89,22 @@ local recipe = {
 }
 ```
 
-## Materials
+## Crafting Materials
 
+A crafting material represents a list of objects which can be used to fulfill the material requirement of a recipe. So for example, if a recipe requires animal hide, you can register `Animal Hide` as a material, and assign guar, alit, kagouti hide etc as that material. Then, any of those items can be used to craft it.
+
+```lua
+crafting.registerMaterial{
+  id = "resin",
+  name = "Resin",
+  ids = {
+    "ingred_resin_01", 
+  },
+}
+--Once registered, material is stored on materials table:
+local resinMaterial = crafting.materials.resin
+--You can add new items to the id list
+resinMaterial:addItem("ingred_shalk_resin_01")
+```
 
 
