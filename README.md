@@ -91,6 +91,7 @@ local recipe = {
   menuOptions = {
   { text = "Open Alchemy Menu", callback = function() alchemy.openAlchemyMenu() end }
 }
+manager:addRecipe(recipe)
 ```
 
 ### Learning a Recipe
