@@ -38,14 +38,17 @@ if crafting then
     recipes = {
       --list of recipes goes here
     },
-    onEquipStations = {
-      equippableStationId = true,
+    equipStationIds = {
+      stationId = true,
     },
-    onActivateStations = {
-      activateableStationId = true
+    activateStationIds = {
+      stationId = true
     },
-    customTrigger = "UniqueEventId"
+    triggers = {
+      "UniqueEventId"
+    }
   }
+end
 
 manager:addRecipe(newRecipe)
 manager:addOnEquipStation(newStationId)
@@ -73,18 +76,20 @@ A recipe represents an item that can be crafted, and describes what is needed to
 
 ```lua
 local recipe = {
-    id  = "alchemyTable_misc",
-    description = "A rope spun from plant fibres that can be used in more advanced crafting recipes.",
-    materials = {
-        { material = crafting.materials.fibre, count = 2 }
-    },
-    timeTaken = 0.25, --hours. Optional,
-    knownByDefault = true, --if false, checks `tes3.player.data.craftingFramework.recipes["alchemyTable_misc"].known`
-    placedObject = "alchemyTable_static", --if set, dropping the misc item will automatically place it as a positionable static.
-    menuOptions = {
-      { text = "Open Alchemy Menu", callback = function() alchemy.openAlchemyMenu() end }
-    }
-},
+  id  = "alchemyTable_misc",
+  description = "A rope spun from plant fibres that can be used in more advanced crafting recipes.",
+  materials = {
+    { material = crafting.materials.fibre, count = 2 }
+  },
+  timeTaken = 0.25, --hours. Optional,
+  knownByDefault = true, --if false, checks `tes3.player.data.craftingFramework.recipes["alchemyTable_misc"].known`
+  placedObject = "alchemyTable_static", --if set, dropping the misc item will automatically place it as a positionable static.
+  menuOptions = {
+  { text = "Open Alchemy Menu", callback = function() alchemy.openAlchemyMenu() end }
+}
 ```
 
 ## Materials
+
+
+
