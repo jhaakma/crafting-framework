@@ -61,13 +61,17 @@ end
 
 A recipe represents an item that can be crafted, and describes what is needed to crafted. if the `id` matches a non-carryable object (static, activator etc), crafting the item will immediately place it in the world and allow you to position it. Otherwise, it will be added to your inventory. Items added to your inventory may still be placed as statics if a `placedObject` field is set to a non-carryable object.
 
+### Registering a recipe
+
+You can either include a recipe in your Crafting Manager definition, or add it via `manager:addRecipe`. 
+
 | Parameter | Description |
 | --------- | ----------- |
 | id | The object ID of the crafted item. If the object is carryable, it will be added to your inventory. Otherwise, it will be placed directly into the world for positioning. |
 | description | A description of the item being crafted. |
 | materials | A list of materials required to craft this item. |
 | timeTaken | Optional. Number of hours taken to craft. If set, the screen will fade out during crafting and this amount of game time will pass. |
-| knownByDefault | Optional (default: false). If set to true, this recipe will be available immediately. Otherwise, it will check whether the recipe has been learned usng `crafting.learnRecipe(craftedObjectId)`. |
+| known | Optional (default: false). If set to true, this recipe will be available immediately. Otherwise, it can be learned using `crafting.learnRecipe(craftedObjectId)`. |
 | placedObject | Optional. Only valid when `id` matches a carryable object. When set, placing the crafted object down in the world will automtaically convert it to the `placedObject` static. Activating this static will open a menu that will let you pick it back up. |
 | menuOptions | A list of buttons that will be added to the placed static's menu in addition to the "Pick up" and "Cancel" buttons. |
 
@@ -88,6 +92,10 @@ local recipe = {
   { text = "Open Alchemy Menu", callback = function() alchemy.openAlchemyMenu() end }
 }
 ```
+
+### Learning a Recipe
+
+A recipe can be known by default by passing `known=true` when registering the recipe. Otherwise, you can trigger when the player learns the recipe by calling `crafting.learnRecipe(craftedObjectId)`. Similarly, you can unlearn the recipe by called `crafting.unlearnRecipe(crafedObjectId)`. Recipes are learned and unlearned globally, not tied to specific crafting stations. 
 
 ## Crafting Materials
 
