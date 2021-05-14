@@ -75,28 +75,29 @@ You can either include a recipe in your Crafting Manager definition, or add it v
 | Parameter | Description |
 | --------- | ----------- |
 | id | The object ID of the crafted item. If the object is carryable, it will be added to your inventory. Otherwise, it will be placed directly into the world for positioning. |
+| craftable | Config for a craftable object. |
 | description | A description of the item being crafted. |
 | materials | A list of materials required to craft this item. |
 | timeTaken | Optional. Number of hours taken to craft. If set, the screen will fade out during crafting and this amount of game time will pass. |
 | known | Optional (default: false). If set to true, this recipe will be available immediately. Otherwise, it can be learned using `crafting.learnRecipe(craftedObjectId)`. |
-| placedObject | Optional. Only valid when `id` matches a carryable object. When set, placing the crafted object down in the world will automtaically convert it to the `placedObject` static. Activating this static will open a menu that will let you pick it back up. |
-| menuOptions | A list of buttons that will be added to the placed static's menu in addition to the "Pick up" and "Cancel" buttons. |
-
-
 ### Example
 
 ```lua
 local recipe = {
-  id  = "alchemyTable_misc",
+  id = "Alchemy Table",
+  craftable = {
+    id  = "alchemyTable_misc",
+    placedObject = "alchemyTable_static", --if set, dropping the misc item will automatically place it as a positionable static.
+    menuOptions = {
+      { text = "Open Alchemy Menu", callback = function() alchemy.openAlchemyMenu() end }
+    }
+  },
   description = "A rope spun from plant fibres that can be used in more advanced crafting recipes.",
   materials = {
     { material = crafting.materials.fibre, count = 2 }
   },
   timeTaken = 0.25, --hours. Optional,
   knownByDefault = true, --if false, checks `tes3.player.data.craftingFramework.recipes["alchemyTable_misc"].known`
-  placedObject = "alchemyTable_static", --if set, dropping the misc item will automatically place it as a positionable static.
-  menuOptions = {
-  { text = "Open Alchemy Menu", callback = function() alchemy.openAlchemyMenu() end }
 }
 manager:addRecipe(recipe)
 ```
@@ -105,6 +106,14 @@ manager:addRecipe(recipe)
 
 A recipe can be known by default by passing `known=true` when registering the recipe. Otherwise, you can trigger when the player learns the recipe by calling `crafting.learnRecipe(craftedObjectId)`. Similarly, you can unlearn the recipe by called `crafting.unlearnRecipe(crafedObjectId)`. Recipes are learned and unlearned globally, not tied to specific crafting stations. 
 
+## Craftables
+A craftable is an object that can be crafted from a recipe
+
+| Parameter | Description |
+| --------- | ----------- |
+| id | The object ID of the crafted item. If the object is carryable, it will be added to your inventory. Otherwise, it will be placed directly into the world for positioning. |
+| placedObject | Optional. Only valid when `id` matches a carryable object. When set, placing the crafted object down in the world will automtaically convert it to the `placedObject` static. Activating this static will open a menu that will let you pick it back up. |
+| menuOptions | A list of buttons that will be added to the placed static's menu in addition to the "Pick up" and "Cancel" buttons. |
 
 ## Crafting Materials
 
