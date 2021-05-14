@@ -44,12 +44,12 @@ Validator.validate = function(object, schema)
     local schemaName = schema.name or "[unknown]"
     for key, field in pairs(schema.fields) do
         --check schema values
-        assert(type(field) == "table", string.format("Validation failed: %s field data is not a table.", key))
-        assert(field.type, string.format("Validation failed: %s field data missing type.", key))
+        assert(type(field) == "table", string.format('Validation failed: "%s" field data is not a table.', key))
+        assert(field.type, string.format('Validation failed: "%s" field data missing type.', key))
 
         --check field exists
         if field.required then
-            assert(object[key] ~= nil, string.format("Validation failed for %s: Missing %s field.", schemaName, key))
+            assert(object[key] ~= nil, string.format('Validation failed for "%s": Missing "%s" field.', schemaName, key))
         end
         --check field types
         if object[key] then
@@ -82,7 +82,7 @@ Validator.validate = function(object, schema)
                     --This will give a consistent error message
                     assert(type(object[key]) == field.type,
                         string.format(
-                            "Validation failed for %s: %s must be of type %s. Instead got %s.",
+                            'Validation failed for %s: %s must be of type "%s". Instead got "%s".',
                             schemaName, key, field.type, type(object[key])
                         )
                     )
@@ -92,6 +92,5 @@ Validator.validate = function(object, schema)
     end
     return true
 end
-
 Validator.validate(SchemaSchema, SchemaSchema)
 return Validator
