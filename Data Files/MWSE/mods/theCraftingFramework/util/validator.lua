@@ -65,12 +65,12 @@ Validator.validate = function(object, schema)
         assert(type(field) == "table", string.format('Validation failed: "%s" field data is not a table.', key))
         assert(field.type, string.format('Validation failed: "%s" field data missing type.', key))
 
-        --check field exists
+        --check required field exists
         if field.required then
-            assert(object[key] ~= nil, string.format('Validation failed for "%s": Missing "%s" field.', schemaName, key))
+            assert(object[key] ~= nil, string.format('Validation failed for "%s": Missing required "%s" field.', schemaName, key))
         end
-        --check field types
-        if object[key] then
+        
+        if object[key] ~= nil then
             if field.type == "any" then
                 --any let's whatever through
                 return
