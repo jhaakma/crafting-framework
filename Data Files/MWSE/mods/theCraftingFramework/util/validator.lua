@@ -37,9 +37,27 @@ local function getTypeStrings(str)
    return t
 end
 
+
 Validator.validate = function(object, schema)
     assert(object, "Validation failed: No object provided.")
     assert(schema, "Validation failed: No schema provided.")
+
+
+    if type(schema) == "string" then
+        if schema == "any" then return end
+        local matchesType = false
+        for _, typeString in ipairs(getTypeStrings(schema)) do
+            if type(object) == typeString then
+                matchesType = true
+            end
+        end
+        
+        if not matchesType then
+            assert(type(object) == schema,
+            string.format('Validation failed: expected type "%s", got "%s"', schema, type(object)))
+        end
+        return
+    end
 
     local schemaName = schema.name or "[unknown]"
     for key, field in pairs(schema.fields) do
@@ -70,6 +88,9 @@ Validator.validate = function(object, schema)
                         --table has child Type
                         if expectedTypeString == "table" and field.childType then
                             for _, tableValue in pairs(object[key]) do
+                                Validator.validate(tableValue, field.childType)
+                            end
+                            for _, tableValue in ipairs(object[key]) do
                                 Validator.validate(tableValue, field.childType)
                             end
                         end
