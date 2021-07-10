@@ -1,11 +1,17 @@
 local Validator = {}
+local doDebug = true
+local function log(message, ...)
+    mwse.log("[Validator] " .. message, ...)
+end
 
 local FieldSchema = {
     name = "FieldSchema",
     fields = {
         type = { type = "table|string", required = true },
         required = { type = "boolean", required = true},
-        childType = { type = "table", required = false }
+        childType = { type = "table", required = false },
+        values = { type = "table", required = false },
+        default = { type = "any", required = false }
     }
 }
 local SchemaSchema = {
@@ -60,6 +66,7 @@ Validator.validate = function(object, schema)
     end
 
     local schemaName = schema.name or "[unknown]"
+    assert(schema.fields, string.format("%s schema missing fields", schemaName) )
     for key, field in pairs(schema.fields) do
         --check schema values
         assert(type(field) == "table", string.format('Validation failed: "%s" field data is not a table.', key))
@@ -76,7 +83,7 @@ Validator.validate = function(object, schema)
                 return
             elseif type(field.type) == "table" then
                 --Type is itself a schema
-                Validator.validate(object.key, field.type)
+                Validator.validate(object[key], field.type)
             elseif type(field.type) == "string" then
                 --standard lua types, might be separated by |
                 --Split types and check each one
@@ -86,14 +93,39 @@ Validator.validate = function(object, schema)
                     if type(object[key]) == expectedTypeString then
                         matchesType = true
                         --table has child Type
-                        if expectedTypeString == "table" and field.childType then
-                            for _, tableValue in pairs(object[key]) do
-                                Validator.validate(tableValue, field.childType)
-                            end
-                            for _, tableValue in ipairs(object[key]) do
-                                Validator.validate(tableValue, field.childType)
+                        if expectedTypeString == "table" then
+                            --Child Type of table values
+                            if field.childType then
+                                for _, tableValue in pairs(object[key]) do
+                                    Validator.validate(tableValue, field.childType)
+                                end
+                                for _, tableValue in ipairs(object[key]) do
+                                    Validator.validate(tableValue, field.childType)
+                                end
+                            --Enums for table values
+                            elseif field.values then
+                                local valuesString = ""
+                                for _, str in ipairs(field.values) do
+                                    valuesString = string.format('%s, %s', valuesString, str)
+                                end
+                                for _, tableValue in ipairs(object[key]) do
+                                    assert(field.values[tableValue], 
+                                        string.format('Validation failed for %s, expected one of the following values: [%s], got %s',
+                                            schemaName, valuesString, tableValue
+                                        )
+                                    )
+                                end
+                                for _, tableValue in pairs(object[key]) do
+                                    assert(field.values[tableValue], 
+                                        string.format('Validation failed for %s, expected one of the following values: [%s], got %s',
+                                            schemaName, valuesString, tableValue
+                                        )
+                                    )
+                                end
                             end
                         end
+                        --table has values table
+
                     end
                 end
 
@@ -109,6 +141,9 @@ Validator.validate = function(object, schema)
                     )
                 end
             end
+        elseif field.default then
+            --nil, initialise default
+            object[key] = field.default
         end
     end
     return true

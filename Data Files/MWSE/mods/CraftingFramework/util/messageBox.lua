@@ -1,13 +1,11 @@
-local MenuButton = require("theCraftingFramework.components.MenuButton")
-local validate = require("theCraftingFramework.util.validator").validate
-
-local this = {}
-
-function this.createTooltip(e)
+local MenuButton = require("CraftingFramework.components.MenuButton")
+local validator = require("CraftingFramework.util.validator")
+--Generic Tooltip with header and description
+local function createTooltip(e)
     local thisHeader, thisLabel = e.header, e.text
     local tooltip = tes3ui.createTooltipMenu()
-
-    local outerBlock = tooltip:createBlock({ id = tes3ui.registerID("Ashfall:temperatureIndicator_outerBlock") })
+    
+    local outerBlock = tooltip:createBlock()
     outerBlock.flowDirection = "top_to_bottom"
     outerBlock.paddingTop = 6
     outerBlock.paddingBottom = 12
@@ -15,11 +13,11 @@ function this.createTooltip(e)
     outerBlock.paddingRight = 6
     outerBlock.maxWidth = 300
     outerBlock.autoWidth = true
-    outerBlock.autoHeight = true
-
+    outerBlock.autoHeight = true    
+    
     if thisHeader then
         local headerText = thisHeader
-        local headerLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:temperatureIndicator_header"), text = headerText })
+        local headerLabel = outerBlock:createLabel({ text = headerText})
         headerLabel.autoHeight = true
         headerLabel.width = 285
         headerLabel.color = tes3ui.getPalette("header_color")
@@ -28,12 +26,11 @@ function this.createTooltip(e)
     end
     if thisLabel then
         local descriptionText = thisLabel
-        local descriptionLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:temperatureIndicator_description"), text = descriptionText })
+        local descriptionLabel = outerBlock:createLabel({text = descriptionText })
         descriptionLabel.autoHeight = true
         descriptionLabel.width = 285
         descriptionLabel.wrapText = true
     end
-
     tooltip:updateLayout()
 end
 
@@ -48,7 +45,7 @@ local function populateButtons(e)
 
     for i = startIndex, math.min(endIndex, #buttons) do
         local data = buttons[i]
-        validate(data, MenuButton)
+        validator.validate(data, MenuButton.schema)
         local doAddButton = true
         if data.showRequirements then
             if data.showRequirements() ~= true then
@@ -82,26 +79,31 @@ local function populateButtons(e)
 
             if not disabled and data.tooltip then
                 button:register( "help", function()
-                    this.createTooltip(data.tooltip)
+                    createTooltip(data.tooltip)
                 end)
             elseif disabled and data.tooltipDisabled then
                 button:register( "help", function()
-                    this.createTooltip(data.tooltipDisabled)
+                    createTooltip(data.tooltipDisabled)
                 end)
             end
         end
-
+        
     end
     menu:updateLayout()
 end
+
+
 local messageBoxId = tes3ui.registerID("CustomMessageBox")
-function this.messageBox(params)
+
+
+
+local function messageBox(params)
     local function enable(button)
         button.disabled = false
         button.widget.state = 1
         button.color = tes3ui.getPalette("normal_color")
     end
-
+    
     local function disable(button)
         button.disabled = true
         button.widget.state = 2
@@ -158,7 +160,7 @@ function this.messageBox(params)
 
             populateButtons{ buttons= buttons, menu = menu, buttonsBlock = buttonsBlock, startIndex = startIndex, endIndex = endIndex}
         end)
-
+        
         nextButton:register("mouseClick", function()
             --move start index forward, check if enable prev  button
             startIndex = startIndex + maxButtonsPerColumn
@@ -171,11 +173,11 @@ function this.messageBox(params)
             if endIndex >= #buttons then
                 disable(nextButton)
             end
-
+           
             populateButtons{ buttons= buttons, menu = menu, buttonsBlock = buttonsBlock, startIndex = startIndex, endIndex = endIndex}
         end)
     end
-
+    
     -- add cancel button
     if params.doesCancel then
         local buttonId = tes3ui.registerID("CustomMessageBox_CancelButton")
@@ -190,3 +192,5 @@ function this.messageBox(params)
     end
     menu:updateLayout()
 end
+
+return messageBox
