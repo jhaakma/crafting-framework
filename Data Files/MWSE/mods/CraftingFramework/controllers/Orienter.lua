@@ -46,9 +46,14 @@ local function isTall(ref)
 end
 
 local function getMaxSteepness(ref)
+    if ref.data and ref.data.positionerMaxSteepness then
+        return ref.data.positionerMaxSteepness
+    end
     local objType = ref.baseObject.objectType
     if objType == tes3.objectType.npc or objType == tes3.objectType.creature then return 60 end
-    return isTall(ref) and 5 or 50
+    if objType == tes3.objectType.light then return 0 end
+    if isTall(ref) then return 5 end
+    return 50
 end
 
 function this.positionRef(ref, rayResult)
@@ -93,7 +98,7 @@ function this.getGroundBelowRef(e)
     if bottle then
         table.insert(ignoreList, bottle)
     end
-    
+
     local result = tes3.rayTest {
         position = {ref.position.x, ref.position.y, ref.position.z + offset},
         direction = {0, 0, -1},
@@ -122,14 +127,17 @@ function this.getGroundBelowRef(e)
     else
         bottle.position = result.intersection:copy()
     end
-    
+
     return result
 end
 
 function this.orientRefToGround(params)
     local ref = params.ref
     local terrainOnly = params.mode == "ground"
-    local result = this.getGroundBelowRef({ref = ref, terrainOnly = terrainOnly})
+    local result = this.getGroundBelowRef{
+        ref = ref,
+        --terrainOnly = terrainOnly
+    }
     if result then
         this.positionRef(ref, result)
         this.orientRef(ref, result)

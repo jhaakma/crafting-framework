@@ -1,7 +1,7 @@
 local TooltipSchema = {
     name = "Tooltip",
     fields = {
-        header = { type = "string", required = false },
+        header = { type = "string|function", required = false },
         text = { type = "string", required = false }
     }
 }
@@ -12,7 +12,7 @@ local ButtonSchema = {
         callback = { type = "function", required = false },
         tooltip = { type = TooltipSchema, required = false },
         tooltipDisabled = { type = TooltipSchema, required = false },
-        requirements = { type = "function", required = false },
+        enableRequirements = { type = "function", required = false },
         showRequirements = { type = "function", required = false },
     }
 }

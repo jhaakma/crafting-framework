@@ -3,12 +3,20 @@ local config = require("CraftingFramework.config")
 
 do --logger
     local logLevel = config.mcm.logLevel
-    local logger = require("CraftingFramework.util.logger")
+    local logger = require("logging.logger")
     Util.log = logger.new{
         name = config.static.modName,
         logLevel = logLevel
     }
+    Util.createLogger = function(serviceName)
+        return logger.new{
+            name = string.format("%s: %s", config.static.modName, serviceName),
+            logLevel = logLevel
+        }
+    end
 end
+
+
 Util.validate = require("CraftingFramework.util.validator").validate
 Util.messageBox = require("CraftingFramework.util.messageBox")
 Util.traverseRoots = function(roots)
@@ -26,7 +34,7 @@ Util.traverseRoots = function(roots)
 end
 Util.onLight = function(lightRef)
     local function isCollisionNode(node)
-        return node:isInstanceOfType(tes3.niType.RootCollisionNode) 
+        return node:isInstanceOfType(tes3.niType.RootCollisionNode)
     end
     if (not lightRef.object.mesh) or (string.len(lightRef.object.mesh) == 0) then
         return
@@ -35,8 +43,8 @@ Util.onLight = function(lightRef)
     local newNode = tes3.loadMesh(lightRef.object.mesh):clone()
     --[[
         Remove existing children and reattach them from the base mesh,
-        to restore light properties. Ignore collision node to avoid 
-        crashes from collision detection. 
+        to restore light properties. Ignore collision node to avoid
+        crashes from collision detection.
     ]]
     for i, childNode in ipairs(lightRef.sceneNode.children) do
         if childNode and not isCollisionNode(childNode) then
@@ -90,22 +98,22 @@ Util.removeLight = function(lightNode)
             --node.appCulled = true
             node.parent:detachChild(node)
         end
-        
-        -- Kill materialProperty 
+
+        -- Kill materialProperty
         local materialProperty = node:getProperty(0x2)
         if materialProperty then
             if (materialProperty.emissive.r > 1e-5 or materialProperty.emissive.g > 1e-5 or materialProperty.emissive.b > 1e-5 or materialProperty.controller) then
                 materialProperty = node:detachProperty(0x2):clone()
                 node:attachProperty(materialProperty)
-        
+
                 -- Kill controllers
                 materialProperty:removeAllControllers()
-                
+
                 -- Kill emissives
                 local emissive = materialProperty.emissive
                 emissive.r, emissive.g, emissive.b = 0,0,0
                 materialProperty.emissive = emissive
-        
+
                 node:updateProperties()
             end
         end
@@ -117,7 +125,7 @@ Util.removeLight = function(lightNode)
         end
         if (texturingProperty and texturingProperty.maps[5]) then
             texturingProperty.maps[5].texture = niSourceTexture.createFromPath(newTextureFilepath)
-        end 
+        end
     end
     lightNode:update()
     lightNode:updateNodeEffects()
@@ -135,17 +143,30 @@ function Util.isShiftDown()
 end
 function Util.isKeyPressed(pressed, expected)
     return (
-        pressed.keyCode == expected.keyCode and
-        not not pressed.isShiftDown == not not expected.isShiftDown and
-        not not pressed.isControlDown == not not expected.isControlDown and
-        not not pressed.isAltDown == not not expected.isAltDown
+        pressed.keyCode == expected.keyCode
+         and not not pressed.isShiftDown == not not expected.isShiftDown
+         and not not pressed.isControlDown == not not expected.isControlDown
+         and not not pressed.isAltDown == not not expected.isAltDown
+         and not not pressed.isSuperDown == not not expected.isSuperDown
     )
 end
 
+---@param ref tes3reference
 function Util.canBeActivated(ref)
-    local canActivate = ref.baseObject.objectType ~= tes3.objectType.static
-    return canActivate
+    return ref.baseObject.objectType ~= tes3.objectType.activator
+        and ref.object.script
 end
 
+function Util.convertListTypes(list, classType)
+    if list == nil then
+        return nil
+    end
+    local newList = {}
+    for _, data in ipairs(list) do
+        local newItem = classType:new(data)
+        table.insert(newList, newItem)
+    end
+    return newList
+end
 
 return Util

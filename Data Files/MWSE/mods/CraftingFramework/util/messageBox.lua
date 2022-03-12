@@ -2,9 +2,12 @@ local MenuButton = require("CraftingFramework.components.MenuButton")
 local validator = require("CraftingFramework.util.validator")
 --Generic Tooltip with header and description
 local function createTooltip(e)
+    if type(e) == "function" then
+        e = e()
+    end
     local thisHeader, thisLabel = e.header, e.text
     local tooltip = tes3ui.createTooltipMenu()
-    
+
     local outerBlock = tooltip:createBlock()
     outerBlock.flowDirection = "top_to_bottom"
     outerBlock.paddingTop = 6
@@ -13,8 +16,8 @@ local function createTooltip(e)
     outerBlock.paddingRight = 6
     outerBlock.maxWidth = 300
     outerBlock.autoWidth = true
-    outerBlock.autoHeight = true    
-    
+    outerBlock.autoHeight = true
+
     if thisHeader then
         local headerText = thisHeader
         local headerLabel = outerBlock:createLabel({ text = headerText})
@@ -40,12 +43,13 @@ local function populateButtons(e)
     local menu = e.menu
     local startIndex = e.startIndex
     local endIndex = e.endIndex
+    local callbackParams = e.callbackParams
 
     buttonsBlock:destroyChildren()
 
     for i = startIndex, math.min(endIndex, #buttons) do
         local data = buttons[i]
-        validator.validate(data, MenuButton.schema)
+        --validator.validate(data, MenuButton.schema)
         local doAddButton = true
         if data.showRequirements then
             if data.showRequirements() ~= true then
@@ -59,8 +63,8 @@ local function populateButtons(e)
             local button = buttonsBlock:createButton{ id = buttonId, text = data.text}
 
             local disabled = false
-            if data.requirements then
-                if data.requirements() ~= true then
+            if data.enableRequirements then
+                if data.enableRequirements() ~= true then
                     disabled = true
                 end
             end
@@ -70,7 +74,7 @@ local function populateButtons(e)
             else
                 button:register( "mouseClick", function()
                     if data.callback then
-                        data.callback()
+                        data.callback(callbackParams)
                     end
                     tes3ui.leaveMenuMode()
                     menu:destroy()
@@ -87,15 +91,12 @@ local function populateButtons(e)
                 end)
             end
         end
-        
+
     end
     menu:updateLayout()
 end
 
-
 local messageBoxId = tes3ui.registerID("CustomMessageBox")
-
-
 
 local function messageBox(params)
     local function enable(button)
@@ -103,12 +104,13 @@ local function messageBox(params)
         button.widget.state = 1
         button.color = tes3ui.getPalette("normal_color")
     end
-    
+
     local function disable(button)
         button.disabled = true
         button.widget.state = 2
         button.color = tes3ui.getPalette("disabled_color")
     end
+    local callbackParams = params.callbackParams
     local maxButtonsPerColumn = params.maxButtons or 30
     local message = params.message
     local buttons = params.buttons
@@ -131,7 +133,14 @@ local function messageBox(params)
 
     --populate initial buttons
     local startIndex, endIndex = 1, maxButtonsPerColumn
-    populateButtons{ buttons= buttons, menu = menu, buttonsBlock = buttonsBlock, startIndex = startIndex, endIndex = endIndex}
+    populateButtons{
+        buttons= buttons,
+        menu = menu,
+        buttonsBlock = buttonsBlock,
+        startIndex = startIndex,
+        endIndex = endIndex,
+        callbackParams = callbackParams
+    }
 
     --add next/previous buttons
     if #buttons > maxButtonsPerColumn then
@@ -158,9 +167,16 @@ local function messageBox(params)
                 enable(nextButton)
             end
 
-            populateButtons{ buttons= buttons, menu = menu, buttonsBlock = buttonsBlock, startIndex = startIndex, endIndex = endIndex}
+            populateButtons{
+                buttons= buttons,
+                menu = menu,
+                buttonsBlock = buttonsBlock,
+                startIndex = startIndex,
+                endIndex = endIndex,
+                callbackParams = callbackParams
+            }
         end)
-        
+
         nextButton:register("mouseClick", function()
             --move start index forward, check if enable prev  button
             startIndex = startIndex + maxButtonsPerColumn
@@ -173,18 +189,25 @@ local function messageBox(params)
             if endIndex >= #buttons then
                 disable(nextButton)
             end
-           
-            populateButtons{ buttons= buttons, menu = menu, buttonsBlock = buttonsBlock, startIndex = startIndex, endIndex = endIndex}
+
+            populateButtons{
+                buttons= buttons,
+                menu = menu,
+                buttonsBlock = buttonsBlock,
+                startIndex = startIndex,
+                endIndex = endIndex,
+                callbackParams = callbackParams
+            }
         end)
     end
-    
+
     -- add cancel button
     if params.doesCancel then
         local buttonId = tes3ui.registerID("CustomMessageBox_CancelButton")
         local cancelButton = menu:createButton{ id = buttonId, text = tes3.findGMST(tes3.gmst.sCancel).value }
         cancelButton:register( "mouseClick", function()
             if params.cancelCallback then
-                params.cancelCallback()
+                params.cancelCallback(callbackParams)
             end
             tes3ui.leaveMenuMode()
             menu:destroy()

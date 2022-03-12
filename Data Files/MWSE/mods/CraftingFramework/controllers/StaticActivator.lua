@@ -14,7 +14,7 @@ local function centerText(element)
     element.autoHeight = true
     element.autoWidth = true
     element.wrapText = true
-    element.justifyText = "center" 
+    element.justifyText = "center"
 end
 
 local function createActivatorIndicator(reference)
@@ -27,15 +27,15 @@ local function createActivatorIndicator(reference)
 
         if not reference then return end
         --objects that already have a name don't need an activator
-        if reference.object.name then 
-            return 
+        if reference.object.name and reference.object.name ~= "" then
+            return
         end
         if tes3ui.menuMode() then return end
 
         local craftable = Craftable.getPlacedCraftable(reference.object.id:lower())
         if craftable then
             mainBlock = menu:createBlock({id = id_indicator })
-            
+
             mainBlock.absolutePosAlignX = 0.5
             mainBlock.absolutePosAlignY = 0.03
             mainBlock.autoHeight = true
@@ -72,7 +72,7 @@ local function callRayTest(e)
     }
 
     if result then
-        if result.reference and result.reference.data and result.reference.data.crafted then 
+        if result.reference and result.reference.data and result.reference.data.crafted then
             local distance = eyePos:distance(result.intersection)
             if distance < tes3.findGMST(tes3.gmst.iMaxActivateDist).value then
                 createActivatorIndicator(result.reference)
@@ -83,12 +83,14 @@ local function callRayTest(e)
         createActivatorIndicator()
     end
 end
-event.register("simulate", function() callRayTest() end)
+event.register("simulate", function()
+     callRayTest()
+end)
 
 local function doTriggerActivate()
-    if (not config.persistent.positioningActive) 
-    and (not isBlocked) 
-    and (not tes3ui.menuMode()) 
+    if (not config.persistent.positioningActive)
+    and (not isBlocked)
+    and (not tes3ui.menuMode())
     then
         local ref = callRayTest({ returnRef = true})
         if ref then

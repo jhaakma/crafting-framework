@@ -11,27 +11,40 @@ local Tool = {
     }
 }
 
+
 Tool.registeredTools = {}
 function Tool.getTool(id)
     return Tool.registeredTools[id]
 end
 
-
 function Tool:new(data)
     Util.validate(data, Tool.schema)
-    setmetatable(data, self)
+    if not Tool.registeredTools[data.id] then
+        Tool.registeredTools[data.id] = {
+            id = data.id,
+            name = data.name,
+            ids = {}
+        }
+    end
+    local tool = Tool.registeredTools[data.id]
+    --add tool ids
+    for _, id in ipairs(data.ids) do
+        tool.ids[id:lower()] = true
+    end
+    setmetatable(tool, self)
     self.__index = self
-    Tool.registeredTools[data.id] = data
-    return data
+    return tool
 end
 
 function Tool:getName()
     return self.name
 end
 
+---Find a valid tool of this type and apply condition damage if appropriate.
+---@param amount number How much condition damage is done
 function Tool:use(amount)
     amount = amount or 1
-    for _, id in ipairs(self.ids) do
+    for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
         if obj then
             local itemStack = tes3.player.object.inventory:findItemStack(obj)
@@ -83,10 +96,10 @@ function Tool.checkToolEquipped(obj, requirements)
     return true
 end
 
-function Tool.checkToolCondition(obj, requirements)
+function Tool.checkToolCondition(obj)
     if obj.maxCondition then
         local stack = tes3.player.object.inventory:findItemStack(obj)
-        if not stack.variables then return true end
+        if not( stack and stack.variables ) then return true end
         for _, data in pairs(stack.variables) do
             if data.condition and data.condition > 0 then
                 return true
@@ -102,24 +115,24 @@ function Tool.checkToolRequirements(id, requirements)
     local isValid = obj
         and Tool.checkInventoryToolCount(obj, requirements)
         and Tool.checkToolEquipped(obj, requirements)
-        and Tool.checkToolCondition(obj, requirements)
+        and Tool.checkToolCondition(obj)
     if isValid then
         Util.log:debug("Has specific tool")
-        return true 
+        return true
     end
     return false
 end
 
 
 function Tool:hasToolEquipped(requirements)
-    for _, id in ipairs(self.ids) do
+    for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
         return Tool.checkToolEquipped(obj, requirements)
     end
 end
 
 function Tool:hasToolCondition(requirements)
-    for _, id in ipairs(self.ids) do
+    for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
         return Tool.checkToolCondition(obj, requirements)
     end
@@ -127,7 +140,7 @@ end
 
 function Tool:hasTool(requirements)
     requirements = requirements or {}
-    for _, id in ipairs(self.ids) do
+    for id, _ in pairs(self.ids) do
         if Tool.checkToolRequirements(id, requirements) then
             Util.log:debug("hasTool(): Has tool %s", id)
             return true

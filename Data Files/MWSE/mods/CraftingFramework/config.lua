@@ -20,7 +20,7 @@ this.mcmDefault = {
     keybindModeCycle = {
         keyCode = tes3.scanCode.lAlt
     },
-    defaultMaterialRecovery = 1.0
+    defaultMaterialRecovery = 75
 }
 this.save = function(newConfig)
     inMemConfig = newConfig
@@ -42,7 +42,7 @@ this.mcm = setmetatable({}, {
 
 local persistentDefault = {
     knownRecipes = {},
-    placementSetting = 'free',
+    placementSetting = 'ground',
 }
 
 this.persistent = setmetatable({}, {

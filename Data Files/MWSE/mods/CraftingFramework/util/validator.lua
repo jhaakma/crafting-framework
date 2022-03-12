@@ -57,7 +57,7 @@ Validator.validate = function(object, schema)
                 matchesType = true
             end
         end
-        
+
         if not matchesType then
             assert(type(object) == schema,
             string.format('Validation failed: expected type "%s", got "%s"', schema, type(object)))
@@ -76,7 +76,6 @@ Validator.validate = function(object, schema)
         if field.required then
             assert(object[key] ~= nil, string.format('Validation failed for "%s": Missing required "%s" field.', schemaName, key))
         end
-        
         if object[key] ~= nil then
             if field.type == "any" then
                 --any let's whatever through
@@ -109,14 +108,14 @@ Validator.validate = function(object, schema)
                                     valuesString = string.format('%s, %s', valuesString, str)
                                 end
                                 for _, tableValue in ipairs(object[key]) do
-                                    assert(field.values[tableValue], 
+                                    assert(field.values[tableValue],
                                         string.format('Validation failed for %s, expected one of the following values: [%s], got %s',
                                             schemaName, valuesString, tableValue
                                         )
                                     )
                                 end
                                 for _, tableValue in pairs(object[key]) do
-                                    assert(field.values[tableValue], 
+                                    assert(field.values[tableValue],
                                         string.format('Validation failed for %s, expected one of the following values: [%s], got %s',
                                             schemaName, valuesString, tableValue
                                         )
@@ -141,8 +140,9 @@ Validator.validate = function(object, schema)
                     )
                 end
             end
-        elseif field.default then
+        elseif field.default ~= nil then
             --nil, initialise default
+            assert(type(object) == "table", string.format("Validation failed: %s is not a table.", object))
             object[key] = field.default
         end
     end

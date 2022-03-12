@@ -9,17 +9,68 @@ local Craftable = {
         fields = {
             id = { type = "string", required = true },
             name = { type = "string", required = false },
-            miscObject = { type = "string", required = false },
+            description = { type = "string", required = false },
             placedObject = { type = "string", required = false },
-            additionalMenuOptions = { type = "table", childType = MenuButton.schema, required = false },
+            uncarryable = { type = "boolean", required = false },
+            additionalMenuOptions = { type = "table", required = false },
             soundId = { type = "string", required = false },
             soundPath = { type = "string", required = false },
+            soundType = { type = "string", required = false },
             materialRecovery = { type = "number", required = false},
+            maxSteepness = { type = "number", required = false},
+            resultAmount = { type = "number", required = false}
         }
-    }
+    },
+    constructionSounds = {
+        fabric = {
+            "craftingFramework\\craft\\Fabric1.wav",
+            "craftingFramework\\craft\\Fabric2.wav",
+            "craftingFramework\\craft\\Fabric3.wav",
+            "craftingFramework\\craft\\Fabric4.wav",
+        },
+        wood = {
+            "craftingFramework\\craft\\Wood1.wav",
+            "craftingFramework\\craft\\Wood2.wav",
+            "craftingFramework\\craft\\Wood3.wav",
+        },
+        leather = {
+            "craftingFramework\\craft\\Leather1.wav",
+            "craftingFramework\\craft\\Leather2.wav",
+            "craftingFramework\\craft\\Leather3.wav",
+        },
+        rope = {
+            "craftingFramework\\craft\\Rope1.wav",
+            "craftingFramework\\craft\\Rope2.wav",
+            "craftingFramework\\craft\\Rope3.wav",
+        },
+        straw = {
+            "craftingFramework\\craft\\Straw1.wav",
+            "craftingFramework\\craft\\Straw2.wav",
+        },
+        metal = {
+            "craftingFramework\\craft\\Metal1.wav",
+            "craftingFramework\\craft\\Metal2.wav",
+            "craftingFramework\\craft\\Metal3.wav",
+        },
+        default = {
+            "craftingFramework\\craft\\Fabric1.wav",
+            "craftingFramework\\craft\\Fabric2.wav",
+            "craftingFramework\\craft\\Fabric3.wav",
+            "craftingFramework\\craft\\Fabric4.wav",
+        }
+    },
+    deconstructionSounds = {
+        "craftingFramework\\craft\\Deconstruct1.wav",
+        "craftingFramework\\craft\\Deconstruct2.wav",
+        "craftingFramework\\craft\\Deconstruct3.wav",
+    },
+
 }
 
+
 Craftable.registeredCraftables = {}
+--Static functions
+
 function Craftable.getCraftable(id)
     return Craftable.registeredCraftables[id]
 end
@@ -30,9 +81,40 @@ function Craftable.getPlacedCraftable(id)
     end
 end
 
+local function isCarryable(id)
+    local unCarryableTypes = {
+        [tes3.objectType.light] = true,
+        [tes3.objectType.container] = true,
+        [tes3.objectType.static] = true,
+        [tes3.objectType.door] = true,
+        [tes3.objectType.activator] = true,
+        [tes3.objectType.npc] = true,
+        [tes3.objectType.creature] = true,
+    }
+    local placedObject = tes3.getObject(id)
+    if placedObject then
+        if placedObject.canCarry then
+            return true
+        end
+        local objType = placedObject.objectType
+
+        if unCarryableTypes[objType] then
+            return false
+        end
+        return true
+    end
+end
+--Methods
+
 function Craftable:new(data)
-    --Util.validate(data, Craftable.schema)
+    Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
+    if data.uncarryable == nil then
+        data.uncarryable = not isCarryable(data.id)
+    end
+    if data.uncarryable and not data.placedObject then
+        data.placedObject = data.id
+    end
     setmetatable(data, self)
     self.__index = self
     Craftable.registeredCraftables[data.id] = data
@@ -42,14 +124,12 @@ end
 
 function Craftable:registerEvents()
     if self.placedObject then
-        mwse.log("Registering events for %s", self.id)
         event.register("CraftingFramework:CraftableActivated", function(e)
             if Util.isShiftDown() and Util.canBeActivated(e.reference) then
                 e.reference.data.allowActivate = true
                 tes3.player:activate(e.reference)
                 e.reference.data.allowActivate = nil
             else
-                mwse.log("Activated %s", self.placedObject)
                 self:activate(e.reference)
             end
         end, { filter = self.placedObject:lower() })
@@ -67,6 +147,7 @@ function Craftable:activate(reference)
         message = self:getName(),
         buttons = self:getMenuButtons(reference),
         doesCancel = true,
+        callbackParams = { reference = reference }
     }
 end
 
@@ -78,33 +159,32 @@ function Craftable:swap(reference)
         cell = reference.cell
     }
     ref.data.crafted = true
+    ref.data.positionerMaxSteepness = self.maxSteepness
+
     Util.deleteRef(reference)
+end
+
+function Craftable:getDescription()
+    return self.description
 end
 
 function Craftable:getMenuButtons(reference)
     local menuButtons = {}
     if self.additionalMenuOptions then
         for _, option in ipairs(self.additionalMenuOptions) do
+
             table.insert(menuButtons, option)
         end
     end
     local defaultButtons = {
-        {
-            text = "Pick Up",
-            showRequirements = function()
-                return self.miscItem ~= nil
-            end,
-            callback = function()
-                self:pickUp(reference)
-            end
-        },
+
         {
             text = "Open",
             showRequirements = function()
                 return reference.object.objectType == tes3.objectType.container
             end,
             callback = function()
-                timer.delayOneFrame(function() 
+                timer.delayOneFrame(function()
                     reference.data.allowActivate = true
                     tes3.player:activate(reference)
                     reference.data.allowActivate = nil
@@ -118,12 +198,24 @@ function Craftable:getMenuButtons(reference)
             end
         },
         {
+            text = "Pick Up",
+            showRequirements = function()
+                return not self.uncarryable
+            end,
+            callback = function()
+                self:pickUp(reference)
+            end
+        },
+        {
             text = "Destroy",
+            showRequirements = function()
+                return self.uncarryable
+            end,
             callback = function()
                 Util.messageBox{
                     message = string.format("Destroy %s?", self:getName()),
                     buttons = {
-                        { 
+                        {
                             text = "Yes",
                             callback = function()
                                 self:destroy(reference)
@@ -133,7 +225,7 @@ function Craftable:getMenuButtons(reference)
                     },
                     doesCancel = true
                 }
-               
+
             end
         }
     }
@@ -145,7 +237,6 @@ function Craftable:getMenuButtons(reference)
 end
 
 function Craftable:position(reference)
-
     timer.delayOneFrame(function()
         -- Put those hands away.
         if (tes3.mobilePlayer.weaponReady) then
@@ -180,20 +271,21 @@ function Craftable:pickUp(reference)
     Util.deleteRef(reference)
 end
 
+
 function Craftable:destroy(reference)
     self:transferItems(reference)
     -- play a destroy sound
-    tes3.playSound{ sound = "repair fail", pitch = 0.2 }
+    self:playDeconstructingSound()
     local destroyMessage = string.format("%s has been destroyed.", self:getName())
 
     --check if materials are recovered
     if reference.data.materialsUsed  then
-        
+
         local recoverMessage = "You recover the following materials:"
         local didRecover = false
         for id, count in pairs(reference.data.materialsUsed) do
             local item = tes3.getObject(id)
-            local recoveryRatio = self.materialRecovery or config.mcm.defaultMaterialRecovery
+            local recoveryRatio = (self.materialRecovery or config.mcm.defaultMaterialRecovery) / 100
             local recoveredCount = math.floor(count * math.clamp(recoveryRatio, 0, 1) )
             if item and recoveredCount > 0 then
                 didRecover = true
@@ -201,10 +293,13 @@ function Craftable:destroy(reference)
                 tes3.addItem{
                     reference = tes3.player,
                     item = item,
-                    count = recoveredCount
+                    count = recoveredCount,
+                    playSound = false,
+                    updateGUI = false
                 }
             end
         end
+        tes3ui.updateInventoryTiles()
         if didRecover then
             destroyMessage = recoverMessage
         end
@@ -213,7 +308,7 @@ function Craftable:destroy(reference)
 
     reference.sceneNode.appCulled = true
     tes3.positionCell{
-        reference = reference, 
+        reference = reference,
         position = { 0, 0, 0, },
     }
     reference:disable()
@@ -226,51 +321,66 @@ function Craftable:getName()
     return self.name or tes3.getObject(self.id) and tes3.getObject(self.id).name or "[unknown]"
 end
 
-function Craftable:playCraftingSound()
+function Craftable:getNameWithCount()
+    return string.format("%s%s", self:getName(),
+        self.resultAmount and string.format(" x%d", self.resultAmount) or ""
+    )
+end
 
+function Craftable:playCraftingSound()
+    if self.soundType then
+        local soundPick = table.choice(self.constructionSounds[self.soundType])
+        if soundPick then
+            tes3.playSound{ soundPath = soundPick}
+            return
+        end
+    end
     if self.soundId then
         tes3.playSound{ sound = self.soundId }
     elseif self.soundPath then
         tes3.playSound{ soundPath = self.soundPath }
     else
-        tes3.playSound{ soundPath = "furncraft\\craft.wav" }
+        local soundPick = table.choice(self.constructionSounds.default)
+        tes3.playSound{ soundPath = soundPick }
     end
 end
 
+function Craftable:playDeconstructingSound()
+    local soundPick = table.choice(self.deconstructionSounds)
+    tes3.playSound{soundPath = soundPick }
+end
+
 function Craftable:craft(materialsUsed)
-    if self.miscObject then
-        local item = tes3.getObject(self.miscObject)
-        if item then
-            tes3.playSound{ soundPath = "ashfall\\craft.wav"}
-            tes3.addItem{ reference = tes3.player, item = item, playSound = false }
-            tes3.messageBox("You successfully crafted %s.", item.name)
-        end
-    else
+    if self.uncarryable then
         self:position(self:place(materialsUsed))
+    else
+        local item = tes3.getObject(self.id)
+        if item then
+            tes3.addItem{
+                reference = tes3.player,
+                item = item, playSound = false,
+                count = self.resultAmount or 1,
+            }
+            tes3.messageBox("You successfully crafted %s%s.",
+                item.name,
+                self.resultAmount and string.format(" x%d", self.resultAmount) or ""
+            )
+        end
     end
     self:playCraftingSound()
-    
 end
 
 function Craftable:place(materialsUsed)
     local eyeOri = tes3.getPlayerEyeVector()
     local eyePos = tes3.getPlayerEyePosition()
-    local ray = tes3.rayTest{ 
-        position = tes3.getPlayerEyePosition(), 
+    local ray = tes3.rayTest{
+        position = tes3.getPlayerEyePosition(),
         direction = tes3.getPlayerEyeVector(),
         ignore = { tes3.player}
     }
     local rayDist = ray and ray.intersection and math.min(ray.distance -5, 200) or 0
-
-    if not ray then
-        mwse.log("WTF why no ray?")
-        end
-    if not ray.intersection then
-        mwse.log("WTF why no intersection?")
-    end
-
     local position = eyePos + eyeOri * rayDist
-    
+
     local ref = tes3.createReference{
         object = self.placedObject,
         cell = tes3.player.cell,
@@ -278,6 +388,7 @@ function Craftable:place(materialsUsed)
         position = position
     }
     ref.data.crafted = true
+    ref.data.positionerMaxSteepness = self.maxSteepness
     ref.data.materialsUsed = materialsUsed
     ref:updateSceneGraph()
     ref.sceneNode:updateNodeEffects()

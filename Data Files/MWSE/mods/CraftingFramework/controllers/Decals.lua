@@ -16,10 +16,10 @@ local function traverseNIF(roots)
 end
 
 local states = {
-    active = "textures\\ss20\\decal_white.dds",
-    ground =  "textures\\ss20\\decal_green.dds",
-    free =  "textures\\ss20\\decal_blue.dds",
-    drop = "textures\\ss20\\decal_pink.dds",
+    active = "textures\\CraftingFramework\\decal_white.dds",
+    ground =  "textures\\CraftingFramework\\decal_green.dds",
+    free =  "textures\\CraftingFramework\\decal_blue.dds",
+    drop = "textures\\CraftingFramework\\decal_pink.dds",
 }
 
 local textures = {}
@@ -35,7 +35,7 @@ preloadTextures()
 
 
 local function setDecal(property, currentState)
-    local decal 
+    local decal
     if currentState then
         decal = textures[currentState]
     end
@@ -43,7 +43,7 @@ local function setDecal(property, currentState)
     for index, map in ipairs(property.maps) do
         local texture = map and map.texture
         local fileName = texture and texture.fileName
-        
+
         if fileName then
             for _, path in pairs(states) do
                 if fileName == path then

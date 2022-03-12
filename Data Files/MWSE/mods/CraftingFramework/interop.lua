@@ -49,13 +49,16 @@ end
 
 --Tool APIs
 function interop.registerTools(data)
-    for _, material in ipairs(data) do
-        interop.registerTool(material)
+    for _, tool in ipairs(data) do
+        interop.registerTool(tool)
     end
 end
+
 function interop.registerTool(data)
     Tool:new(data)
 end
+
+---@param id string the id of the tool
 function interop.getTools(id)
     return Tool.registeredTools[id]
 end
