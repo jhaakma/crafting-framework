@@ -21,12 +21,15 @@ jobs:
           import os
           from pathlib import Path
           def openConfigFile(configPath):
-              with open(configPath, 'r') as stream:
-                  try:
-                      config = yaml.safe_load(stream)
-                  except:
-                      return None
-                  return config
+              try:
+                  with open(configPath, 'r') as stream:
+                      try:
+                          config = yaml.safe_load(stream)
+                      except:
+                          return None
+                      return config
+              except:
+                  print("No timestamps override found, skipping")
           def setTimeStamp(filepath, timestamp):
               os.utime(filepath, (timestamp, timestamp))
           def resetTimestamps(overrides):
