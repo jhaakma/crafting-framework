@@ -14,8 +14,8 @@ local SkillRequirement = {
     }
 }
 
-local MAX_PROGRESS_DEFAULT = 20
-local MAX_SKILL_DIFF = 20
+local MAX_PROGRESS_DEFAULT = 30
+local MAX_SKILL_DIFF = 40
 
 --[[
     SkillRequirement Constructor

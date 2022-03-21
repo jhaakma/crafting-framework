@@ -172,12 +172,15 @@ function Craftable:getMenuButtons(reference)
     local menuButtons = {}
     if self.additionalMenuOptions then
         for _, option in ipairs(self.additionalMenuOptions) do
-
-            table.insert(menuButtons, option)
+            table.insert(menuButtons, {
+                text = option.text,
+                callback = function()
+                    option.callback(reference)
+                end
+            })
         end
     end
     local defaultButtons = {
-
         {
             text = "Open",
             showRequirements = function()

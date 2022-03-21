@@ -564,11 +564,6 @@ function this.updateButtons()
 
         if buttonConf.requirements and buttonConf.requirements()== false then
             this.toggleButtonDisabled(button, true, true)
-            button:register("help", function()
-                local tooltip = tes3ui.createTooltipMenu()
-                local _, reason = buttonConf.requirements()
-                tooltip:createLabel{ text = reason }
-            end)
         else
             this.toggleButtonDisabled(button, true, false)
             button:register("mouseClick", function()
@@ -576,6 +571,15 @@ function this.updateButtons()
                 button.text = buttonConf.name()
             end)
         end
+
+        --help event doesn't override so we set it once and do logic inside
+        button:register("help", function()
+            local tooltip = tes3ui.createTooltipMenu()
+            local meetsRequirements, reason = buttonConf.requirements()
+            if reason and not meetsRequirements then
+                tooltip:createLabel{ text = reason }
+            end
+        end)
     end
 end
 

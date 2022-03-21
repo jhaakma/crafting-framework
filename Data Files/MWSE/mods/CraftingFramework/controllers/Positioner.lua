@@ -503,9 +503,6 @@ local function onActiveKey(e)
             this.togglePlacement()
         end
     end
-    -- if e.keyCode == tes3.scanCode.delete then
-    --     deleteActive()
-    -- end
 end
 event.register("keyDown", onActiveKey, { priority = 100 })
 
