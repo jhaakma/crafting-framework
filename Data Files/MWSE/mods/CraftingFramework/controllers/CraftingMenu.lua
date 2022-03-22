@@ -495,7 +495,7 @@ function this.updateDescriptionPane(recipe)
         tes3ui.createTooltipMenu{ item = recipe.craftable.id }
     end)
 end
-
+local nifRotateX = false
 function this.updatePreviewPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
@@ -544,7 +544,14 @@ function this.updatePreviewPane(recipe)
             end
 
             m1:toRotationX(math.rad(-15))
-            m2:toRotationZ(math.rad(180))
+            if item.objectType == tes3.objectType.weapon then
+                nifRotateX = true
+                m2:toRotationX(math.rad(270))
+            else
+                nifRotateX = false
+                m2:toRotationZ(math.rad(180))
+            end
+
             node.rotation = node.rotation * m1:copy() * m2:copy()
 
 
@@ -575,9 +582,11 @@ function this.updateButtons()
         --help event doesn't override so we set it once and do logic inside
         button:register("help", function()
             local tooltip = tes3ui.createTooltipMenu()
-            local meetsRequirements, reason = buttonConf.requirements()
-            if reason and not meetsRequirements then
-                tooltip:createLabel{ text = reason }
+            if buttonConf.requirements then
+                local meetsRequirements, reason = buttonConf.requirements()
+                if reason and not meetsRequirements then
+                    tooltip:createLabel{ text = reason }
+                end
             end
         end)
     end
@@ -718,7 +727,12 @@ function this.rotateNif(e)
     local nif = menu:findChild(uiids.nif)
     if nif and nif.sceneNode then
         local node = nif.sceneNode
-        m2:toRotationZ(math.rad(15) * e.delta)
+        if nifRotateX then
+            m2:toRotationY(math.rad(15) * e.delta)
+        else
+            m2:toRotationZ(math.rad(15) * e.delta)
+        end
+
         node.rotation = node.rotation * m2
         node:update()
     end
