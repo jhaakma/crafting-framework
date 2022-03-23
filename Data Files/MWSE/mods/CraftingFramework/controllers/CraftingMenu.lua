@@ -495,6 +495,13 @@ function this.updateDescriptionPane(recipe)
         tes3ui.createTooltipMenu{ item = recipe.craftable.id }
     end)
 end
+
+local function doAlternateRotation(item)
+    mwse.log("ObjectType = %s", table.find(tes3.objectType, item.objectType))
+    return item.objectType == tes3.objectType.weapon
+        or item.objectType == tes3.objectType.ammunition
+end
+
 local nifRotateX = false
 function this.updatePreviewPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
@@ -524,11 +531,8 @@ function this.updatePreviewPane(recipe)
             local depth = bb.max.x - bb.min.x
             maxDimension = math.max(width, depth, height)
 
-            local targetHeight = 140
+            local targetHeight = 170
             node.scale = targetHeight / maxDimension
-
-            local lowestPoint = bb.min.z * node.scale
-            node.translation.z = node.translation.z - lowestPoint
 
             do --add properties
                 local vertexColorProperty = niVertexColorProperty.new()
@@ -543,18 +547,21 @@ function this.updatePreviewPane(recipe)
                 node:attachProperty(zBufferProperty)
             end
 
-            m1:toRotationX(math.rad(-15))
-            if item.objectType == tes3.objectType.weapon then
+            if doAlternateRotation(item) then
                 nifRotateX = true
+                m1:toRotationZ(math.rad(-15))
+                local lowestPoint = bb.min.y * node.scale
+                node.translation.z = node.translation.z - lowestPoint
                 m2:toRotationX(math.rad(270))
             else
                 nifRotateX = false
+                m1:toRotationX(math.rad(-15))
+                local lowestPoint = bb.min.z * node.scale
+                node.translation.z = node.translation.z - lowestPoint
                 m2:toRotationZ(math.rad(180))
             end
 
             node.rotation = node.rotation * m1:copy() * m2:copy()
-
-
             node.appCulled = false
             node:updateProperties()
             node:update()
