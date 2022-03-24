@@ -175,7 +175,9 @@ function Craftable:getMenuButtons(reference)
             table.insert(menuButtons, {
                 text = option.text,
                 callback = function()
-                    option.callback(reference)
+                    option.callback({
+                        reference = reference
+                    })
                 end
             })
         end
