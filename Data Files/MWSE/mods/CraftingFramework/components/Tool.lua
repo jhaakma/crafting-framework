@@ -1,5 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 
+---@class craftingFrameworkTool
 local Tool = {
     schema = {
         name = "Tool",
@@ -13,10 +14,15 @@ local Tool = {
 
 
 Tool.registeredTools = {}
+---@param id string
+---@return craftingFrameworkTool Tool
 function Tool.getTool(id)
     return Tool.registeredTools[id]
 end
 
+---Creates a new tool.
+---@param data craftingFrameworkToolData
+---@return craftingFrameworkTool Tool The newly constructed tool.
 function Tool:new(data)
     Util.validate(data, Tool.schema)
     if not Tool.registeredTools[data.id] then
@@ -36,6 +42,7 @@ function Tool:new(data)
     return tool
 end
 
+---@return string name
 function Tool:getName()
     return self.name
 end
@@ -124,6 +131,9 @@ function Tool.checkToolRequirements(id, requirements)
 end
 
 
+---The method returns `true` if the player has the tool equipped.
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool:hasToolEquipped(requirements)
     for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
@@ -131,6 +141,9 @@ function Tool:hasToolEquipped(requirements)
     end
 end
 
+---The method returns `true` if the tool's condition is above zero.
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool:hasToolCondition(requirements)
     for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
@@ -138,6 +151,9 @@ function Tool:hasToolCondition(requirements)
     end
 end
 
+---The method returns `true` if the player has the tool that meets provided conditions.
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool:hasTool(requirements)
     requirements = requirements or {}
     for id, _ in pairs(self.ids) do
