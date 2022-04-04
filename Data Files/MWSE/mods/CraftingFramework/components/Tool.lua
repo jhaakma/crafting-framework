@@ -151,7 +151,7 @@ function Tool:hasToolCondition(requirements)
     end
 end
 
----The method returns `true` if the player has the tool that meets provided conditions.
+---The method returns `true` if the player has the tool that meets provided requirements.
 ---@param requirements craftingFrameworkToolRequirements
 ---@return boolean
 function Tool:hasTool(requirements)
