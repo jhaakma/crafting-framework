@@ -280,12 +280,13 @@ end
 
 ---@param materialsUsed table<string, number>
 ---@return string|nil recoverMessage A message that tells the player what materials were recovered. If no materials were recovered, returns nil.
-function Craftable:recoverMaterials(materialsUsed)
+function Craftable:recoverMaterials(materialsUsed, materialRecovery)
     local recoverMessage = "You recover the following materials:"
     local didRecover = false
     for id, count in pairs(materialsUsed) do
         local item = tes3.getObject(id)
-        local recoveryRatio = (self.materialRecovery or config.mcm.defaultMaterialRecovery) / 100
+        materialRecovery = materialRecovery or self.materialRecovery or config.mcm.defaultMaterialRecovery
+        local recoveryRatio = materialRecovery / 100
         local recoveredCount = math.floor(count * math.clamp(recoveryRatio, 0, 1) )
         if item and recoveredCount > 0 then
             didRecover = true
@@ -311,7 +312,7 @@ function Craftable:destroy(reference)
     local destroyMessage = string.format("%s has been destroyed.", self:getName())
     --check if materials are recovered
     if reference.data.materialsUsed  then
-        local recoverMessage = self:recoverMaterials(reference.data.materialsUsed)
+        local recoverMessage = self:recoverMaterials(reference.data.materialsUsed, reference.data.materialRecovery)
         if recoverMessage then
             destroyMessage = destroyMessage .. "\n" .. recoverMessage
         end
@@ -383,6 +384,7 @@ function Craftable:craft(materialsUsed)
                     item = item,
                 }
                 itemData.data.materialsUsed = materialsUsed
+                itemData.data.materialRecovery = self.materialRecovery
             end
             tes3.messageBox("You successfully crafted %s%s.",
                 item.name,
@@ -416,6 +418,7 @@ function Craftable:place(materialsUsed)
     ref.data.crafted = true
     ref.data.positionerMaxSteepness = self.maxSteepness
     ref.data.materialsUsed = materialsUsed
+    ref.data.materialRecovery = self.materialRecovery
     ref:updateSceneGraph()
     ref.sceneNode:updateNodeEffects()
     if self.placeCallback then

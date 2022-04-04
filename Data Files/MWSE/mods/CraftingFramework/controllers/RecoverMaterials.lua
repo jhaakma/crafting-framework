@@ -9,7 +9,8 @@ local Craftable = require("CraftingFramework.components.Craftable")
 local function recoverBrokenToolMaterials(e)
     logger:debug("Recovering broken tool materials")
     local materialsUsed = e.itemData.data.materialsUsed
-    local recoverMessage = Craftable:recoverMaterials(materialsUsed)
+    local materialRecovery = e.itemData.data.materialRecovery
+    local recoverMessage = Craftable:recoverMaterials(materialsUsed, materialRecovery)
     if recoverMessage then
         tes3.messageBox(recoverMessage)
     else
@@ -32,6 +33,7 @@ local function showRecoverMaterialsMessage(e)
     end
     local isBroken = e.itemData.condition and e.itemData.condition <= 0
     local materialsUsed = e.itemData.data.materialsUsed
+
     if isBroken and materialsUsed then
         logger:debug("Item is broken, showing recover materials message")
         Util.messageBox{
