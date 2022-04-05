@@ -14,21 +14,14 @@ local Tool = {
 
 
 Tool.registeredTools = {}
----@param id string The tool's unique identifier.
+---@param id string
 ---@return craftingFrameworkTool Tool
 function Tool.getTool(id)
     return Tool.registeredTools[id]
 end
 
----Creates a new tool.
----@param data craftingFrameworkToolData This table accepts following values:
----
---- `id`: string — **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `tool`.
----
---- `name`: string — The name of the tool. Used in various UIs.
----
---- `ids`: table<number, string> — **Required.**  This is the list of item ids that are considered identical tool.
----@return craftingFrameworkTool Tool The newly constructed tool.
+---@param data craftingFrameworkToolData
+---@return craftingFrameworkTool Tool
 function Tool:new(data)
     Util.validate(data, Tool.schema)
     if not Tool.registeredTools[data.id] then
@@ -53,8 +46,7 @@ function Tool:getName()
     return self.name
 end
 
----Find a valid tool of this type and apply condition damage if appropriate.
----@param amount number How much condition damage is done
+---@param amount number
 function Tool:use(amount)
     amount = amount or 1
     for id, _ in pairs(self.ids) do
@@ -137,15 +129,7 @@ function Tool.checkToolRequirements(id, requirements)
 end
 
 
----The method returns `true` if the player has the tool equipped.
----@param requirements craftingFrameworkToolRequirements This table accepts following values:
---- `tool`: string — **Required.** The tool's id.
----
---- `equipped`: boolean — When `true`, the player needs to have the tool equipped to be considered valid.
----
---- `count`: number — How many of the items need to be in the player's inventory.
----
---- `conditionPerUse`: number — Tool's condition will be reduced by this value per use.
+---@param requirements craftingFrameworkToolRequirements
 ---@return boolean
 function Tool:hasToolEquipped(requirements)
     for id, _ in pairs(self.ids) do
@@ -154,15 +138,7 @@ function Tool:hasToolEquipped(requirements)
     end
 end
 
----The method returns `true` if the tool's condition is above zero.
----@param requirements craftingFrameworkToolRequirements This table accepts following values:
---- `tool`: string — **Required.** The tool's id.
----
---- `equipped`: boolean — When `true`, the player needs to have the tool equipped to be considered valid.
----
---- `count`: number — How many of the items need to be in the player's inventory.
----
---- `conditionPerUse`: number — Tool's condition will be reduced by this value per use.
+---@param requirements craftingFrameworkToolRequirements
 ---@return boolean
 function Tool:hasToolCondition(requirements)
     for id, _ in pairs(self.ids) do
@@ -171,15 +147,7 @@ function Tool:hasToolCondition(requirements)
     end
 end
 
----The method returns `true` if the player has the tool that meets provided requirements.
----@param requirements craftingFrameworkToolRequirements This table accepts following values:
---- `tool`: string — **Required.** The tool's id.
----
---- `equipped`: boolean — When `true`, the player needs to have the tool equipped to be considered valid.
----
---- `count`: number — How many of the items need to be in the player's inventory.
----
---- `conditionPerUse`: number — Tool's condition will be reduced by this value per use.
+---@param requirements craftingFrameworkToolRequirements
 ---@return boolean
 function Tool:hasTool(requirements)
     requirements = requirements or {}
