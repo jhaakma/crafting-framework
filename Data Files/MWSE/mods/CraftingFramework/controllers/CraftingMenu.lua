@@ -266,7 +266,7 @@ function this.createToolLabel(toolReq, parentList)
     if tool then
         local requirementText = string.format("%s x %G", tool.name, (toolReq.count or 1) )
         if toolReq.equipped then
-            if tool:checkToolEquipped(toolReq) then
+            if tool:hasToolEquipped(toolReq) then
                 requirementText = string.format("%s (Equipped)", tool.name)
             else
                 requirementText = string.format("%s (Not Equipped)", tool.name)
