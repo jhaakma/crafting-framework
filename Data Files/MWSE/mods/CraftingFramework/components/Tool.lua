@@ -1,5 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 
+---@class craftingFrameworkTool
 local Tool = {
     schema = {
         name = "Tool",
@@ -13,10 +14,14 @@ local Tool = {
 
 
 Tool.registeredTools = {}
+---@param id string
+---@return craftingFrameworkTool Tool
 function Tool.getTool(id)
     return Tool.registeredTools[id]
 end
 
+---@param data craftingFrameworkToolData
+---@return craftingFrameworkTool Tool
 function Tool:new(data)
     Util.validate(data, Tool.schema)
     if not Tool.registeredTools[data.id] then
@@ -36,12 +41,12 @@ function Tool:new(data)
     return tool
 end
 
+---@return string name
 function Tool:getName()
     return self.name
 end
 
----Find a valid tool of this type and apply condition damage if appropriate.
----@param amount number How much condition damage is done
+---@param amount number
 function Tool:use(amount)
     amount = amount or 1
     for id, _ in pairs(self.ids) do
@@ -124,6 +129,8 @@ function Tool.checkToolRequirements(id, requirements)
 end
 
 
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool:hasToolEquipped(requirements)
     for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
@@ -131,6 +138,8 @@ function Tool:hasToolEquipped(requirements)
     end
 end
 
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool:hasToolCondition(requirements)
     for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
@@ -138,6 +147,8 @@ function Tool:hasToolCondition(requirements)
     end
 end
 
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool:hasTool(requirements)
     requirements = requirements or {}
     for id, _ in pairs(self.ids) do
