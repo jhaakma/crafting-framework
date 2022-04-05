@@ -1,6 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 
----@class craftingFrameworkTool
+---@class Tool
 local Tool = {
     schema = {
         name = "Tool",
@@ -41,12 +41,10 @@ function Tool:new(data)
     return tool
 end
 
----@return string name
 function Tool:getName()
     return self.name
 end
 
----@param amount number
 function Tool:use(amount)
     amount = amount or 1
     for id, _ in pairs(self.ids) do
@@ -72,7 +70,9 @@ function Tool:use(amount)
     end
 end
 
-
+---@param obj tes3object
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool.checkInventoryToolCount(obj, requirements)
     local countNeeded = requirements.count or 1
     local count = mwscript.getItemCount{ reference = tes3.player, item = obj }
@@ -83,6 +83,9 @@ function Tool.checkInventoryToolCount(obj, requirements)
     return true
 end
 
+---@param obj tes3object
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool.checkToolEquipped(obj, requirements)
     if requirements.equipped then
         local hasEquipped = tes3.getEquippedItem{
@@ -101,6 +104,8 @@ function Tool.checkToolEquipped(obj, requirements)
     return true
 end
 
+---@param obj tes3object
+---@return boolean
 function Tool.checkToolCondition(obj)
     if obj.maxCondition then
         local stack = tes3.player.object.inventory:findItemStack(obj)
@@ -115,6 +120,9 @@ function Tool.checkToolCondition(obj)
     end
 end
 
+---@param id string
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
 function Tool.checkToolRequirements(id, requirements)
     local obj = tes3.getObject(id)
     local isValid = obj
@@ -129,8 +137,6 @@ function Tool.checkToolRequirements(id, requirements)
 end
 
 
----@param requirements craftingFrameworkToolRequirements
----@return boolean
 function Tool:hasToolEquipped(requirements)
     for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
@@ -138,8 +144,6 @@ function Tool:hasToolEquipped(requirements)
     end
 end
 
----@param requirements craftingFrameworkToolRequirements
----@return boolean
 function Tool:hasToolCondition(requirements)
     for id, _ in pairs(self.ids) do
         local obj = tes3.getObject(id)
@@ -147,8 +151,6 @@ function Tool:hasToolCondition(requirements)
     end
 end
 
----@param requirements craftingFrameworkToolRequirements
----@return boolean
 function Tool:hasTool(requirements)
     requirements = requirements or {}
     for id, _ in pairs(self.ids) do

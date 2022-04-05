@@ -19,21 +19,6 @@
 ---@field ids table<number, string> A table with the in-game ids of the items that are registered as this tool.
 craftingFrameworkTool = {}
 
----@param id string The tool's unique identifier.
----@return craftingFrameworkTool Tool The tool requested.
-function craftingFrameworkTool.getTool(id) end
-
----This method creates a new tool.
----@param data craftingFrameworkToolData This table accepts following values:
----
---- `id`: string — **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `tool`.
----
---- `name`: string — The name of the tool. Used in various UIs.
----
---- `ids`: table<number, string> — **Required.**  This is the list of item ids that are considered identical tool.
----@return craftingFrameworkTool Tool The newly constructed tool.
-function craftingFrameworkTool:new(data) end
-
 ---This method returns the name of the tool.
 ---@return string name
 function craftingFrameworkTool:getName() end
@@ -77,3 +62,45 @@ function craftingFrameworkTool:hasToolCondition(requirements) end
 --- `conditionPerUse`: number — Tool's condition will be reduced by this value per use.
 ---@return boolean
 function craftingFrameworkTool:hasTool(requirements) end
+
+
+---@class Tool
+---@field registeredTools table<string, craftingFrameworkTool>
+Tool = {}
+
+---@param id string The tool's unique identifier.
+---@return craftingFrameworkTool Tool The tool requested.
+function Tool.getTool(id) end
+
+---This method creates a new tool.
+---@param data craftingFrameworkToolData This table accepts following values:
+---
+--- `id`: string — **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `tool`.
+---
+--- `name`: string — The name of the tool. Used in various UIs.
+---
+--- `ids`: table<number, string> — **Required.**  This is the list of item ids that are considered identical tool.
+---@return craftingFrameworkTool Tool The newly constructed tool.
+function Tool:new(data) end
+
+---Performs a check whether the player has needed amount of the tool in inventory.
+---@param obj tes3object
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
+function Tool.checkInventoryToolCount(obj, requirements) end
+
+---Performs a check whether the player has the tool equipped.
+---@param obj tes3object
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
+function Tool.checkToolEquipped(obj, requirements) end
+
+---Performs a check whether the tool's condition is above zero.
+---@param obj tes3object
+---@return boolean
+function Tool.checkToolCondition(obj) end
+
+---@param id string The id of the tool to check.
+---@param requirements craftingFrameworkToolRequirements
+---@return boolean
+function Tool.checkToolRequirements(id, requirements) end
