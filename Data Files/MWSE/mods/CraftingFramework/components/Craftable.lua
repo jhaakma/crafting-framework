@@ -1,6 +1,5 @@
 local Util = require("CraftingFramework.util.Util")
 local Positioner = require("CraftingFramework.controllers.Positioner")
-local MenuButton = require("CraftingFramework.components.MenuButton")
 local config = require("CraftingFramework.config")
 
 local Craftable = {
@@ -18,7 +17,11 @@ local Craftable = {
             soundType = { type = "string", required = false },
             materialRecovery = { type = "number", required = false},
             maxSteepness = { type = "number", required = false},
-            resultAmount = { type = "number", required = false}
+            resultAmount = { type = "number", required = false},
+            recoverEquipmentMaterials = { type = "boolean", required = false},
+            destroyCallback = { type = "function", required = false },
+            placeCallback = { type = "function", required = false },
+            craftCallback = { type = "function", required = false },
         }
     },
     constructionSounds = {
@@ -160,7 +163,6 @@ function Craftable:swap(reference)
     }
     ref.data.crafted = true
     ref.data.positionerMaxSteepness = self.maxSteepness
-
     Util.deleteRef(reference)
 end
 
@@ -253,7 +255,7 @@ function Craftable:position(reference)
     end)
 end
 
-function Craftable:transferItems(reference)
+function Craftable:recoverItemsFromContainer(reference)
     --if container, move to player inventory
     if reference.baseObject.objectType == tes3.objectType.container then
         local itemList = {}
@@ -271,42 +273,48 @@ function Craftable:transferItems(reference)
 end
 
 function Craftable:pickUp(reference)
-    self:transferItems(reference)
+    self:recoverItemsFromContainer(reference)
     tes3.addItem{ reference = tes3.player, item = self.id }
     Util.deleteRef(reference)
 end
 
+---@param materialsUsed table<string, number>
+---@return string|nil recoverMessage A message that tells the player what materials were recovered. If no materials were recovered, returns nil.
+function Craftable:recoverMaterials(materialsUsed, materialRecovery)
+    local recoverMessage = "You recover the following materials:"
+    local didRecover = false
+    for id, count in pairs(materialsUsed) do
+        local item = tes3.getObject(id)
+        materialRecovery = materialRecovery or self.materialRecovery or config.mcm.defaultMaterialRecovery
+        local recoveryRatio = materialRecovery / 100
+        local recoveredCount = math.floor(count * math.clamp(recoveryRatio, 0, 1) )
+        if item and recoveredCount > 0 then
+            didRecover = true
+            recoverMessage = recoverMessage .. string.format("\n- %s x%d", item.name, recoveredCount )
+            tes3.addItem{
+                reference = tes3.player,
+                item = item,
+                count = recoveredCount,
+                playSound = false,
+                updateGUI = false
+            }
+        end
+    end
+    tes3ui.updateInventoryTiles()
+    if didRecover then
+        return recoverMessage
+    end
+end
 
 function Craftable:destroy(reference)
-    self:transferItems(reference)
-    -- play a destroy sound
-    self:playDeconstructingSound()
+    self:recoverItemsFromContainer(reference)
+    self:playDeconstructionSound()
     local destroyMessage = string.format("%s has been destroyed.", self:getName())
-
     --check if materials are recovered
     if reference.data.materialsUsed  then
-
-        local recoverMessage = "You recover the following materials:"
-        local didRecover = false
-        for id, count in pairs(reference.data.materialsUsed) do
-            local item = tes3.getObject(id)
-            local recoveryRatio = (self.materialRecovery or config.mcm.defaultMaterialRecovery) / 100
-            local recoveredCount = math.floor(count * math.clamp(recoveryRatio, 0, 1) )
-            if item and recoveredCount > 0 then
-                didRecover = true
-                recoverMessage = recoverMessage .. string.format("\n- %s x%d", item.name, recoveredCount )
-                tes3.addItem{
-                    reference = tes3.player,
-                    item = item,
-                    count = recoveredCount,
-                    playSound = false,
-                    updateGUI = false
-                }
-            end
-        end
-        tes3ui.updateInventoryTiles()
-        if didRecover then
-            destroyMessage = recoverMessage
+        local recoverMessage = self:recoverMaterials(reference.data.materialsUsed, reference.data.materialRecovery)
+        if recoverMessage then
+            destroyMessage = destroyMessage .. "\n" .. recoverMessage
         end
     end
     tes3.messageBox(destroyMessage)
@@ -320,6 +328,9 @@ function Craftable:destroy(reference)
     timer.delayOneFrame(function()
         mwscript.setDelete{ reference = reference}
     end)
+    if self.destroyCallback then
+        self:destroyCallback()
+    end
 end
 
 function Craftable:getName()
@@ -350,7 +361,7 @@ function Craftable:playCraftingSound()
     end
 end
 
-function Craftable:playDeconstructingSound()
+function Craftable:playDeconstructionSound()
     local soundPick = table.choice(self.deconstructionSounds)
     tes3.playSound{soundPath = soundPick }
 end
@@ -361,11 +372,20 @@ function Craftable:craft(materialsUsed)
     else
         local item = tes3.getObject(self.id)
         if item then
+            local count = self.resultAmount or 1
             tes3.addItem{
                 reference = tes3.player,
                 item = item, playSound = false,
-                count = self.resultAmount or 1,
+                count = count,
             }
+            if count == 1 and item.maxCondition and self.recoverEquipmentMaterials then
+                local itemData = tes3.addItemData{
+                    to = tes3.player,
+                    item = item,
+                }
+                itemData.data.materialsUsed = materialsUsed
+                itemData.data.materialRecovery = self.materialRecovery
+            end
             tes3.messageBox("You successfully crafted %s%s.",
                 item.name,
                 self.resultAmount and string.format(" x%d", self.resultAmount) or ""
@@ -373,6 +393,9 @@ function Craftable:craft(materialsUsed)
         end
     end
     self:playCraftingSound()
+    if self.craftCallback then
+        self:craftCallback()
+    end
 end
 
 function Craftable:place(materialsUsed)
@@ -395,8 +418,12 @@ function Craftable:place(materialsUsed)
     ref.data.crafted = true
     ref.data.positionerMaxSteepness = self.maxSteepness
     ref.data.materialsUsed = materialsUsed
+    ref.data.materialRecovery = self.materialRecovery
     ref:updateSceneGraph()
     ref.sceneNode:updateNodeEffects()
+    if self.placeCallback then
+        self:placeCallback()
+    end
     return ref
 end
 
