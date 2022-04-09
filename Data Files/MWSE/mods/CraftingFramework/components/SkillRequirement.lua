@@ -3,6 +3,7 @@ local config = require("CraftingFramework.config")
 local skillsModule = include("OtherSkills.skillModule")
 local logger = Util.createLogger("SkillRequirement")
 
+---@class SkillRequirement
 local SkillRequirement = {
     schema = {
         name = "SkillRequirement",
@@ -20,6 +21,8 @@ local MAX_SKILL_DIFF = 40
 --[[
     SkillRequirement Constructor
 ]]
+---@param data craftingFrameworkSkillRequirementData
+---@return craftingFrameworkSkillRequirement skillRequirement
 function SkillRequirement:new(data)
     local skillRequirement = table.copy(data, {})
     Util.validate(data, SkillRequirement.schema)
