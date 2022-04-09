@@ -15,13 +15,13 @@ local Tool = {
 
 Tool.registeredTools = {}
 ---@param id string
----@return craftingFrameworkTool Tool
+---@return craftingFrameworkTool tool
 function Tool.getTool(id)
     return Tool.registeredTools[id]
 end
 
 ---@param data craftingFrameworkToolData
----@return craftingFrameworkTool Tool
+---@return craftingFrameworkTool tool
 function Tool:new(data)
     Util.validate(data, Tool.schema)
     if not Tool.registeredTools[data.id] then
