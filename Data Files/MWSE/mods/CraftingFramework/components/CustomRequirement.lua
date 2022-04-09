@@ -16,7 +16,7 @@ local CustomRequirement = {
 
 ---Constructor
 ---@param data craftingFrameworkCustomRequirementData
----@return craftingFrameworkCustomRequirement
+---@return craftingFrameworkCustomRequirement customRequirement
 function CustomRequirement:new(data)
     Util.validate(data, CustomRequirement.schema)
     setmetatable(data, self)
