@@ -1,5 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Material")
+---@class Material
 local Material = {
     schema = {
         name = "Material",
@@ -12,6 +13,8 @@ local Material = {
 }
 
 Material.registeredMaterials = {}
+---@param id string
+---@return craftingFrameworkMaterial material
 function Material.getMaterial(id)
     local material = Material.registeredMaterials[id:lower()]
     if not material then
@@ -34,6 +37,8 @@ function Material.getMaterial(id)
     return material
 end
 
+---@param data craftingFrameworkMaterialData
+---@return craftingFrameworkMaterial material
 function Material:new(data)
     Util.validate(data, Material.schema)
 
