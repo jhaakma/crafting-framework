@@ -1,13 +1,15 @@
 local Recipe = require("CraftingFramework.components.Recipe")
 local Material = require("CraftingFramework.components.Material")
+local Tool = require("CraftingFramework.components.Tool")
 
-local doUnitTests = true
-local UnitWind = include("unitwind.unitwind")
+
+local doUnitTests = false
+local UnitWind = include("unitwind")
 if not UnitWind then return end
 UnitWind = UnitWind.new{
     enabled = doUnitTests,
     highlight = true,
-    exitAfter = false
+    exitAfter = true
 }
 
 UnitWind:start("Crafting Framework: On Initialised Tests")
@@ -23,6 +25,14 @@ Material:new{
     },
 }
 
+Tool:new{
+    id = "testTool",
+    name = "Test Tool",
+    ids = {
+        "ashfall_woodaxe"
+    }
+}
+
 local validRecipe = {
     id = "testRecipe",
     craftable = {
@@ -33,7 +43,13 @@ local validRecipe = {
     },
     skillRequirement = {
         skill = "speechcraft",
-        requirement = 50
+        requirement = 10
+    },
+    toolRequirements = {
+        {
+            tool = "testTool",
+            count = 1
+        }
     }
 }
 

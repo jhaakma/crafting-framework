@@ -1,3 +1,5 @@
+if not require("unitwind") then return end
+
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Unit Tests")
 logger:debug("Initialising Crafting Framework tests")

@@ -21,10 +21,12 @@ function CustomRequirement:new(data)
     return data
 end
 
-function CustomRequirement:getName()
-    return self.name
+function CustomRequirement:getLabel()
+    return nil
 end
 
-
+function CustomRequirement:check()
+    return nil
+end
 
 return CustomRequirement

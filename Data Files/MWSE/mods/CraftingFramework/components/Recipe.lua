@@ -1,9 +1,10 @@
 local Util = require("CraftingFramework.util.Util")
+local log = Util.createLogger("Recipe")
 local Material = require("CraftingFramework.components.Material")
 local Craftable = require("CraftingFramework.components.Craftable")
 local SkillRequirement = require("CraftingFramework.components.SkillRequirement")
 local CustomRequirement = require("CraftingFramework.components.CustomRequirement")
-local Tool = require("CraftingFramework.components.Tool")
+local ToolRequirement = require("CraftingFramework.components.ToolRequirement")
 local config = require("CraftingFramework.config")
 
 local MaterialRequirementSchema = {
@@ -14,15 +15,6 @@ local MaterialRequirementSchema = {
     }
 }
 
-local ToolRequirementsSchema = {
-    name = "ToolRequirements",
-    fields = {
-        tool = { type = "string", required = true },
-        equipped = { type = "boolean", required = false },
-        count = { type = "number", required = false },
-        conditionPerUse = { type = "number", required = false }
-    }
-}
 
 local Recipe = {
     schema = {
@@ -36,7 +28,7 @@ local Recipe = {
             knownByDefault = { type = "boolean", required = false },
             customRequirements = { type = "table", childType = CustomRequirement.schema, required = false },
             skillRequirements = { type = "table", childType = SkillRequirement.schema, required = false },
-            tools = { type = "table", childType = ToolRequirementsSchema, required = false },
+            toolRequirements = { type = "table", childType = ToolRequirement.schema, required = false },
             category = { type = "string", required = false },
             mesh = { type = "string", required = false},
         }
@@ -62,8 +54,8 @@ function Recipe:new(data)
     end
 
     recipe.id = data.id or data.craftable.id
-    recipe.tools = data.tools or {}
     recipe.category = recipe.category or "Other"
+    recipe.toolRequirements = Util.convertListTypes(data.toolRequirements, ToolRequirement) or {}
     recipe.skillRequirements = Util.convertListTypes(data.skillRequirements, SkillRequirement) or {}
     recipe.customRequirements = Util.convertListTypes(data.customRequirements, CustomRequirement) or {}
     assert(recipe.id, "Validation Error: No id or craftable provided for Recipe")
@@ -105,10 +97,9 @@ function Recipe:craft()
             if remaining == 0 then break end
         end
     end
-    for _, toolReq in ipairs(self.tools) do
-        local tool = Tool.getTool(toolReq.tool)
-        if tool then
-            tool:use(toolReq.conditionPerUse)
+    for _, toolReq in ipairs(self.toolRequirements) do
+        if toolReq.tool and toolReq.conditionPerUse then
+            toolReq.tool:use(toolReq.conditionPerUse)
         end
     end
 
@@ -141,7 +132,7 @@ function Recipe:hasMaterials()
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
         if not material then
-            Util.log:error("Can not craft %s, required material '%s' has not been registered", self.id, materialReq.material)
+            log:error("Can not craft %s, required material '%s' has not been registered", self.id, materialReq.material)
             return false, "You do not have the required materials"
         end
         local numRequired = materialReq.count
@@ -153,16 +144,18 @@ function Recipe:hasMaterials()
 end
 
 function Recipe:meetsToolRequirements()
-    for _, toolRequirement in ipairs(self.tools) do
-        local tool = Tool.getTool(toolRequirement.tool)
+    for _, toolRequirement in ipairs(self.toolRequirements) do
+        local tool = toolRequirement.tool
         if not tool then
-            Util.log:error("Can not craft %s, required tool '%s' has not been registered", self.id, tool.id)
-            return false, "You do not have the required tools"
+            log:error("For recipe %s, required tool has not been registered", self.id)
+            return true
         end
-        if not tool:hasTool(toolRequirement) then
+        log:debug("Checking tool requirements met")
+        if not toolRequirement:hasTool() then
             return false, "You do not have the required tools"
         end
     end
+
     return true
 end
 

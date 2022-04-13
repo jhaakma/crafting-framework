@@ -267,7 +267,7 @@ function Craftable:recoverItemsFromContainer(reference)
         end
         tes3ui.forcePlayerInventoryUpdate()
         if #itemList > 0 then
-            tes3.messageBox("Contents of %s added to inventory.", self:getName(reference))
+            tes3.messageBox("Contents of %s added to inventory.", self:getName())
         end
     end
 end

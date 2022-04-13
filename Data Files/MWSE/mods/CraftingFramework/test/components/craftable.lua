@@ -1,5 +1,5 @@
 local doUnitTests = false
-local UnitWind = include("unitwind.unitwind")
+local UnitWind = include("unitwind")
 if not UnitWind then return end
 UnitWind = UnitWind.new{
     enabled = doUnitTests,

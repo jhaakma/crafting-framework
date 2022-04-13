@@ -208,7 +208,9 @@ function this.toggleButtonDisabled(button, isVisible, isDisabled)
     button.disabled = isDisabled
 end
 
-function this.createToolTooltip(tool, toolReq)
+function this.createToolTooltip(toolReq)
+    local tool = toolReq.tool
+    if not tool then return end
     Util.log:debug("ids: %s", json.encode(tool.ids, {indent = true}))
     local tooltip = tes3ui.createTooltipMenu()
     local outerBlock = tooltip:createBlock()
@@ -229,7 +231,7 @@ function this.createToolTooltip(tool, toolReq)
         Util.log:debug("Tool Id: %s", id)
         local item = tes3.getObject(id)
         if item then
-            local itemCount = mwscript.getItemCount{ reference = tes3.player, item = item }
+            local itemCount =tes3.getItemCount{ reference = tes3.player, item = item }
             local block = outerBlock:createBlock{}
             block.flowDirection = "left_to_right"
             block.autoHeight = true
@@ -240,19 +242,19 @@ function this.createToolTooltip(tool, toolReq)
             local nameText = string.format("%s (%G)", item.name, itemCount)
 
             if toolReq.equipped then
-                if Tool.checkToolEquipped(item, toolReq) then
+                if toolReq:checkToolEquipped(item) then
                     nameText = string.format("%s (Equipped)", item.name)
                 else
                     nameText = string.format("%s (Not Equipped)", item.name)
                 end
             end
-            if itemCount > 0 and not Tool.checkToolCondition(item) then
+            if itemCount > 0 and not toolReq:checkToolCondition(item) then
                 nameText = string.format("%s (Broken)", item.name)
             end
             local textLabel = block:createLabel{ text = nameText}
             textLabel.borderAllSides = 4
 
-            if not Tool.checkToolRequirements(id, toolReq) then
+            if not toolReq:checkToolRequirements(id) then
                 textLabel.color = tes3ui.getPalette("disabled_color")
             end
         else
@@ -262,17 +264,17 @@ function this.createToolTooltip(tool, toolReq)
 end
 
 function this.createToolLabel(toolReq, parentList)
-    local tool = Tool.getTool(toolReq.tool)
+    local tool = toolReq.tool
     if tool then
         local requirementText = string.format("%s x %G", tool.name, (toolReq.count or 1) )
         if toolReq.equipped then
-            if tool:checkToolEquipped(toolReq) then
+            if toolReq:hasToolEquipped() then
                 requirementText = string.format("%s (Equipped)", tool.name)
             else
                 requirementText = string.format("%s (Not Equipped)", tool.name)
             end
         end
-        if tool:hasToolCondition(toolReq) == false then
+        if toolReq:hasToolCondition() == false then
             requirementText = string.format("%s (Broken)", tool.name)
         end
 
@@ -281,10 +283,10 @@ function this.createToolLabel(toolReq, parentList)
         requirement.text = requirementText
 
         requirement:register("help", function()
-            this.createToolTooltip(tool, toolReq)
+            this.createToolTooltip(toolReq)
         end)
 
-        if tool:hasTool(toolReq) then
+        if toolReq:hasTool() then
             requirement.color = tes3ui.getPalette("normal_color")
         else
             requirement.color = tes3ui.getPalette("disabled_color")
@@ -298,11 +300,11 @@ function this.updateToolsPane(recipe)
     local toolRequirementsBlock = craftingMenu:findChild(uiids.toolRequirementsBlock)
     local list = craftingMenu:findChild(uiids.toolRequirementsPane)
     list:getContentElement():destroyChildren()
-    if #recipe.tools < 1 then
+    if #recipe.toolRequirements < 1 then
         toolRequirementsBlock.visible = false
     else
         toolRequirementsBlock.visible = true
-        for _, toolReq in ipairs(recipe.tools) do
+        for _, toolReq in ipairs(recipe.toolRequirements) do
             this.createToolLabel(toolReq, list)
         end
     end
@@ -425,7 +427,7 @@ function this.createMaterialTooltip(material)
     for id, _ in pairs(material.ids) do
         local item = tes3.getObject(id)
         if item then
-            local itemCount = mwscript.getItemCount{ reference = tes3.player, item = item }
+            local itemCount = tes3.getItemCount{ reference = tes3.player, item = item }
             local block = outerBlock:createBlock{}
             block.flowDirection = "left_to_right"
             block.autoHeight = true
