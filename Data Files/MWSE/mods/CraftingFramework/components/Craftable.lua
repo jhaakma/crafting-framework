@@ -2,7 +2,7 @@ local Util = require("CraftingFramework.util.Util")
 local Positioner = require("CraftingFramework.controllers.Positioner")
 local config = require("CraftingFramework.config")
 
----@class Craftable
+---@class craftingFrameworkCraftable
 local Craftable = {
     schema = {
         name = "Craftable",
@@ -125,11 +125,12 @@ function Craftable:new(data)
     if data.uncarryable and not data.placedObject then
         data.placedObject = data.id
     end
-    setmetatable(data, self)
+    ---@type craftingFrameworkCraftable
+    local craftable = setmetatable(data, self)
     self.__index = self
-    Craftable.registeredCraftables[data.id] = data
-    data:registerEvents()
-    return data
+    Craftable.registeredCraftables[craftable.id] = craftable
+    craftable:registerEvents()
+    return craftable
 end
 
 function Craftable:registerEvents()

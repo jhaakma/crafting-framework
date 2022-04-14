@@ -2,7 +2,7 @@
 
 ---@class craftingFrameworkCraftableData
 ---@field id string **Required.**
----@field name string
+---@field name string The name of the craftable
 ---@field description string
 ---@field placedObject string
 ---@field uncarryable boolean
@@ -20,21 +20,21 @@
 
 ---@class craftingFrameworkCraftable
 ---@field id string **Required.**
----@field name string
----@field description string
----@field placedObject string
----@field uncarryable boolean
----@field additionalMenuOptions table
----@field soundId string
----@field soundPath string
----@field soundType string
----@field materialsRecovery number
----@field maxSteepness number
----@field resultAmount number
----@field recoverEquipmentMaterials boolean
----@field destroyCallback function
----@field placeCallback function
----@field craftCallback function
+---@field name string The name of the craftable displayed in the menu. If not set, it will use the name of the craftable object
+---@field description string The description of the craftable that is displayed in the crafting menu
+---@field placedObject string If the object being placed is different from the object that is picked up by the player, use `id` for the held object id and `placedObject` for the id of the object that is placed in the world
+---@field uncarryable boolean Treats the crafted item as uncarryable even if the object type otherwise would be carryable. This will make the object be crafted immediately into the world and remove the Pick Up button from the menu. Not required if the crafted object is already uncarryable, such as a static or activator
+---@field additionalMenuOptions table A list of additional menu options that will be displayed in the craftable menu
+---@field soundId string Provide a sound ID (for a sound registered in the CS) that will be played when the craftable is crafted
+---@field soundPath string Provide a custom sound path that will be played when an craftable is crafted
+---@field soundType string Determines the crafting sound used, using sounds from the framework or added by interop. These include: "fabric", "wood", "leather", "rope", "straw" and "metal"
+---@field materialRecovery number The percentage of materials used to craft the item that will be recovered. Overrides the default amount set in the Crafting Framework MCM
+---@field maxSteepness number The max angle a crafted object will be oriented to while repositioning
+---@field resultAmount number The amount of the item to be crafted
+---@field recoverEquipmentMaterials boolean When set to true, and the craftable is an armor or weapon item, equipping it when it has 0 condition will destroy it and salvage its materials
+---@field destroyCallback function Custom function called after a craftable has been destroyed
+---@field placeCallback function Custom function called after a craftable has been placed
+---@field craftCallback function Custom function called after a craftable has been crafted
 craftingFrameworkCraftable = {}
 
 ---comment
@@ -47,7 +47,7 @@ function craftingFrameworkCraftable:swap(reference) end
 
 ---comment
 ---@param reference tes3reference
----@return unknow menuButtons
+---@return table menuButtons
 function craftingFrameworkCraftable:getMenuButtons(reference) end
 
 ---comment
