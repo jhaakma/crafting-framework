@@ -5,9 +5,6 @@
 ---@field name string The name of the material. Used in various UIs.
 ---@field ids table<number, string> **Required.**  This is the list of item ids that are considered as identical material.
 
----@class craftingFrameworkMaterialRequirement
----@field material string **Required.** The Crafting Framework id to indentify the material.
----@field count number *Default*: `0`. The required amount of the material.
 
 ---@class craftingFrameworkMaterial
 ---@field id string The material's id. This is the id used as the material's unique identifer within Crafting Framework.

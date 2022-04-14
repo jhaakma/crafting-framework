@@ -16,6 +16,7 @@ local MaterialRequirementSchema = {
 }
 
 
+---@class Recipe
 local Recipe = {
     schema = {
         name = "Recipe",
@@ -36,10 +37,14 @@ local Recipe = {
 }
 
 Recipe.registeredRecipes = {}
+---@param id string
+---@return craftingFrameworkRecipe recipe
 function Recipe.getRecipe(id)
     return Recipe.registeredRecipes[id]
 end
 
+---@param data craftingFrameworkRecipeData
+---@return craftingFrameworkRecipe recipe
 function Recipe:new(data)
     local recipe = table.copy(data, {})
     Util.validate(data, Recipe.schema)
