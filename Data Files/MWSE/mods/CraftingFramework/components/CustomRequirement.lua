@@ -1,6 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local config = require("CraftingFramework.config")
 
+---@class CustomRequirement
 local CustomRequirement = {
     schema = {
         name = "CustomRequirement",
@@ -13,7 +14,9 @@ local CustomRequirement = {
 }
 
 
---Constructor
+---Constructor
+---@param data craftingFrameworkCustomRequirementData
+---@return craftingFrameworkCustomRequirement customRequirement
 function CustomRequirement:new(data)
     Util.validate(data, CustomRequirement.schema)
     setmetatable(data, self)
