@@ -2,6 +2,7 @@ local Util = require("CraftingFramework.util.Util")
 local Positioner = require("CraftingFramework.controllers.Positioner")
 local config = require("CraftingFramework.config")
 
+---@class Craftable
 local Craftable = {
     schema = {
         name = "Craftable",
@@ -74,10 +75,14 @@ local Craftable = {
 Craftable.registeredCraftables = {}
 --Static functions
 
+---@param id string
+---@return craftingFrameworkCraftable craftable
 function Craftable.getCraftable(id)
     return Craftable.registeredCraftables[id]
 end
 
+---@param id string
+---@return craftingFrameworkCraftable craftable
 function Craftable.getPlacedCraftable(id)
     for _, craftable in pairs(Craftable.registeredCraftables) do
         if craftable.placedObject == id:lower() then return craftable end
@@ -109,6 +114,8 @@ local function isCarryable(id)
 end
 --Methods
 
+---@param data craftingFrameworkCraftableData
+---@return craftingFrameworkCraftable
 function Craftable:new(data)
     Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
