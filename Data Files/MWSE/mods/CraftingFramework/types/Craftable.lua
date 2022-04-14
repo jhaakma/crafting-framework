@@ -1,5 +1,13 @@
 ---@meta
 
+---@alias craftingFrameworkCraftableSoundType
+---| '"fabric"'
+---| '"wood"'
+---| '"leather"'
+---| '"rope"'
+---| '"straw"'
+---| '"metal"'
+
 ---@class craftingFrameworkCraftableData
 ---@field id string **Required.**
 ---@field name string The name of the craftable
@@ -9,7 +17,7 @@
 ---@field additionalMenuOptions table
 ---@field soundId string
 ---@field soundPath string
----@field soundType string
+---@field soundType craftingFrameworkCraftableSoundType
 ---@field materialsRecovery number
 ---@field maxSteepness number
 ---@field resultAmount number
@@ -27,7 +35,7 @@
 ---@field additionalMenuOptions table A list of additional menu options that will be displayed in the craftable menu
 ---@field soundId string Provide a sound ID (for a sound registered in the CS) that will be played when the craftable is crafted
 ---@field soundPath string Provide a custom sound path that will be played when an craftable is crafted
----@field soundType string Determines the crafting sound used, using sounds from the framework or added by interop. These include: "fabric", "wood", "leather", "rope", "straw" and "metal"
+---@field soundType craftingFrameworkCraftableSoundType Determines the crafting sound used, using sounds from the framework or added by interop. These include: "fabric", "wood", "leather", "rope", "straw" and "metal"
 ---@field materialRecovery number The percentage of materials used to craft the item that will be recovered. Overrides the default amount set in the Crafting Framework MCM
 ---@field maxSteepness number The max angle a crafted object will be oriented to while repositioning
 ---@field resultAmount number The amount of the item to be crafted
