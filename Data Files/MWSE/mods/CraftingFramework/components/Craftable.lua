@@ -308,7 +308,7 @@ function Craftable:recoverMaterials(materialsUsed, materialRecovery)
             }
         end
     end
-    tes3ui.updateInventoryTiles()
+    tes3ui.forcePlayerInventoryUpdate()
     if didRecover then
         return recoverMessage
     end

@@ -82,6 +82,7 @@ function Recipe:isKnown()
 end
 
 function Recipe:craft()
+    log:debug("Crafting %s", self.id)
     local materialsUsed = {}
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
@@ -99,6 +100,7 @@ function Recipe:craft()
     end
     for _, toolReq in ipairs(self.toolRequirements) do
         if toolReq.tool and toolReq.conditionPerUse then
+            log:debug("Has conditionPerUse, using tool")
             toolReq.tool:use(toolReq.conditionPerUse)
         end
     end

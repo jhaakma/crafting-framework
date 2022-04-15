@@ -7,6 +7,7 @@ local CustomRequirement = {
         name = "CustomRequirement",
         fields = {
             getLabel = { type = "function",  required = true},
+            description = { type = "string", required = false},
             check = { type = "function",  required = true},
             showInMenu = { type = "boolean", default = true, required = false},
         }

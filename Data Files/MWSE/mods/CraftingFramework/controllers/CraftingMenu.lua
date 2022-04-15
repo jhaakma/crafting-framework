@@ -1,6 +1,7 @@
 local Material = require("CraftingFramework.components.Material")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
+local log = Util.createLogger("CraftingMenu")
 local Tool = require("CraftingFramework.components.Tool")
 local this = {}
 
@@ -51,17 +52,17 @@ local m2 = tes3matrix33.new()
 
 
 function this.closeMenu()
-    Util.log:debug("Closing Menu")
+    log:debug("Closing Menu")
     local menu = tes3ui.findMenu(uiids.craftingMenu)
     if menu then
-        Util.log:debug("Destroying Menu")
+        log:debug("Destroying Menu")
         menu:destroy()
         tes3ui.leaveMenuMode()
         selectedRecipe = nil
         currentRecipeList = nil
 
     else
-        Util.log:error("Can't find menu!!!")
+        log:error("Can't find menu!!!")
     end
 end
 
@@ -153,7 +154,7 @@ local menuButtons = {
         end,
         callback = function(_)
             local nextFilter = filters[currentFilter].nextFilter
-            Util.log:debug("Next Filter: " .. nextFilter)
+            log:debug("Next Filter: " .. nextFilter)
             currentFilter = nextFilter
             this.populateRecipeList()
         end
@@ -165,7 +166,7 @@ local menuButtons = {
         end,
         callback = function(_)
             local nextSorter = sorters[currentSorter].nextSorter
-            Util.log:debug("nextSorter: %s", nextSorter)
+            log:debug("nextSorter: %s", nextSorter)
             currentSorter = nextSorter
             this.populateRecipeList()
         end
@@ -211,7 +212,7 @@ end
 function this.createToolTooltip(toolReq)
     local tool = toolReq.tool
     if not tool then return end
-    Util.log:debug("ids: %s", json.encode(tool.ids, {indent = true}))
+    if #tool.ids == 0 then return end
     local tooltip = tes3ui.createTooltipMenu()
     local outerBlock = tooltip:createBlock()
     outerBlock.flowDirection = "top_to_bottom"
@@ -227,10 +228,11 @@ function this.createToolTooltip(toolReq)
     local header =  outerBlock:createLabel{ text = tool.name}
     header.color = tes3ui.getPalette("header_color")
 
-    for id, _ in pairs(tool.ids) do
-        Util.log:debug("Tool Id: %s", id)
+    for id, _ in pairs(tool:getToolIds()) do
+        log:debug("Tool Id: %s", id)
         local item = tes3.getObject(id)
         if item then
+            log:debug("checking toolId: %s", id)
             local itemCount =tes3.getItemCount{ reference = tes3.player, item = item }
             local block = outerBlock:createBlock{}
             block.flowDirection = "left_to_right"
@@ -258,11 +260,13 @@ function this.createToolTooltip(toolReq)
                 textLabel.color = tes3ui.getPalette("disabled_color")
             end
         else
-            Util.log:error("Could not find item %s", id)
+            log:error("Could not find item %s", id)
         end
     end
 end
 
+---@param toolReq craftingFrameworkToolRequirement
+---@param parentList table
 function this.createToolLabel(toolReq, parentList)
     local tool = toolReq.tool
     if tool then
@@ -486,16 +490,21 @@ function this.updateDescriptionPane(recipe)
     selectedItemLabel.autoHeight = true
     selectedItemLabel.color = tes3ui.getPalette("header_color")
     selectedItemLabel.text = recipe.craftable:getNameWithCount()
-    selectedItemLabel:register("help", function()
-        tes3ui.createTooltipMenu{ item = recipe.craftable.id }
-    end)
+
+    local obj = tes3.getObject(recipe.craftable.id)
 
     local previewDescription = descriptionBlock:createLabel{ id = uiids.previewDescription }
     previewDescription.wrapText = true
     previewDescription.text = recipe.description or ""
-    previewDescription:register("help", function()
-        tes3ui.createTooltipMenu{ item = recipe.craftable.id }
-    end)
+
+    if obj and obj.name and obj.name ~= "" then
+        selectedItemLabel:register("help", function()
+            tes3ui.createTooltipMenu{ item = recipe.craftable.id }
+        end)
+        previewDescription:register("help", function()
+            tes3ui.createTooltipMenu{ item = recipe.craftable.id }
+        end)
+    end
 end
 
 local function doAlternateRotation(item)
@@ -675,14 +684,14 @@ end
 local currentCategories
 function this.updateCategoriesList()
     for _, category in pairs(currentCategories) do
-        Util.log:debug("Clearing recipes for %s", category.name)
+        log:debug("Clearing recipes for %s", category.name)
         category.recipes = {}
     end
 
     for _, recipe in pairs(currentRecipeList) do
         local category = recipe.category
         if not currentCategories[category] then
-            Util.log:debug("Category %s doesn't exist yet", category)
+            log:debug("Category %s doesn't exist yet", category)
             currentCategories[category] = {
                 name = category,
                 recipes = {},
@@ -972,7 +981,7 @@ end
 
 local RightClickMenuExit = include("mer.RightClickMenuExit")
 if RightClickMenuExit then
-    Util.log:debug("Registering Crafting Menu Exit button")
+    log:debug("Registering Crafting Menu Exit button")
     RightClickMenuExit.registerMenu{
         menuId = uiids.craftingMenu,
         buttonId = uiids.cancelButton

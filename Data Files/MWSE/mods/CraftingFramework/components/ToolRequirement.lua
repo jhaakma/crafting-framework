@@ -36,25 +36,25 @@ end
 function ToolRequirement:hasTool()
     log:debug("hasTool()")
     if self.tool then
-        for id, _ in pairs(self.tool.ids) do
+        for id, _ in pairs(self.tool:getToolIds()) do
+            log:debug("hasTool: id: %s", id)
             if self:checkToolRequirements(id) then
                 log:debug("hasTool(): Has tool %s", id)
                 return true
             end
         end
+        log:debug("hasTool: No tool found")
         return false
     end
     log:debug("tool not registered, ignore it and return hasTool=true")
     return true
 end
 
-
-
 ---@return boolean
 function ToolRequirement:hasToolEquipped()
     log:debug("hasToolEquipped()")
     if self.tool then
-        for id, _ in pairs(self.tool.ids) do
+        for id, _ in pairs(self.tool:getToolIds()) do
             local obj = tes3.getObject(id)
             if obj then
                 return self:checkToolEquipped(obj)
@@ -69,14 +69,19 @@ end
 function ToolRequirement:hasToolCondition()
     log:debug("hasToolCondition()")
     if self.tool then
-        for id, _ in pairs(self.tool.ids) do
+        for id, _ in pairs(self.tool:getToolIds()) do
+            log:debug("id: %s", id)
             local obj = tes3.getObject(id)
             if obj then
+                log:debug("Found tool, returning checkCondition")
                 return self:checkToolCondition(obj)
             end
         end
+        log:debug("No valid tool found")
+        return true
     end
-    return false
+    log:debug("no Tool found")
+    return true
 end
 
 
@@ -93,7 +98,6 @@ end
 
 function ToolRequirement:checkToolEquipped(obj)
     log:debug("checkToolEquipped()")
-    log:debug(json.encode(self))
     if self.equipped then
         local hasEquipped = tes3.getEquippedItem{
             actor = tes3.player,
@@ -105,7 +109,8 @@ function ToolRequirement:checkToolEquipped(obj)
             log:debug("Tool %s needs to be equipped and isn't", obj.id)
             return false
         end
-        log:debug("Tool %s is totally equipped", obj.id)
+        log:debug("Tool %s is equipped", obj.id)
+        return true
     end
     log:debug("Tool doesn't need equipping")
     return true
@@ -114,7 +119,7 @@ end
 
 
 function ToolRequirement:checkToolRequirements(id)
-    log:debug("checkToolRequirements()")
+    log:debug("checkToolRequirements() for id %s", id)
     local obj = tes3.getObject(id)
     local isValid = obj
         and self:checkInventoryToolCount(obj)
@@ -128,7 +133,7 @@ function ToolRequirement:checkToolRequirements(id)
 end
 
 function ToolRequirement:checkToolCondition(obj)
-    log:debug("checkToolCondition()")
+    log:debug("checkToolCondition() for item %s", obj.id)
     if obj.maxCondition then
         local stack = tes3.player.object.inventory:findItemStack(obj)
         if not( stack and stack.variables ) then return true end
