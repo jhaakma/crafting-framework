@@ -31,6 +31,7 @@ local Recipe = {
             toolRequirements = { type = "table", childType = ToolRequirement.schema, required = false },
             category = { type = "string", required = false },
             mesh = { type = "string", required = false},
+            alternatePreviewPosition = { type = "boolean", required = false},
         }
     }
 }

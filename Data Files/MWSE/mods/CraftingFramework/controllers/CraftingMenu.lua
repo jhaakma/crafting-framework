@@ -507,10 +507,15 @@ function this.updateDescriptionPane(recipe)
     end
 end
 
-local function doAlternateRotation(item)
-    mwse.log("ObjectType = %s", table.find(tes3.objectType, item.objectType))
-    return item.objectType == tes3.objectType.weapon
-        or item.objectType == tes3.objectType.ammunition
+local function doAlternateRotation(recipe)
+    if recipe.alternatePreviewPosition ~= nil then
+        return recipe.alternatePreviewPosition
+    else
+        local item = recipe:getItem()
+        mwse.log("ObjectType = %s", table.find(tes3.objectType, item.objectType))
+        return item.objectType == tes3.objectType.weapon
+            or item.objectType == tes3.objectType.ammunition
+    end
 end
 
 local nifRotateX = false
@@ -542,7 +547,7 @@ function this.updatePreviewPane(recipe)
             local depth = bb.max.x - bb.min.x
             maxDimension = math.max(width, depth, height)
 
-            local targetHeight = 170
+            local targetHeight = 160
             node.scale = targetHeight / maxDimension
 
             do --add properties
@@ -558,17 +563,17 @@ function this.updatePreviewPane(recipe)
                 node:attachProperty(zBufferProperty)
             end
 
-            if doAlternateRotation(item) then
+            if doAlternateRotation(recipe) then
                 nifRotateX = true
                 m1:toRotationZ(math.rad(-15))
                 local lowestPoint = bb.min.y * node.scale
-                node.translation.z = node.translation.z - lowestPoint
+                node.translation.z = node.translation.z - lowestPoint - 20
                 m2:toRotationX(math.rad(270))
             else
                 nifRotateX = false
                 m1:toRotationX(math.rad(-15))
                 local lowestPoint = bb.min.z * node.scale
-                node.translation.z = node.translation.z - lowestPoint
+                node.translation.z = node.translation.z - lowestPoint - 20
                 m2:toRotationZ(math.rad(180))
             end
 
