@@ -25,7 +25,7 @@ local Recipe = {
             description = { type = "string", required = false },
             craftable = { type = Craftable.schema, required = false },
             materials = { type = "table", childType = MaterialRequirementSchema, required = true },
-            timeTaken = { type = "string", required = false },
+            timeTaken = { type = "number", required = false },
             knownByDefault = { type = "boolean", required = false },
             customRequirements = { type = "table", childType = CustomRequirement.schema, required = false },
             skillRequirements = { type = "table", childType = SkillRequirement.schema, required = false },
