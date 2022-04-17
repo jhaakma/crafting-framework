@@ -3,6 +3,7 @@ local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("MenuActivator")
 
+---@class MenuActivator : craftingFrameworkMenuActivator
 local MenuActivator = {
     schema = {
         name = "MenuActivator",
@@ -20,6 +21,8 @@ local MenuActivator = {
 
 MenuActivator.registeredMenuActivators = {}
 
+---@param data craftingFrameworkMenuActivatorData
+---@return craftingFrameworkMenuActivator menuActivator
 function MenuActivator:new(data)
     Util.validate(data, MenuActivator.schema)
     data.equipStationIds = data.equipStationIds or {}
