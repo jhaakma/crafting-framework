@@ -50,7 +50,7 @@ function Recipe:new(data)
     local recipe = table.copy(data, {})
     Util.validate(data, Recipe.schema)
     recipe.knownByDefault = data.knownByDefault or true
-    --Flatten the API so craftable is just part of the
+    --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
     recipe.craftable = data.craftable or {}
     for field, _ in pairs(craftableFields) do
@@ -96,7 +96,7 @@ function Recipe:craft()
         for id, _ in pairs(material.ids) do
             materialsUsed[id] = materialsUsed[id] or 0
 
-            local inInventory = mwscript.getItemCount{ reference = tes3.player, item = id}
+            local inInventory = tes3.getItemCount{ reference = tes3.player, item = id}
             local numToRemove = math.min(inInventory, remaining)
             materialsUsed[id] = materialsUsed[id] + numToRemove
             tes3.removeItem{ reference = tes3.player, item = id, playSound = false, count = numToRemove}

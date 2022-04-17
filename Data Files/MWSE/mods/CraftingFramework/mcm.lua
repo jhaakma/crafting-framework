@@ -15,10 +15,10 @@ local LINKS_LIST = {
     --     text = "Nexus",
     --     url = "https://www.nexusmods.com/morrowind/mods/49057"
     -- },
-    -- {
-    --     text = "Buy me a coffee",
-    --     url = "https://ko-fi.com/merlord"
-    -- },
+    {
+        text = "Buy me a coffee",
+        url = "https://ko-fi.com/merlord"
+    },
 }
 local CREDITS_LIST = {
     {

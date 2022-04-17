@@ -16,9 +16,24 @@
 ---@field toolRequirements craftingFrameworkToolRequirementData[]
 ---@field category string
 ---@field mesh string
+---@field alternatePreviewPosition boolean
+---@field name string
+---@field placedObject string
+---@field uncarryable boolean
+---@field additionalMenuOptions table
+---@field soundId string
+---@field soundPath string
+---@field soundType craftingFrameworkCraftableSoundType
+---@field materialsRecovery number
+---@field maxSteepness number
+---@field resultAmount number
+---@field recoverEquipmentMaterials boolean
+---@field destroyCallback function
+---@field placeCallback function
+---@field craftCallback function
 
 ---@class craftingFrameworkRecipe
----@field id string This is the unique identifier used internally by Crafting Framework to identify this `recipe`.
+---@field id string The id of the object crafted by this recipe.
 ---@field description string The description of the recipe. Used in various UIs.
 ---@field craftable craftingFrameworkCraftable The object that can be crafted with this recipe.
 ---@field materials craftingFrameworkMaterialRequirementData|craftingFrameworkMaterialRequirementData[] **Required.** A table with the materials required by this recipe.
@@ -29,6 +44,7 @@
 ---@field toolRequirements craftingFrameworkToolRequirement|craftingFrameworkToolRequirement[] A table with the tool requirements needed to craft the associated item.
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
+---@field alternatePreviewPosition boolean If set to true, the object will be rotated 90 degrees in the crafting menu preview window. Use this for flat objects.
 craftingFrameworkRecipe = {}
 
 ---This method will make the recipe available to the player.
@@ -118,5 +134,7 @@ function Recipe.getRecipe(id) end
 --- `category`: string — *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---
 --- `mesh`: string — This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
+---
+--- `alternatePreviewPosition`: boolean — If set to true, the object will be rotated 90 degrees in the crafting menu preview window. Use this for flat objects.
 ---@return craftingFrameworkRecipe recipe The newly constructed recipe.
 function Recipe:new(data) end

@@ -3,7 +3,7 @@ local config = require("CraftingFramework.config")
 local skillsModule = include("OtherSkills.skillModule")
 local logger = Util.createLogger("SkillRequirement")
 
----@class SkillRequirement
+---@class craftingFrameworkSkillRequirement
 local SkillRequirement = {
     schema = {
         name = "SkillRequirement",

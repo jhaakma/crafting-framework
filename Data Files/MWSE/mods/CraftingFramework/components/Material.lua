@@ -1,6 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Material")
----@class Material
+---@class craftingFrameworkMaterial
 local Material = {
     schema = {
         name = "Material",
@@ -70,7 +70,7 @@ end
 function Material:checkHasIngredient(numRequired)
     local count = 0
     for id, _ in pairs(self.ids) do
-        count = count + mwscript.getItemCount{ reference = tes3.player, item = id }
+        count = count + tes3.getItemCount{ reference = tes3.player, item = id }
     end
     return count >= numRequired
 end

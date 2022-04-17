@@ -1,5 +1,4 @@
 local Util = require("CraftingFramework.util.Util")
-local config = require("CraftingFramework.config")
 
 ---@class CustomRequirement
 local CustomRequirement = {
@@ -13,7 +12,6 @@ local CustomRequirement = {
         }
     }
 }
-
 
 ---Constructor
 ---@param data craftingFrameworkCustomRequirementData

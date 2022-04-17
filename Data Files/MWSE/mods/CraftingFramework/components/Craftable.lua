@@ -9,7 +9,6 @@ local Craftable = {
         fields = {
             id = { type = "string", required = true },
             name = { type = "string", required = false },
-            description = { type = "string", required = false },
             placedObject = { type = "string", required = false },
             uncarryable = { type = "boolean", required = false },
             additionalMenuOptions = { type = "table", required = false },
@@ -174,9 +173,6 @@ function Craftable:swap(reference)
     Util.deleteRef(reference)
 end
 
-function Craftable:getDescription()
-    return self.description
-end
 
 ---@param reference tes3reference
 ---@return craftingFrameworkMenuButtonData[] menuButtons
