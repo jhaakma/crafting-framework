@@ -47,7 +47,7 @@ function craftingFrameworkCraftable:swap(reference) end
 
 ---comment
 ---@param reference tes3reference
----@return table menuButtons
+---@return craftingFrameworkMenuButtonData[] menuButtons
 function craftingFrameworkCraftable:getMenuButtons(reference) end
 
 ---comment

@@ -1,6 +1,7 @@
 local MenuButton = require("CraftingFramework.components.MenuButton")
 local validator = require("CraftingFramework.util.validator")
 --Generic Tooltip with header and description
+---@param e craftingFrameworkTooltipData
 local function createTooltip(e)
     if type(e) == "function" then
         e = e()
@@ -37,6 +38,7 @@ local function createTooltip(e)
     tooltip:updateLayout()
 end
 
+---@param e { buttons : craftingFrameworkMenuButtonData[], bottonsBlock : tes3uiElement, menu : tes3uiElement, startIndex : number, endIndex : number, callbackParams : table }
 local function populateButtons(e)
     local buttons = e.buttons
     local buttonsBlock = e.buttonsBlock
