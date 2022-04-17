@@ -178,7 +178,10 @@ function Craftable:getDescription()
     return self.description
 end
 
+---@param reference tes3reference
+---@return craftingFrameworkMenuButtonData[] menuButtons
 function Craftable:getMenuButtons(reference)
+	---@type craftingFrameworkMenuButtonData[]
     local menuButtons = {}
     if self.additionalMenuOptions then
         for _, option in ipairs(self.additionalMenuOptions) do
@@ -192,6 +195,7 @@ function Craftable:getMenuButtons(reference)
             })
         end
     end
+	---@type craftingFrameworkMenuButtonData[]
     local defaultButtons = {
         {
             text = "Open",
