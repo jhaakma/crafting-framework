@@ -1,6 +1,6 @@
 ---@meta
 
----@class craftingFrameworkMaterialRequirement
+---@class craftingFrameworkMaterialRequirementData
 ---@field material string **Required.** The Crafting Framework id of the required material.
 ---@field count number *Default*: `1`. The required amount of the material.
 
@@ -8,12 +8,12 @@
 ---@field id string
 ---@field description string
 ---@field craftable craftingFrameworkCraftableData
----@field materials table<number, craftingFrameworkMaterialRequirement>
+---@field materials craftingFrameworkMaterialRequirementData[]
 ---@field timeTaken string
 ---@field knownByDefault boolean
----@field customRequirements table<number, craftingFrameworkCustomRequirementData>
----@field skillRequirements table<number, craftingFrameworkSkillRequirementData>
----@field tools table<number, craftingFrameworkToolRequirementData>
+---@field customRequirements craftingFrameworkCustomRequirementData[]
+---@field skillRequirements craftingFrameworkSkillRequirementData[]
+---@field toolRequirements craftingFrameworkToolRequirementData[]
 ---@field category string
 ---@field mesh string
 
@@ -21,12 +21,12 @@
 ---@field id string This is the unique identifier used internally by Crafting Framework to identify this `recipe`.
 ---@field description string The description of the recipe. Used in various UIs.
 ---@field craftable craftingFrameworkCraftable The object that can be crafted with this recipe.
----@field materials table<number, craftingFrameworkMaterialRequirement> **Required.** A table with the materials required by this recipe.
+---@field materials craftingFrameworkMaterialRequirementData|craftingFrameworkMaterialRequirementData[] **Required.** A table with the materials required by this recipe.
 ---@field timeTaken string The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---@field knownByDefault boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
----@field customRequirements table<number, craftingFrameworkCustomRequirement> A table with the custom requirements that need to be met in order to craft the associated item.
----@field skillRequirements table<number, craftingFrameworkSkillRequirement> A table with the skill requirements needed to craft the associated item.
----@field tools table<number, craftingFrameworkToolRequirement> A table with the tool requirements needed to craft the associated item.
+---@field customRequirements craftingFrameworkCustomRequirement|craftingFrameworkCustomRequirement[] A table with the custom requirements that need to be met in order to craft the associated item.
+---@field skillRequirements craftingFrameworkSkillRequirement|craftingFrameworkSkillRequirement[] A table with the skill requirements needed to craft the associated item.
+---@field toolRequirements craftingFrameworkToolRequirement|craftingFrameworkToolRequirement[] A table with the tool requirements needed to craft the associated item.
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
 craftingFrameworkRecipe = {}
@@ -34,7 +34,7 @@ craftingFrameworkRecipe = {}
 ---This method will make the recipe available to the player.
 function craftingFrameworkRecipe:learn() end
 
----This method will make the recipe unavailable for the player. If the recipe has knownByDefault set to `true`, calling this method will change it to `false`.
+---This method will make the recipe unavailable for the player. If the recipe has `knownByDefault` set to `true`, calling this method will change it to `false`.
 function craftingFrameworkRecipe:unlearn() end
 
 ---This method will return `true` if the player knows the recipe.
@@ -103,17 +103,17 @@ function Recipe.getRecipe(id) end
 ---
 --- `craftable`: craftingFrameworkCraftableData — The object that can be crafted with this recipe.
 ---
---- `materials`: table<number, craftingFrameworkMaterialRequirement> — **Required.**  A table with the materials required by this recipe.
+--- `materials`: craftingFrameworkMaterialRequirementData[] — **Required.**  A table with the materials required by this recipe.
 ---
 --- `timeTaken`: string — The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---
 --- `knownByDefault`: boolean — *Default*: `true`. Controls whether the player knows this recipe from the game start.
 ---
---- `customRequirements`: table<number, craftingFrameworkCustomRequirementData> — A table with the custom requirements that need to be met in order to craft the associated item.
+--- `customRequirements`: craftingFrameworkCustomRequirementData[] — A table with the custom requirements that need to be met in order to craft the associated item.
 ---
---- `skillRequirements`: table<number, craftingFrameworkSkillRequirementData> — A table with the skill requirements needed to craft the associated item.
+--- `skillRequirements`: craftingFrameworkSkillRequirementData[] — A table with the skill requirements needed to craft the associated item.
 ---
---- `tools`: table<number, craftingFrameworkToolRequirementData> — A table with the tool requirements needed to craft the associated item.
+--- `tools`: craftingFrameworkToolRequirementData[] — A table with the tool requirements needed to craft the associated item.
 ---
 --- `category`: string — *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---

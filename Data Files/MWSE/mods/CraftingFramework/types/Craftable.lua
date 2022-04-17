@@ -19,7 +19,7 @@
 ---@field craftCallback function
 
 ---@class craftingFrameworkCraftable
----@field id string **Required.**
+---@field id string This is the unique identifier used internally by the Crafting Framework to identify this `craftable`.
 ---@field name string The name of the craftable displayed in the menu. If not set, it will use the name of the craftable object
 ---@field description string The description of the craftable that is displayed in the crafting menu
 ---@field placedObject string If the object being placed is different from the object that is picked up by the player, use `id` for the held object id and `placedObject` for the id of the object that is placed in the world
