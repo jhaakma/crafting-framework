@@ -18,7 +18,7 @@ local ToolRequirement = {
 
 --Constructor
 ---@param data craftingFrameworkToolRequirementData
----@return craftingFrameworkTool
+---@return craftingFrameworkToolRequirement toolRequirement
 function ToolRequirement:new(data)
     Util.validate(data, ToolRequirement.schema)
     data.tool = Tool.getTool(data.tool)
