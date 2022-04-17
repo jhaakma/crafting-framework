@@ -298,6 +298,7 @@ function this.createToolLabel(toolReq, parentList)
     end
 end
 
+---@param recipe craftingFrameworkRecipe
 function this.updateToolsPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
@@ -333,6 +334,7 @@ function this.createCustomRequirementLabel(customRequirement, list)
     end
 end
 
+---@param recipe craftingFrameworkRecipe
 function this.updateCustomRequirementsPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
@@ -396,6 +398,7 @@ function this.createSkillLabel(skillReq, parentList)
 end
 
 
+---@param recipe craftingFrameworkRecipe
 function this.updateSkillsRequirementsPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
@@ -466,6 +469,7 @@ function this.createMaterialButton(materialReq, list)
     end
 end
 
+---@param recipe craftingFrameworkRecipe
 function this.updateMaterialsRequirementsPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
@@ -477,6 +481,7 @@ function this.updateMaterialsRequirementsPane(recipe)
     end
 end
 
+---@param recipe craftingFrameworkRecipe
 function this.updateDescriptionPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
@@ -519,6 +524,7 @@ local function doAlternateRotation(recipe)
 end
 
 local nifRotateX = false
+---@param recipe craftingFrameworkRecipe
 function this.updatePreviewPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
