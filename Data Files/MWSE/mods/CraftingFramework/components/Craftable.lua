@@ -55,6 +55,10 @@ local Craftable = {
             "craftingFramework\\craft\\Metal2.wav",
             "craftingFramework\\craft\\Metal3.wav",
         },
+        carve = {
+            "craftingFramework\\craft\\Carve1.wav",
+            "craftingFramework\\craft\\Carve2.wav",
+        },
         default = {
             "craftingFramework\\craft\\Fabric1.wav",
             "craftingFramework\\craft\\Fabric2.wav",
