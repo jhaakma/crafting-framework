@@ -9,7 +9,7 @@
 ---@class craftingFrameworkMaterial
 ---@field id string The material's id. This is the id used as the material's unique identifer within Crafting Framework.
 ---@field name string The material's name. Used in various UIs.
----@field ids table<string, boolean> This is the list of item ids that are considered as identical material.
+---@field ids table<string, true> This is the list of item ids that are considered as identical material.
 ---@field registeredMaterials table<string, craftingFrameworkMaterial>
 craftingFrameworkMaterial = {}
 
