@@ -16,7 +16,7 @@ local MaterialRequirementSchema = {
 }
 
 
----@class Recipe : craftingFrameworkRecipe
+---@class craftingFrameworkRecipe
 local Recipe = {
     schema = {
         name = "Recipe",
@@ -119,6 +119,7 @@ function Recipe:craft()
     end
 end
 
+---@return tes3object object
 function Recipe:getItem()
     local id = self.craftable.placedObject or self.id
     if id then
@@ -126,6 +127,7 @@ function Recipe:getItem()
     end
 end
 
+---@return number
 function Recipe:getAverageSkillLevel()
     local total = 0
     local count = 0
@@ -137,6 +139,8 @@ function Recipe:getAverageSkillLevel()
     return total / count
 end
 
+---@return boolean
+---@return string reason
 function Recipe:hasMaterials()
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
@@ -152,6 +156,8 @@ function Recipe:hasMaterials()
     return true
 end
 
+---@return boolean
+---@return string reason
 function Recipe:meetsToolRequirements()
     for _, toolRequirement in ipairs(self.toolRequirements) do
         local tool = toolRequirement.tool
@@ -168,6 +174,8 @@ function Recipe:meetsToolRequirements()
     return true
 end
 
+---@return boolean
+---@return string reason
 function Recipe:meetsSkillRequirements()
     for _, skillRequirement in ipairs(self.skillRequirements) do
         if not skillRequirement:check() then
@@ -177,6 +185,8 @@ function Recipe:meetsSkillRequirements()
     return true
 end
 
+---@return boolean
+---@return string reason
 function Recipe:meetsCustomRequirements()
     if self.customRequirements then
         for _, requirement in ipairs(self.customRequirements) do
@@ -189,6 +199,8 @@ function Recipe:meetsCustomRequirements()
     return true
 end
 
+---@return boolean
+---@return string reason
 function Recipe:meetsAllRequirements()
     local meetsCustomRequirements, reason = self:meetsCustomRequirements()
     if not meetsCustomRequirements then return false, reason end

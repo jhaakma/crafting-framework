@@ -59,14 +59,19 @@ function Material:new(data)
     return material
 end
 
+---@param itemId string
+---@return boolean isMaterial
 function Material:itemIsMaterial(itemId)
     return self.ids[itemId:lower()]
 end
 
+---@return string name
 function Material:getName()
     return self.name
 end
 
+---@param numRequired number
+---@return boolean hasEnough
 function Material:checkHasIngredient(numRequired)
     local count = 0
     for id, _ in pairs(self.ids) do

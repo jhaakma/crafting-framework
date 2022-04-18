@@ -47,7 +47,43 @@
 ---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
 ---@field rotationAxis boolean **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale number **Default "1"** Determines the scale of the preview mesh.
+---@field registeredRecipes table<string, craftingFrameworkRecipe>
 craftingFrameworkRecipe = {}
+
+---@param id string The recipe's unique identifier.
+---@return craftingFrameworkRecipe recipe The recipe requested.
+function craftingFrameworkRecipe.getRecipe(id) end
+
+---This method creates a new recipe.
+---@param data craftingFrameworkRecipeData This table accepts following values:
+---
+--- `id`: string —  This is the unique identifier used internally by Crafting Framework to identify this `recipe`. If none is provided, the id of the associated craftable object will be used.
+---
+--- `description`: string —  The description of the recipe. Used in various UIs.
+---
+--- `craftable`: craftingFrameworkCraftableData — The object that can be crafted with this recipe.
+---
+--- `materials`: craftingFrameworkMaterialRequirementData[] — **Required.**  A table with the materials required by this recipe.
+---
+--- `timeTaken`: string — The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
+---
+--- `knownByDefault`: boolean — *Default*: `true`. Controls whether the player knows this recipe from the game start.
+---
+--- `customRequirements`: craftingFrameworkCustomRequirementData[] — A table with the custom requirements that need to be met in order to craft the associated item.
+---
+--- `skillRequirements`: craftingFrameworkSkillRequirementData[] — A table with the skill requirements needed to craft the associated item.
+---
+--- `tools`: craftingFrameworkToolRequirementData[] — A table with the tool requirements needed to craft the associated item.
+---
+--- `category`: string — *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
+---
+--- `mesh`: string — This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
+---
+--- `rotationAxis`: boolean — **Default "z"** Determines about which axis the preview mesh will rotate around. Adding a `-` prefix will flip the mesh 180 degrees. Valid values: "x", "y", "z", "-x", "-y", "-z".
+---
+--- `previewScale`: number — **Default "1"** Determines the scale of the preview mesh.
+---@return craftingFrameworkRecipe recipe The newly constructed recipe.
+function craftingFrameworkRecipe:new(data) end
 
 ---This method will make the recipe available to the player.
 function craftingFrameworkRecipe:learn() end
@@ -102,43 +138,3 @@ function craftingFrameworkRecipe:meetsCustomRequirements() end
 ---@return boolean
 ---@return string reason
 function craftingFrameworkRecipe:meetsAllRequirements() end
-
-
----@class Recipe
----@field registeredRecipes table<string, craftingFrameworkRecipe>
-Recipe = {}
-
----@param id string The recipe's unique identifier.
----@return craftingFrameworkRecipe recipe The recipe requested.
-function Recipe.getRecipe(id) end
-
----This method creates a new recipe.
----@param data craftingFrameworkRecipeData This table accepts following values:
----
---- `id`: string —  This is the unique identifier used internally by Crafting Framework to identify this `recipe`. If none is provided, the id of the associated craftable object will be used.
----
---- `description`: string —  The description of the recipe. Used in various UIs.
----
---- `craftable`: craftingFrameworkCraftableData — The object that can be crafted with this recipe.
----
---- `materials`: craftingFrameworkMaterialRequirementData[] — **Required.**  A table with the materials required by this recipe.
----
---- `timeTaken`: string — The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
----
---- `knownByDefault`: boolean — *Default*: `true`. Controls whether the player knows this recipe from the game start.
----
---- `customRequirements`: craftingFrameworkCustomRequirementData[] — A table with the custom requirements that need to be met in order to craft the associated item.
----
---- `skillRequirements`: craftingFrameworkSkillRequirementData[] — A table with the skill requirements needed to craft the associated item.
----
---- `tools`: craftingFrameworkToolRequirementData[] — A table with the tool requirements needed to craft the associated item.
----
---- `category`: string — *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
----
---- `mesh`: string — This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
----
---- `rotationAxis`: boolean — **Default "z"** Determines about which axis the preview mesh will rotate around. Adding a `-` prefix will flip the mesh 180 degrees. Valid values: "x", "y", "z", "-x", "-y", "-z".
----
---- `previewScale`: number — **Default "1"** Determines the scale of the preview mesh.
----@return craftingFrameworkRecipe recipe The newly constructed recipe.
-function Recipe:new(data) end

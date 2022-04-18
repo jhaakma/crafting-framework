@@ -1,6 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 
----@class CustomRequirement
+---@class craftingFrameworkCustomRequirement
 local CustomRequirement = {
     schema = {
         name = "CustomRequirement",
