@@ -1,5 +1,13 @@
 ---@meta
 
+---@alias craftingFrameworkRotationAxis
+---| '"x"'
+---| '"y"'
+---| '"z"'
+---| '"-x"'
+---| '"-y"'
+---| '"-z"'
+
 ---@class craftingFrameworkMaterialRequirementData
 ---@field material string **Required.** The Crafting Framework id of the required material.
 ---@field count number *Default*: `1`. The required amount of the material.
@@ -9,14 +17,14 @@
 ---@field description string
 ---@field craftable craftingFrameworkCraftableData
 ---@field materials craftingFrameworkMaterialRequirementData[]
----@field timeTaken string
+---@field timeTaken number
 ---@field knownByDefault boolean
 ---@field customRequirements craftingFrameworkCustomRequirementData[]
 ---@field skillRequirements craftingFrameworkSkillRequirementData[]
 ---@field toolRequirements craftingFrameworkToolRequirementData[]
 ---@field category string
 ---@field mesh string
----@field rotationAxis boolean
+---@field rotationAxis craftingFrameworkRotationAxis
 ---@field previewScale number
 ---@field name string
 ---@field placedObject string
@@ -38,14 +46,14 @@
 ---@field description string The description of the recipe. Used in various UIs.
 ---@field craftable craftingFrameworkCraftable The object that can be crafted with this recipe.
 ---@field materials craftingFrameworkMaterialRequirementData|craftingFrameworkMaterialRequirementData[] **Required.** A table with the materials required by this recipe.
----@field timeTaken string The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
+---@field timeTaken number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---@field knownByDefault boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
 ---@field customRequirements craftingFrameworkCustomRequirement|craftingFrameworkCustomRequirement[] A table with the custom requirements that need to be met in order to craft the associated item.
 ---@field skillRequirements craftingFrameworkSkillRequirement|craftingFrameworkSkillRequirement[] A table with the skill requirements needed to craft the associated item.
 ---@field toolRequirements craftingFrameworkToolRequirement|craftingFrameworkToolRequirement[] A table with the tool requirements needed to craft the associated item.
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
----@field rotationAxis boolean **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
+---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale number **Default "1"** Determines the scale of the preview mesh.
 ---@field registeredRecipes table<string, craftingFrameworkRecipe>
 craftingFrameworkRecipe = {}
