@@ -38,30 +38,8 @@
 ---@field defaultFilter craftingFrameworkMenuActivatorDefaultFilter The filter controls which recipes will appear in the Crafting Menu.
 ---@field defaultSort craftingFrameworkMenuActivatorDefaultSort This controls how the recipe list in the Crafting Menu is sorted.
 ---@field defaultShowCategories boolean This controls whether by default the recipes will be grouped in categories or not.
-craftingFrameworkMenuActivetor = {}
-
----Calling this method will open the Crafting Menu for this `menuActivator` if the player knows at least one recipe that can be crafted on this Crafting Station.
-function craftingFrameworkMenuActivetor:openMenu() end
-
----This method creates new `craftingFrameworkRecipe` objects from provided list of `craftingFrameworkRecipeData` and adds it to this `menuActivator`. Provided list of `recipe`s will be available for crafting on this Crafting Station.
----@param recipes craftingFrameworkRecipeData[]
-function craftingFrameworkMenuActivetor:registerRecipes(recipes) end
-
----This method creates a new `craftingFrameworkRecipe` object from provided `data` and adds it to this `menuActivator`. This will make the `recipe` available for crafting on this Crafting Station.
----@param data craftingFrameworkRecipeData
-function craftingFrameworkMenuActivetor:registerRecipe(data) end
-
----Adds a list of `recipe` objects to this `menuActivator`. Provided list of `recipe`s will be available for crafting on this Crafting Station.
----@param recipes craftingFrameworkRecipe[]
-function craftingFrameworkMenuActivetor:addRecipes(recipes) end
-
----Adds a `recipe` object to this `menuActivator`. This will make the `recipe` available for crafting on this Crafting Station.
----@param recipe craftingFrameworkRecipe
-function craftingFrameworkMenuActivetor:addRecipe(recipe) end
-
-
----@class MenuActivator
-MenuActivator = {}
+---@field registeredMenuActivators table<string, craftingFrameworkMenuActivator>
+craftingFrameworkMenuActivator = {}
 
 ---This method is used to create a new Crafting Station.
 ---@param data craftingFrameworkMenuActivatorData This table accepts following values:
@@ -80,7 +58,26 @@ MenuActivator = {}
 ---
 --- `defaultShowCategories`: boolean — *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
 ---@return craftingFrameworkMenuActivator menuActivator The newly constructed Crafting Station object.
-function MenuActivator:new(data) end
+function craftingFrameworkMenuActivator:new(data) end
 
 ---This method will register the `self:openMenu()` method to the appropriate event. This is used during initialization for each `menuActivator` within Crafting Framework.
-function MenuActivator:registerEvents() end
+function craftingFrameworkMenuActivator:registerEvents() end
+
+---Calling this method will open the Crafting Menu for this `menuActivator` if the player knows at least one recipe that can be crafted on this Crafting Station.
+function craftingFrameworkMenuActivator:openMenu() end
+
+---This method creates new `craftingFrameworkRecipe` objects from provided list of `craftingFrameworkRecipeData` and adds it to this `menuActivator`. Provided list of `recipe`s will be available for crafting on this Crafting Station.
+---@param recipes craftingFrameworkRecipeData[]
+function craftingFrameworkMenuActivator:registerRecipes(recipes) end
+
+---This method creates a new `craftingFrameworkRecipe` object from provided `data` and adds it to this `menuActivator`. This will make the `recipe` available for crafting on this Crafting Station.
+---@param data craftingFrameworkRecipeData
+function craftingFrameworkMenuActivator:registerRecipe(data) end
+
+---Adds a list of `recipe` objects to this `menuActivator`. Provided list of `recipe`s will be available for crafting on this Crafting Station.
+---@param recipes craftingFrameworkRecipe[]
+function craftingFrameworkMenuActivator:addRecipes(recipes) end
+
+---Adds a `recipe` object to this `menuActivator`. This will make the `recipe` available for crafting on this Crafting Station.
+---@param recipe craftingFrameworkRecipe
+function craftingFrameworkMenuActivator:addRecipe(recipe) end
