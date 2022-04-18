@@ -233,6 +233,7 @@ function this.toggleButtonDisabled(button, isVisible, isDisabled)
     button.disabled = isDisabled
 end
 
+---@param toolReq craftingFrameworkToolRequirement
 function this.createToolTooltip(toolReq)
     local tool = toolReq.tool
     if not tool then return end
@@ -339,6 +340,7 @@ function this.updateToolsPane(recipe)
     end
 end
 
+---@param customRequirement craftingFrameworkCustomRequirement
 function this.createCustomRequirementLabel(customRequirement, list)
     local requirement = list:createLabel()
     requirement.borderAllSides = 2
@@ -376,6 +378,7 @@ function this.updateCustomRequirementsPane(recipe)
     end
 end
 
+---@param skillReq craftingFrameworkSkillRequirement
 function this.createSkillTooltip(skillReq)
     local name = skillReq:getSkillName()
     local tooltip = tes3ui.createTooltipMenu()
@@ -402,6 +405,7 @@ function this.createSkillTooltip(skillReq)
     }
 end
 
+---@param skillReq craftingFrameworkSkillRequirement
 function this.createSkillLabel(skillReq, parentList)
     local current = skillReq:getCurrent()
     local skillText = string.format("%s: %s/%s",
@@ -440,6 +444,7 @@ function this.updateSkillsRequirementsPane(recipe)
     end
 end
 
+---@param material craftingFrameworkMaterial
 function this.createMaterialTooltip(material)
     local name = material:getName()
     local tooltip = tes3ui.createTooltipMenu()
@@ -477,6 +482,7 @@ function this.createMaterialTooltip(material)
     end
 end
 
+---@param materialReq craftingFrameworkMaterialRequirementData
 function this.createMaterialButton(materialReq, list)
     local material = Material.getMaterial(materialReq.material)
     local materialText = string.format("%s x %G", material:getName(), materialReq.count )
@@ -537,6 +543,8 @@ function this.updateDescriptionPane(recipe)
 end
 
 
+---@param recipe craftingFrameworkRecipe
+---@return craftingFrameworkRotationAxis
 local function getRotationAxis(recipe)
     local rotationObjectTypes = {
         [tes3.objectType.weapon] = 'y',
@@ -689,6 +697,7 @@ function this.updateMenu()
 end
 
 
+---@param recipes craftingFrameworkRecipe[]
 function this.populateCategoryList(recipes, list)
     table.sort(recipes, sorters[currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
@@ -987,6 +996,7 @@ function this.addMenuButtons(parent)
     end
 end
 
+---@param menuActivator craftingFrameworkMenuActivator
 function this.openMenu(menuActivator)
     local title = menuActivator.name
     local recipeList = menuActivator.recipes
