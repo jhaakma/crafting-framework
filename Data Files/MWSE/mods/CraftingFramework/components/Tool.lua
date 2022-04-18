@@ -17,7 +17,7 @@ local Tool = {
 
 Tool.registeredTools = {}
 ---@param id string
----@return craftingFrameworkTool Tool
+---@return craftingFrameworkTool tool
 function Tool.getTool(id)
     return Tool.registeredTools[id]
 end
@@ -83,7 +83,7 @@ function Tool:use(amount)
     log:debug("Couldn't find any item to degrade")
 end
 
----@return table<string, boolean>
+---@return table<string, true>
 function Tool:getToolIds()
     if self.ids and #self.ids > 0 then return self.ids end
     if self.requirement then
