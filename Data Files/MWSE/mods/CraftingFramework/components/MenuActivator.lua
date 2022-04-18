@@ -3,6 +3,7 @@ local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("MenuActivator")
 
+---@class craftingFrameworkMenuActivator
 local MenuActivator = {
     schema = {
         name = "MenuActivator",
@@ -20,6 +21,8 @@ local MenuActivator = {
 
 MenuActivator.registeredMenuActivators = {}
 
+---@param data craftingFrameworkMenuActivatorData
+---@return craftingFrameworkMenuActivator menuActivator
 function MenuActivator:new(data)
     Util.validate(data, MenuActivator.schema)
     data.equipStationIds = data.equipStationIds or {}
@@ -93,6 +96,7 @@ function MenuActivator:openMenu()
 end
 
 -- Adds a list of recipes to the menu activator from recipe schemas
+---@param recipes craftingFrameworkRecipeData[]
 function MenuActivator:registerRecipes(recipes)
     recipes = Util.convertListTypes(recipes, Recipe)
     recipes = recipes or {}
@@ -102,11 +106,13 @@ function MenuActivator:registerRecipes(recipes)
 end
 
 --Adds a recipe to the menu activator from recipe schema
+---@param data craftingFrameworkRecipeData
 function MenuActivator:registerRecipe(data)
     self:registerRecipes({data})
 end
 
 --Adds a list of recipes to the menu activator
+---@param recipes craftingFrameworkRecipe[]
 function MenuActivator:addRecipes(recipes)
     for _, recipe in ipairs(recipes) do
         table.insert(self.recipes, recipe)
@@ -114,6 +120,7 @@ function MenuActivator:addRecipes(recipes)
 end
 
 --Adds an already registered recipe to the menu activator
+---@param recipe craftingFrameworkRecipe
 function MenuActivator:addRecipe(recipe)
     table.insert(self.recipes, recipe)
 end

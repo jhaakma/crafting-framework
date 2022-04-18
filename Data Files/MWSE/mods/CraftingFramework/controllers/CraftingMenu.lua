@@ -987,6 +987,7 @@ function this.addMenuButtons(parent)
     end
 end
 
+---@param menuActivator craftingFrameworkMenuActivator
 function this.openMenu(menuActivator)
     local title = menuActivator.name
     local recipeList = menuActivator.recipes
