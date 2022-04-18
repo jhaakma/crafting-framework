@@ -17,7 +17,7 @@
 ---@field description string
 ---@field craftable craftingFrameworkCraftableData
 ---@field materials craftingFrameworkMaterialRequirementData[]
----@field timeTaken string
+---@field timeTaken number
 ---@field knownByDefault boolean
 ---@field customRequirements craftingFrameworkCustomRequirementData[]
 ---@field skillRequirements craftingFrameworkSkillRequirementData[]
@@ -46,7 +46,7 @@
 ---@field description string The description of the recipe. Used in various UIs.
 ---@field craftable craftingFrameworkCraftable The object that can be crafted with this recipe.
 ---@field materials craftingFrameworkMaterialRequirementData|craftingFrameworkMaterialRequirementData[] **Required.** A table with the materials required by this recipe.
----@field timeTaken string The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
+---@field timeTaken number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---@field knownByDefault boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
 ---@field customRequirements craftingFrameworkCustomRequirement|craftingFrameworkCustomRequirement[] A table with the custom requirements that need to be met in order to craft the associated item.
 ---@field skillRequirements craftingFrameworkSkillRequirement|craftingFrameworkSkillRequirement[] A table with the skill requirements needed to craft the associated item.
@@ -131,7 +131,7 @@ function Recipe.getRecipe(id) end
 ---
 --- `materials`: craftingFrameworkMaterialRequirementData[] — **Required.**  A table with the materials required by this recipe.
 ---
---- `timeTaken`: string — The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
+--- `timeTaken`: number — The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---
 --- `knownByDefault`: boolean — *Default*: `true`. Controls whether the player knows this recipe from the game start.
 ---
