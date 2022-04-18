@@ -5,7 +5,7 @@
 ---@field count number *Default*: `1`. The required amount of the material.
 
 ---@class craftingFrameworkRecipeData
----@field id string
+---@field id string This is the unique identifier used internally by Crafting Framework to identify this `recipe`. If none is provided, the id of the associated craftable object will be used.
 ---@field description string
 ---@field craftable craftingFrameworkCraftableData
 ---@field materials craftingFrameworkMaterialRequirementData[]
@@ -16,7 +16,8 @@
 ---@field toolRequirements craftingFrameworkToolRequirementData[]
 ---@field category string
 ---@field mesh string
----@field alternatePreviewPosition boolean
+---@field rotationAxis boolean
+---@field previewScale number
 ---@field name string
 ---@field placedObject string
 ---@field uncarryable boolean
@@ -44,7 +45,8 @@
 ---@field toolRequirements craftingFrameworkToolRequirement|craftingFrameworkToolRequirement[] A table with the tool requirements needed to craft the associated item.
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
----@field alternatePreviewPosition boolean If set to true, the object will be rotated 90 degrees in the crafting menu preview window. Use this for flat objects.
+---@field rotationAxis boolean **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
+---@field previewScale number **Default "1"** Determines the scale of the preview mesh.
 craftingFrameworkRecipe = {}
 
 ---This method will make the recipe available to the player.
@@ -135,6 +137,8 @@ function Recipe.getRecipe(id) end
 ---
 --- `mesh`: string — This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
 ---
---- `alternatePreviewPosition`: boolean — If set to true, the object will be rotated 90 degrees in the crafting menu preview window. Use this for flat objects.
+--- `rotationAxis`: boolean — **Default "z"** Determines about which axis the preview mesh will rotate around. Adding a `-` prefix will flip the mesh 180 degrees. Valid values: "x", "y", "z", "-x", "-y", "-z".
+---
+--- `previewScale`: number — **Default "1"** Determines the scale of the preview mesh.
 ---@return craftingFrameworkRecipe recipe The newly constructed recipe.
 function Recipe:new(data) end
