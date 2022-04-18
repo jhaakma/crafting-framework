@@ -7,6 +7,7 @@
 ---| '"rope"'
 ---| '"straw"'
 ---| '"metal"'
+---| '"carve"'
 
 ---@class craftingFrameworkCraftableData
 ---@field id string **Required.**
