@@ -9,8 +9,25 @@
 ---@class craftingFrameworkMaterial
 ---@field id string The material's id. This is the id used as the material's unique identifer within Crafting Framework.
 ---@field name string The material's name. Used in various UIs.
----@field ids table<string, boolean> This is the list of item ids that are considered as identical material.
+---@field ids table<string, true> This is the list of item ids that are considered as identical material.
+---@field registeredMaterials table<string, craftingFrameworkMaterial>
 craftingFrameworkMaterial = {}
+
+--- If the material of provided `id` hasn't been registered before, but `id` is a valid item id (e.g. defined in the Construction Set), a new material will be created.
+---@param id string The material's unique identifier.
+---@return craftingFrameworkMaterial material The material requested.
+function craftingFrameworkMaterial.getMaterial(id) end
+
+---This method creates a new material.
+---@param data craftingFrameworkMaterialData This table accepts following values:
+---
+--- `id`: string — **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `material`.
+---
+--- `name`: string — The name of the material. Used in various UIs.
+---
+--- `ids`: table<number, string> — **Required.**  This is the list of item ids that are considered as identical material.
+---@return craftingFrameworkMaterial material The newly constructed material.
+function craftingFrameworkMaterial:new(data) end
 
 ---This method returns `true` if the `itemId` is registered as a this material.
 ---@param itemId string The id of the item to check.
@@ -25,24 +42,3 @@ function craftingFrameworkMaterial:getName() end
 ---@param numRequired number
 ---@return boolean hasEnough
 function craftingFrameworkMaterial:checkHasIngredient(numRequired) end
-
-
----@class Material
----@field registeredMaterials table<string, craftingFrameworkMaterial>
-Material = {}
-
---- If the material of provided `id` hasn't been registered before, but `id` is a valid item id (e.g. defined in the Construction Set), a new material will be created.
----@param id string The material's unique identifier.
----@return craftingFrameworkMaterial material The material requested.
-function Material.getMaterial(id) end
-
----This method creates a new material.
----@param data craftingFrameworkMaterialData This table accepts following values:
----
---- `id`: string — **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `material`.
----
---- `name`: string — The name of the material. Used in various UIs.
----
---- `ids`: table<number, string> — **Required.**  This is the list of item ids that are considered as identical material.
----@return craftingFrameworkMaterial material The newly constructed material.
-function Material:new(data) end

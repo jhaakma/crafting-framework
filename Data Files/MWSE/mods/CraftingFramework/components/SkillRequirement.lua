@@ -53,6 +53,7 @@ function SkillRequirement:getCurrent()
     return nil
 end
 
+---@return number skillId
 function SkillRequirement:getVanillaSkill()
     return tes3.skill[self.skill] and tes3.skill[self.skill] + 1
 end
@@ -81,6 +82,7 @@ function SkillRequirement:progressSkill()
     end
 end
 
+---@return string name
 function SkillRequirement:getSkillName()
     local vanillaSkill = self:getVanillaSkill()
     if vanillaSkill then
@@ -98,10 +100,7 @@ function SkillRequirement:getSkillName()
     return ""
 end
 
---[[
-    Checks if the player has the required skill level.
-]]
----@return boolean
+---@return boolean passed
 function SkillRequirement:check()
     local current = self:getCurrent()
     if current then
