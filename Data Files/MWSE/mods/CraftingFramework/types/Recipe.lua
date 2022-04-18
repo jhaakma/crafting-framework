@@ -1,5 +1,13 @@
 ---@meta
 
+---@alias craftingFrameworkRotationAxis
+---| '"x"'
+---| '"y"'
+---| '"z"'
+---| '"-x"'
+---| '"-y"'
+---| '"-z"'
+
 ---@class craftingFrameworkMaterialRequirementData
 ---@field material string **Required.** The Crafting Framework id of the required material.
 ---@field count number *Default*: `1`. The required amount of the material.
@@ -16,7 +24,7 @@
 ---@field toolRequirements craftingFrameworkToolRequirementData[]
 ---@field category string
 ---@field mesh string
----@field rotationAxis boolean
+---@field rotationAxis craftingFrameworkRotationAxis
 ---@field previewScale number
 ---@field name string
 ---@field placedObject string
@@ -45,7 +53,7 @@
 ---@field toolRequirements craftingFrameworkToolRequirement|craftingFrameworkToolRequirement[] A table with the tool requirements needed to craft the associated item.
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
----@field rotationAxis boolean **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
+---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale number **Default "1"** Determines the scale of the preview mesh.
 craftingFrameworkRecipe = {}
 
@@ -137,7 +145,7 @@ function Recipe.getRecipe(id) end
 ---
 --- `mesh`: string — This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
 ---
---- `rotationAxis`: boolean — **Default "z"** Determines about which axis the preview mesh will rotate around. Adding a `-` prefix will flip the mesh 180 degrees. Valid values: "x", "y", "z", "-x", "-y", "-z".
+--- `rotationAxis`: string — **Default "z"** Determines about which axis the preview mesh will rotate around. Adding a `-` prefix will flip the mesh 180 degrees. Valid values: "x", "y", "z", "-x", "-y", "-z".
 ---
 --- `previewScale`: number — **Default "1"** Determines the scale of the preview mesh.
 ---@return craftingFrameworkRecipe recipe The newly constructed recipe.
