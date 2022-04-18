@@ -580,7 +580,7 @@ function this.updatePreviewPane(recipe)
                 To get around this, we create the UI Nif with an empty niNode, then
                     attach the object's mesh as a child of that.
             ]]
-            local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "ashfall\\empty.nif"}
+            local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
             local mesh = recipe.mesh or item.mesh
             --Avoid popups/CTDs if the mesh is missing.
             if not tes3.getFileExists(string.format("Meshes\\%s", mesh)) then

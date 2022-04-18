@@ -29,6 +29,10 @@ local CREDITS_LIST = {
         text = "Sound Effects by SpratlyNation",
         url = "https://www.facebook.com/VideoGame360Pano",
     },
+    {
+        text = "Help with type definitions from C3pa",
+        url = "https://www.nexusmods.com/morrowind/users/37172285"
+    }
 }
 local SIDE_BAR_DEFAULT =
 [[Crafting Framework is used by mods to implement crafting mechanics. There are a few default settings you can change here but most of them will be mod-specific and handled by the mods themselves.]]
