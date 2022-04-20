@@ -154,18 +154,6 @@ end
 
 local menuButtons = {
     {
-        id = tes3ui.registerID("CraftingFramework_Button_ShowCategories"),
-        name = function()
-            return "Categories: " .. (showCategories and "Visible" or "Hidden")
-        end,
-        callback = function(_)
-            collapseCategories = false
-            toggleAllCategories()
-            showCategories = not showCategories
-            this.updateMenu()
-        end
-    },
-    {
         id = "CraftingFramework_Button_collapse",
         name = function()
             return collapseCategories and "Expand [+]" or "Collapse [-]"
@@ -176,6 +164,18 @@ local menuButtons = {
             button.text = collapseCategories and "Expand [+]" or "Collapse [-]"
             this.updateMenu()
         end,
+    },
+    {
+        id = tes3ui.registerID("CraftingFramework_Button_ShowCategories"),
+        name = function()
+            return "Categories: " .. (showCategories and "Visible" or "Hidden")
+        end,
+        callback = function(_)
+            collapseCategories = false
+            toggleAllCategories()
+            showCategories = not showCategories
+            this.updateMenu()
+        end
     },
     {
         id = "CraftingFramework_Button_Filter",
@@ -583,12 +583,12 @@ function this.updatePreviewPane(recipe)
             local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
             local mesh = recipe.mesh or item.mesh
             --Avoid popups/CTDs if the mesh is missing.
-            if not tes3.getFileExists(string.format("Meshes\\%s", mesh)) then
+            if not tes3.getFileExists(string.format("Meshes/%s", mesh)) then
                 log:error("Mesh does not exist: %s", mesh)
                 return
             end
             log:debug("Loading mesh: %s", mesh)
-            local childNif = tes3.loadMesh(mesh)
+            local childNif = tes3.loadMesh(mesh, false)
             if not nif then return end
             if not childNif then return end
             --Update the layout so the sceneNode becomes available
