@@ -54,7 +54,8 @@ local function populateButtons(e)
         --validator.validate(data, MenuButton.schema)
         local doAddButton = true
         if data.showRequirements then
-            if data.showRequirements() ~= true then
+            doAddButton = data.showRequirements(callbackParams)
+            if doAddButton == nil or not doAddButton then
                 doAddButton = false
             end
         end
@@ -66,7 +67,8 @@ local function populateButtons(e)
 
             local disabled = false
             if data.enableRequirements then
-                if data.enableRequirements() ~= true then
+                local enabled = data.enableRequirements()
+                if enabled == nil or not enabled then
                     disabled = true
                 end
             end

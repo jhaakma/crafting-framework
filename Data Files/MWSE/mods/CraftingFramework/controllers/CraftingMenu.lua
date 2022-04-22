@@ -551,8 +551,8 @@ local function getRotationAxis(recipe)
         [tes3.objectType.ammunition] = 'y',
     }
 
-    if recipe.rotationAxis then
-        return recipe.rotationAxis
+    if recipe.craftable.rotationAxis then
+        return recipe.craftable.rotationAxis
     elseif rotationObjectTypes[recipe:getItem().objectType] then
         return rotationObjectTypes[recipe:getItem().objectType]
     else
@@ -613,8 +613,8 @@ function this.updatePreviewPane(recipe)
 
             local targetHeight = 160
             node.scale = targetHeight / maxDimension
-            if recipe.previewScale then
-                node.scale = node.scale * recipe.previewScale
+            if recipe.craftable.previewScale then
+                node.scale = node.scale * recipe.craftable.previewScale
             end
             do --add properties
                 local vertexColorProperty = niVertexColorProperty.new()
@@ -631,38 +631,40 @@ function this.updatePreviewPane(recipe)
 
             do --Apply rotation
                 rotationAxis = getRotationAxis(recipe)
+                local offset = -20
                 if rotationAxis == 'x' then
                     m1:toRotationZ(math.rad(-15))
                     local lowestPoint = bb.min.x * node.scale
-                    node.translation.z = node.translation.z - lowestPoint - 20
+                    offset = offset - lowestPoint
                     m2:toRotationY(math.rad(90))
                 elseif rotationAxis == 'y' then
                     m1:toRotationZ(math.rad(-15))
                     local lowestPoint = bb.min.y * node.scale
-                    node.translation.z = node.translation.z - lowestPoint - 20
+                    offset = offset - lowestPoint
                     m2:toRotationX(math.rad(270))
                 elseif rotationAxis == 'z' then
                     m1:toRotationX(math.rad(-15))
                     local lowestPoint = bb.min.z * node.scale
-                    node.translation.z = node.translation.z - lowestPoint - 20
+                    offset = offset - lowestPoint
                     m2:toRotationZ(math.rad(180))
                 --Vertically flipped
                 elseif rotationAxis == '-x' then
                     m1:toRotationZ(math.rad(15))
                     local lowestPoint = bb.max.x * node.scale
-                    node.translation.z = node.translation.z + lowestPoint - 20
+                    offset = offset + lowestPoint
                     m2:toRotationY(math.rad(-90))
                 elseif rotationAxis == '-y' then
                     m1:toRotationZ(math.rad(15))
                     local lowestPoint = bb.max.y * node.scale
-                    node.translation.z = node.translation.z + lowestPoint - 20
+                    offset = offset + lowestPoint
                     m2:toRotationX(math.rad(90))
                 elseif rotationAxis == '-z' then
                     m1:toRotationX(math.rad(15))
                     local lowestPoint = bb.max.z * node.scale
-                    node.translation.z = node.translation.z + lowestPoint - 20
+                    offset = offset + lowestPoint
                     m2:toRotationY(math.rad(180))
                 end
+                node.translation.z = node.translation.z + offset + recipe.craftable.previewHeight
                 node.rotation = node.rotation * m1:copy() * m2:copy()
             end
             node.appCulled = false

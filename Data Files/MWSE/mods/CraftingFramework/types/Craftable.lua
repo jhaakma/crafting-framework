@@ -14,7 +14,7 @@
 ---@field name string The name of the craftable
 ---@field placedObject string
 ---@field uncarryable boolean
----@field additionalMenuOptions table
+---@field additionalMenuOptions craftingFrameworkMenuButtonData[]
 ---@field soundId string
 ---@field soundPath string
 ---@field soundType craftingFrameworkCraftableSoundType
@@ -25,13 +25,17 @@
 ---@field destroyCallback function
 ---@field placeCallback function
 ---@field craftCallback function
+---@field mesh string
+---@field rotationAxis craftingFrameworkRotationAxis
+---@field previewScale number
+---@field previewHeight number
 
 ---@class craftingFrameworkCraftable
 ---@field id string This is the unique identifier used internally by the Crafting Framework to identify this `craftable`.
 ---@field name string The name of the craftable displayed in the menu. If not set, it will use the name of the craftable object
 ---@field placedObject string If the object being placed is different from the object that is picked up by the player, use `id` for the held object id and `placedObject` for the id of the object that is placed in the world
 ---@field uncarryable boolean Treats the crafted item as uncarryable even if the object type otherwise would be carryable. This will make the object be crafted immediately into the world and remove the Pick Up button from the menu. Not required if the crafted object is already uncarryable, such as a static or activator
----@field additionalMenuOptions table A list of additional menu options that will be displayed in the craftable menu
+---@field additionalMenuOptions craftingFrameworkMenuButtonData[] A list of additional menu options that will be displayed in the craftable menu
 ---@field soundId string Provide a sound ID (for a sound registered in the CS) that will be played when the craftable is crafted
 ---@field soundPath string Provide a custom sound path that will be played when an craftable is crafted
 ---@field soundType craftingFrameworkCraftableSoundType Determines the crafting sound used, using sounds from the framework or added by interop. These include: "fabric", "wood", "leather", "rope", "straw", "metal" and "carve."
@@ -42,6 +46,10 @@
 ---@field destroyCallback function Custom function called after a craftable has been destroyed
 ---@field placeCallback function Custom function called after a craftable has been placed
 ---@field craftCallback function Custom function called after a craftable has been crafted
+---@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
+---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
+---@field previewScale number **Default 1** Determines the scale of the preview mesh.
+---@field previewHeight number **Default 1** Determines the height of the mesh in the preview window.
 craftingFrameworkCraftable = {}
 
 ---comment

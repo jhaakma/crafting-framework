@@ -23,9 +23,6 @@
 ---@field skillRequirements craftingFrameworkSkillRequirementData[]
 ---@field toolRequirements craftingFrameworkToolRequirementData[]
 ---@field category string
----@field mesh string
----@field rotationAxis craftingFrameworkRotationAxis
----@field previewScale number
 ---@field name string
 ---@field placedObject string
 ---@field uncarryable boolean
@@ -40,6 +37,10 @@
 ---@field destroyCallback function
 ---@field placeCallback function
 ---@field craftCallback function
+---@field mesh string
+---@field rotationAxis craftingFrameworkRotationAxis
+---@field previewScale number
+---@field previewHeight number
 
 ---@class craftingFrameworkRecipe
 ---@field id string The id of the object crafted by this recipe.
@@ -52,9 +53,6 @@
 ---@field skillRequirements craftingFrameworkSkillRequirement|craftingFrameworkSkillRequirement[] A table with the skill requirements needed to craft the associated item.
 ---@field toolRequirements craftingFrameworkToolRequirement|craftingFrameworkToolRequirement[] A table with the tool requirements needed to craft the associated item.
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
----@field mesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
----@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
----@field previewScale number **Default "1"** Determines the scale of the preview mesh.
 ---@field registeredRecipes table<string, craftingFrameworkRecipe>
 craftingFrameworkRecipe = {}
 

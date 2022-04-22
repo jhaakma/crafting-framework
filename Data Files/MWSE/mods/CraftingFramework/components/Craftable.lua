@@ -1,4 +1,5 @@
 local Util = require("CraftingFramework.util.Util")
+local log = Util.createLogger("Craftable")
 local Positioner = require("CraftingFramework.controllers.Positioner")
 local config = require("CraftingFramework.config")
 
@@ -22,6 +23,10 @@ local Craftable = {
             destroyCallback = { type = "function", required = false },
             placeCallback = { type = "function", required = false },
             craftCallback = { type = "function", required = false },
+            mesh = { type = "string", required = false},
+            rotationAxis = { type = "string", required = false},
+            previewScale = { type = "number", required = false},
+            previewHeight = { type = "number", required = false, default = 0}
         }
     },
     constructionSounds = {
@@ -187,6 +192,24 @@ function Craftable:getMenuButtons(reference)
         for _, option in ipairs(self.additionalMenuOptions) do
             table.insert(menuButtons, {
                 text = option.text,
+                enableRequirements = function()
+                    if option.enableRequirements then
+                        local isEnabled = option.enableRequirements(reference)
+                        log:debug("%s has enable requirements, returning %s", option.text, isEnabled)
+                        return isEnabled
+                    end
+                    return true
+                end,
+                showRequirements = function()
+                    if option.showRequirements then
+                        local show = option.showRequirements(reference)
+                        log:debug("%s has show requirements, returning %s", option.text, show)
+                        return show
+                    end
+                    return true
+                end,
+                tooltip = option.tooltip,
+                tooltipDisabled = option.tooltipDisabled,
                 callback = function()
                     option.callback({
                         reference = reference

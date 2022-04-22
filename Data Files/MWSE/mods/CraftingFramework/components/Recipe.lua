@@ -31,9 +31,6 @@ local Recipe = {
             skillRequirements = { type = "table", childType = SkillRequirement.schema, required = false },
             toolRequirements = { type = "table", childType = ToolRequirement.schema, required = false },
             category = { type = "string", required = false },
-            mesh = { type = "string", required = false},
-            rotationAxis = { type = "string", required = false},
-            previewScale = { type = "number", required = false},
         }
     }
 }
