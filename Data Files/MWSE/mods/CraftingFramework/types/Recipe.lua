@@ -9,7 +9,7 @@
 ---| '"-z"'
 
 ---@class craftingFrameworkMaterialRequirementData
----@field material string **Required.** The Crafting Framework id of the required material.
+---@field material string **Required.** The id of either a Crafting Framework Material, or an object id. Using an object id will register it as its own Material where the object itself is the only item in the list.
 ---@field count number *Default*: `1`. The required amount of the material.
 
 ---@class craftingFrameworkRecipeData

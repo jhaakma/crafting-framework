@@ -7,7 +7,7 @@ local Material = {
         fields = {
             id = { type = "string", required = true },
             name = { type = "string", required = false },
-            ids = { type = "table", childType = "string", required = true }
+            ids = { type = "table", childType = "string", required = true },
         }
     }
 }
@@ -57,6 +57,13 @@ function Material:new(data)
     setmetatable(material, self)
     self.__index = self
     return material
+end
+
+---@param materialList craftingFrameworkMaterialData[]
+function Material:registerMaterials(materialList)
+    for _, data in ipairs(materialList) do
+        Material:new(data)
+    end
 end
 
 ---@param itemId string

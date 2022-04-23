@@ -5,7 +5,6 @@
 ---@field name string The name of the material. Used in various UIs.
 ---@field ids table<number, string> **Required.**  This is the list of item ids that are considered as identical material.
 
-
 ---@class craftingFrameworkMaterial
 ---@field id string The material's id. This is the id used as the material's unique identifer within Crafting Framework.
 ---@field name string The material's name. Used in various UIs.
@@ -29,6 +28,10 @@ function craftingFrameworkMaterial.getMaterial(id) end
 ---@return craftingFrameworkMaterial material The newly constructed material.
 function craftingFrameworkMaterial:new(data) end
 
+---This method registers a list of materials
+---@param materials craftingFrameworkMaterialData[] A list of material data
+function craftingFrameworkMaterial:registerMaterials(materials) end
+
 ---This method returns `true` if the `itemId` is registered as a this material.
 ---@param itemId string The id of the item to check.
 ---@return boolean isMaterial True if the item of provided `id` is in this material's list of ids.
@@ -42,3 +45,4 @@ function craftingFrameworkMaterial:getName() end
 ---@param numRequired number
 ---@return boolean hasEnough
 function craftingFrameworkMaterial:checkHasIngredient(numRequired) end
+
