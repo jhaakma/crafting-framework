@@ -72,10 +72,10 @@ function this.craftItem(button)
     button.widget.state = 2
     button.disabled = true
     if not selectedRecipe then return end
-    if selectedRecipe.craftable.uncarryable then
-        this.closeMenu()
-    else
+    if selectedRecipe.craftable:isCarryable() then
         this.updateMenu()
+    else
+        this.closeMenu()
     end
 end
 

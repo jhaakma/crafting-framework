@@ -118,7 +118,7 @@ end
 
 ---@return tes3object object
 function Recipe:getItem()
-    local id = self.craftable.placedObject or self.id
+    local id = self.craftable:getPlacedObjectId() or self.id
     if id then
         return tes3.getObject(id)
     end

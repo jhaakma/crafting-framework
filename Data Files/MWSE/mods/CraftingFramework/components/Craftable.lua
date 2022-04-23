@@ -93,11 +93,12 @@ end
 ---@return craftingFrameworkCraftable craftable
 function Craftable.getPlacedCraftable(id)
     for _, craftable in pairs(Craftable.registeredCraftables) do
-        if craftable.placedObject == id:lower() then return craftable end
+        if craftable:getPlacedObjectId() == id:lower() then return craftable end
     end
 end
 
-local function isCarryable(id)
+function Craftable:isCarryable()
+    if self.uncarryable then return false end
     local unCarryableTypes = {
         [tes3.objectType.light] = true,
         [tes3.objectType.container] = true,
@@ -107,7 +108,7 @@ local function isCarryable(id)
         [tes3.objectType.npc] = true,
         [tes3.objectType.creature] = true,
     }
-    local placedObject = tes3.getObject(id)
+    local placedObject = tes3.getObject(self.id)
     if placedObject then
         if placedObject.canCarry then
             return true
@@ -120,19 +121,24 @@ local function isCarryable(id)
         return true
     end
 end
---Methods
+
+function Craftable:getPlacedObjectId()
+    if self.placedObject then
+        return self.placedObject
+    else
+        if not self:isCarryable() then
+            return self.id
+        end
+    end
+end
+
+
 
 ---@param data craftingFrameworkCraftableData
 ---@return craftingFrameworkCraftable
 function Craftable:new(data)
     Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
-    if data.uncarryable == nil then
-        data.uncarryable = not isCarryable(data.id)
-    end
-    if data.uncarryable and not data.placedObject then
-        data.placedObject = data.id
-    end
     ---@type craftingFrameworkCraftable
     local craftable = setmetatable(data, self)
     self.__index = self
@@ -142,7 +148,8 @@ function Craftable:new(data)
 end
 
 function Craftable:registerEvents()
-    if self.placedObject then
+    local placedObject = self:getPlacedObjectId()
+    if placedObject then
         event.register("CraftingFramework:CraftableActivated", function(e)
             if Util.isShiftDown() and Util.canBeActivated(e.reference) then
                 e.reference.data.allowActivate = true
@@ -151,10 +158,10 @@ function Craftable:registerEvents()
             else
                 self:activate(e.reference)
             end
-        end, { filter = self.placedObject:lower() })
+        end, { filter = placedObject:lower() })
 
         event.register("itemDropped", function(e)
-            if self.placedObject and e.reference.baseObject.id:lower() == self.id then
+            if placedObject and e.reference.baseObject.id:lower() == self.id then
                 self:swap(e.reference)
             end
         end)
@@ -172,7 +179,7 @@ end
 
 function Craftable:swap(reference)
     local ref = tes3.createReference{
-        object = self.placedObject,
+        object = self:getPlacedObjectId(),
         position = reference.position:copy(),
         orientation = reference.orientation:copy(),
         cell = reference.cell
@@ -242,7 +249,7 @@ function Craftable:getMenuButtons(reference)
         {
             text = "Pick Up",
             showRequirements = function()
-                return not self.uncarryable
+                return self:isCarryable()
             end,
             callback = function()
                 self:pickUp(reference)
@@ -251,7 +258,7 @@ function Craftable:getMenuButtons(reference)
         {
             text = "Destroy",
             showRequirements = function()
-                return self.uncarryable
+                return not self:isCarryable()
             end,
             callback = function()
                 Util.messageBox{
@@ -402,7 +409,7 @@ function Craftable:playDeconstructionSound()
 end
 
 function Craftable:craft(materialsUsed)
-    if self.uncarryable then
+    if not self:isCarryable() then
         self:position(self:place(materialsUsed))
     else
         local item = tes3.getObject(self.id)
@@ -445,7 +452,7 @@ function Craftable:place(materialsUsed)
     local position = eyePos + eyeOri * rayDist
 
     local ref = tes3.createReference{
-        object = self.placedObject,
+        object = self:getPlacedObjectId(),
         cell = tes3.player.cell,
         orientation = tes3.player.orientation:copy() + tes3vector3.new(0, 0, math.pi),
         position = position
