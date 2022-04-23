@@ -583,7 +583,7 @@ function this.updatePreviewPane(recipe)
             local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
             local mesh = recipe.mesh or item.mesh
             --Avoid popups/CTDs if the mesh is missing.
-            if not tes3.getFileExists(string.format("Meshes/%s", mesh)) then
+            if not tes3.getFileExists(string.format("Meshes\\%s", mesh)) then
                 log:error("Mesh does not exist: %s", mesh)
                 return
             end
