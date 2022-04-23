@@ -7,14 +7,14 @@ local LINKS_LIST = {
         text = "Release history",
         url = "https://github.com/jhaakma/crafting-framework/releases"
     },
-    -- {
-    --     text = "Wiki",
-    --     url = "https://github.com/jhaakma/crafting-framework/wiki"
-    -- },
-    -- {
-    --     text = "Nexus",
-    --     url = "https://www.nexusmods.com/morrowind/mods/49057"
-    -- },
+    {
+        text = "Wiki",
+        url = "https://github.com/jhaakma/crafting-framework/wiki"
+    },
+    {
+        text = "Nexus",
+        url = "https://www.nexusmods.com/morrowind/mods/51009"
+    },
     {
         text = "Buy me a coffee",
         url = "https://ko-fi.com/merlord"
