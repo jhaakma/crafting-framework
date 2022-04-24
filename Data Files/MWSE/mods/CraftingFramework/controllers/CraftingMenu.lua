@@ -68,10 +68,11 @@ function this.closeMenu()
 end
 
 function this.craftItem(button)
+    if not selectedRecipe then return end
     selectedRecipe:craft()
     button.widget.state = 2
     button.disabled = true
-    if not selectedRecipe then return end
+
     if selectedRecipe.craftable:isCarryable() then
         this.updateMenu()
     else
@@ -212,7 +213,7 @@ local menuButtons = {
             this.craftItem(button)
         end,
         requirements = function()
-            return selectedRecipe:meetsAllRequirements()
+            return selectedRecipe and selectedRecipe:meetsAllRequirements()
         end
     },
 }
@@ -565,6 +566,7 @@ local rotationAxis = 'z'
 function this.updatePreviewPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
+    if not recipe then return end
     local item = recipe:getItem()
     if item then
         log:debug("preview pane item: %s", item.id)
@@ -704,6 +706,7 @@ function this.updateButtons()
 end
 
 function this.updateSidebar()
+    if not selectedRecipe then return end
     this.updatePreviewPane(selectedRecipe)
     this.updateDescriptionPane(selectedRecipe)
     this.updateCustomRequirementsPane(selectedRecipe)
@@ -723,21 +726,24 @@ end
 function this.populateCategoryList(recipes, list)
     table.sort(recipes, sorters[currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
-        if recipe:isKnown() and filters[currentFilter].filter(recipe) then
-            local button = list:createTextSelect({ id = string.format("Button_%s", recipe.id)})
-            local thisRecipeId = recipe.id
-            local buttonCallback = function()
-                selectedRecipe = Recipe.getRecipe(thisRecipeId)
-                this.updateSidebar()
-                this.updateButtons()
-            end
-            button:register("mouseClick", buttonCallback)
-            button.borderAllSides = 2
-            button.text = "- " .. recipe.craftable:getName()
-            local canCraft = recipe:meetsAllRequirements()
-            if not canCraft then
-                button.color = tes3ui.getPalette("disabled_color")
-                button.widget.idle = tes3ui.getPalette("disabled_color")
+        if recipe:isKnown() then
+            if not selectedRecipe then selectedRecipe = recipe end
+            if filters[currentFilter].filter(recipe) then
+                local button = list:createTextSelect({ id = string.format("Button_%s", recipe.id)})
+                local thisRecipeId = recipe.id
+                local buttonCallback = function()
+                    selectedRecipe = Recipe.getRecipe(thisRecipeId)
+                    this.updateSidebar()
+                    this.updateButtons()
+                end
+                button:register("mouseClick", buttonCallback)
+                button.borderAllSides = 2
+                button.text = "- " .. recipe.craftable:getName()
+                local canCraft = recipe:meetsAllRequirements()
+                if not canCraft then
+                    button.color = tes3ui.getPalette("disabled_color")
+                    button.widget.idle = tes3ui.getPalette("disabled_color")
+                end
             end
         end
     end
@@ -1021,8 +1027,6 @@ end
 ---@param menuActivator craftingFrameworkMenuActivator
 function this.openMenu(menuActivator)
     local title = menuActivator.name
-    local recipeList = menuActivator.recipes
-    selectedRecipe = selectedRecipe or recipeList[1]
     currentRecipeList = menuActivator.recipes
     currentCategories = {}
     currentFilter = menuActivator.defaultFilter
@@ -1057,9 +1061,13 @@ function this.openMenu(menuActivator)
     this.createSkillRequirementsPane(resultsBlock)
     this.createMaterialRequirementsPane(resultsBlock)
 
+
+
     --Craft and Cancel buttons on the bottom
     local menuButtonBlock = this.createMenuButtonBlock(craftingMenu)
     this.addMenuButtons(menuButtonBlock)
+
+    this.updateMenu()
     this.updateButtons()
 
     local closeButton = menuButtonBlock:createButton({ id = uiids.cancelButton})
@@ -1069,7 +1077,7 @@ function this.openMenu(menuActivator)
 
 
 
-    this.updateMenu()
+
 
     craftingMenu:updateLayout()
     tes3ui.enterMenuMode(uiids.craftingMenu)
