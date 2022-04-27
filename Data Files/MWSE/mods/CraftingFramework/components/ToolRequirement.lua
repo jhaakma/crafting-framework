@@ -90,7 +90,6 @@ function ToolRequirement:checkInventoryToolCount(obj)
     local countNeeded = self.count or 1
     local count = tes3.getItemCount{ reference = tes3.player, item = obj }
     if count < countNeeded then
-        log:debug("Player has %d %s, needs %s", count, obj.id, countNeeded)
         return false
     end
     return true

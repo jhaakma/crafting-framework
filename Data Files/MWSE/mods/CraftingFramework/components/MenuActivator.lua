@@ -15,6 +15,7 @@ local MenuActivator = {
             defaultFilter = { type = "string", values = {"all", "canCraft", "materials", "skill"}, default = "all", required = false },
             defaultSort = { type = "string", values = {"name", "skill", "canCraft"}, default = "name", required = false },
             defaultShowCategories = { type = "boolean", default = true, required = false },
+            blockEvent = { type = "boolean", default = true, required = false },
         }
     }
 }
@@ -43,7 +44,7 @@ function MenuActivator:new(data)
     end
     --Convert to objects
     data.recipes = Util.convertListTypes(data.recipes, Recipe)
-    data:registerEvents()
+
 
     --Merge with existing or register new Menu Activator
     local menuActivator = MenuActivator.registeredMenuActivators[data.id]
@@ -55,6 +56,7 @@ function MenuActivator:new(data)
             table.insert(menuActivator.recipes, recipe)
         end
     end
+    menuActivator:registerEvents()
     return menuActivator
 end
 
@@ -63,18 +65,27 @@ function MenuActivator:registerEvents()
         event.register("activate", function(e)
             if e.target.baseObject.id:lower() == self.id:lower() then
                 self:openMenu()
+                if self.blockEvent ~= false then
+                    return false
+                end
             end
         end)
     elseif self.type == "equip" then
         event.register("equip", function(e)
             if e.item.id:lower() == self.id:lower() then
                 self:openMenu()
+                if self.blockEvent ~= false then
+                    return false
+                end
                 return false
             end
         end)
     elseif self.type == "event" then
         event.register(self.id, function()
             self:openMenu()
+            if self.blockEvent ~= false then
+                return false
+            end
         end)
     end
 end

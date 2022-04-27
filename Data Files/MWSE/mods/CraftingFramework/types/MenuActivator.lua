@@ -28,6 +28,7 @@
 ---@field defaultFilter craftingFrameworkMenuActivatorDefaultFilter *Default*: `"all"`. The filter controls which recipes will appear in the Crafting Menu.
 ---@field defaultSort craftingFrameworkMenuActivatorDefaultSort *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
 ---@field defaultShowCategories boolean *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
+---@field blockEvent boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
 
 
 ---@class craftingFrameworkMenuActivator This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
@@ -38,6 +39,7 @@
 ---@field defaultFilter craftingFrameworkMenuActivatorDefaultFilter The filter controls which recipes will appear in the Crafting Menu.
 ---@field defaultSort craftingFrameworkMenuActivatorDefaultSort This controls how the recipe list in the Crafting Menu is sorted.
 ---@field defaultShowCategories boolean This controls whether by default the recipes will be grouped in categories or not.
+---@field blockEvent boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
 ---@field registeredMenuActivators table<string, craftingFrameworkMenuActivator>
 craftingFrameworkMenuActivator = {}
 
@@ -57,6 +59,8 @@ craftingFrameworkMenuActivator = {}
 --- `defaultSort`: `"name"|"skill"|"canCraft"` — *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
 ---
 --- `defaultShowCategories`: boolean — *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
+---
+--- `blockEvent`: boolean — *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
 ---@return craftingFrameworkMenuActivator menuActivator The newly constructed Crafting Station object.
 function craftingFrameworkMenuActivator:new(data) end
 

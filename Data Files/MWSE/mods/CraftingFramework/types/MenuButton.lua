@@ -9,5 +9,5 @@
 ---@field callback function This function is called after the associated button is created.
 ---@field tooltip craftingFrameworkTooltipData This is the tooltip shown when the button is enabled.
 ---@field tooltipDisabled craftingFrameworkTooltipData This tooltip is shown when the button is disabled.
----@field enableRequirements fun(): boolean If this function returns `flase`, the associated button will be disabled.
----@field showRequirements fun(): boolean If this function returns `false`, the associated button will not be created.
+---@field enableRequirements fun(reference: tes3reference): boolean If this function returns `flase`, the associated button will be disabled.
+---@field showRequirements fun(reference: tes3reference): boolean If this function returns `false`, the associated button will not be created.

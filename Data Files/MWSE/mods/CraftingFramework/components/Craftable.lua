@@ -202,7 +202,6 @@ function Craftable:getMenuButtons(reference)
                 enableRequirements = function()
                     if option.enableRequirements then
                         local isEnabled = option.enableRequirements(reference)
-                        log:debug("%s has enable requirements, returning %s", option.text, isEnabled)
                         return isEnabled
                     end
                     return true
@@ -210,7 +209,6 @@ function Craftable:getMenuButtons(reference)
                 showRequirements = function()
                     if option.showRequirements then
                         local show = option.showRequirements(reference)
-                        log:debug("%s has show requirements, returning %s", option.text, show)
                         return show
                     end
                     return true

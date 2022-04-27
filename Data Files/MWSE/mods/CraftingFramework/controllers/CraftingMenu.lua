@@ -691,7 +691,6 @@ function this.updateButtons()
                 buttonConf.callback(button)
             end)
         end
-
         --help event doesn't override so we set it once and do logic inside
         button:register("help", function()
             local tooltip = tes3ui.createTooltipMenu()
@@ -871,7 +870,6 @@ function this.createPreviewPane(parent)
     previewBorder.childAlignX = 0.5
     --previewBorder.absolutePosAlignX = 0
 
-
     local nifPreviewBlock = previewBorder:createBlock{ id = uiids.nifPreviewBlock }
     --nifPreviewBlock.width = menuConfig.previewWidth
     nifPreviewBlock.width = menuConfig.previewWidth
@@ -1033,7 +1031,6 @@ function this.openMenu(menuActivator)
     currentSorter = menuActivator.defaultSort
     showCategories = menuActivator.defaultShowCategories
 
-
     tes3.playSound{sound="Menu Click", reference=tes3.player}
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if craftingMenu then craftingMenu:destroy() end
@@ -1061,8 +1058,6 @@ function this.openMenu(menuActivator)
     this.createSkillRequirementsPane(resultsBlock)
     this.createMaterialRequirementsPane(resultsBlock)
 
-
-
     --Craft and Cancel buttons on the bottom
     local menuButtonBlock = this.createMenuButtonBlock(craftingMenu)
     this.addMenuButtons(menuButtonBlock)
@@ -1074,10 +1069,6 @@ function this.openMenu(menuActivator)
     closeButton.text = "Cancel"
     closeButton.borderLeft = 0
     closeButton:register("mouseClick", this.closeMenu)
-
-
-
-
 
     craftingMenu:updateLayout()
     tes3ui.enterMenuMode(uiids.craftingMenu)
