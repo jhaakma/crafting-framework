@@ -24,6 +24,7 @@ local Craftable = {
             placeCallback = { type = "function", required = false },
             craftCallback = { type = "function", required = false },
             mesh = { type = "string", required = false},
+            previewMesh = { type = "string", required = false},
             rotationAxis = { type = "string", required = false},
             previewScale = { type = "number", required = false},
             previewHeight = { type = "number", required = false, default = 0}
@@ -139,6 +140,11 @@ end
 function Craftable:new(data)
     Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
+    --for pre-1.0.5 compatibility
+    if data.mesh then
+        data.previewMesh = data.mesh
+        data.mesh = nil
+    end
     ---@type craftingFrameworkCraftable
     local craftable = setmetatable(data, self)
     self.__index = self

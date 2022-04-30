@@ -551,7 +551,6 @@ local function getRotationAxis(recipe)
         [tes3.objectType.weapon] = 'y',
         [tes3.objectType.ammunition] = 'y',
     }
-
     if recipe.craftable.rotationAxis then
         return recipe.craftable.rotationAxis
     elseif rotationObjectTypes[recipe:getItem().objectType] then
@@ -583,7 +582,16 @@ function this.updatePreviewPane(recipe)
                     attach the object's mesh as a child of that.
             ]]
             local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
-            local mesh = recipe.mesh or item.mesh
+            local mesh = recipe.craftable.previewMesh or item.mesh
+
+            --Get sheath mesh if item is a weapon
+            if item.objectType == tes3.objectType.weapon then
+                local sheathMesh = mesh:sub(1, -5) .. "_sh.nif"
+                if tes3.getFileExists("meshes\\" .. sheathMesh) then
+                    mesh = sheathMesh
+                end
+            end
+
             --Avoid popups/CTDs if the mesh is missing.
             if not tes3.getFileExists(string.format("Meshes\\%s", mesh)) then
                 log:error("Mesh does not exist: %s", mesh)
