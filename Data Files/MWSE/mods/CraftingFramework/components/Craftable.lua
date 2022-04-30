@@ -201,14 +201,18 @@ function Craftable:getMenuButtons(reference)
                 text = option.text,
                 enableRequirements = function()
                     if option.enableRequirements then
-                        local isEnabled = option.enableRequirements(reference)
+                        local isEnabled = option.enableRequirements({
+                            reference = reference
+                        })
                         return isEnabled
                     end
                     return true
                 end,
                 showRequirements = function()
                     if option.showRequirements then
-                        local show = option.showRequirements(reference)
+                        local show = option.showRequirements({
+                            reference = reference
+                        })
                         return show
                     end
                     return true
