@@ -35,9 +35,7 @@ Tool:new{
 
 local validRecipe = {
     id = "testRecipe",
-    craftable = {
-        id = "testCraftable",
-    },
+    craftableId = "testCraftable",
     materials = {
         {material = "testMaterial"}
     },

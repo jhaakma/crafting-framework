@@ -22,6 +22,7 @@ local Recipe = {
         name = "Recipe",
         fields = {
             id = { type = "string", required = false },
+            craftableId = { type = "string", required = true },
             description = { type = "string", required = false },
             craftable = { type = Craftable.schema, required = false },
             materials = { type = "table", childType = MaterialRequirementSchema, required = true },
@@ -57,6 +58,10 @@ function Recipe:new(data)
         if not recipe.craftable[field] then
             recipe.craftable[field] = data[field]
         end
+    end
+    if recipe.craftableId then
+        recipe.craftable.id = recipe.craftableId
+        recipe.craftableId = nil
     end
 
     recipe.id = data.id or data.craftable.id
