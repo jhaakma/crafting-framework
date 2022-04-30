@@ -22,7 +22,7 @@ local Recipe = {
         name = "Recipe",
         fields = {
             id = { type = "string", required = false },
-            craftableId = { type = "string", required = true },
+            craftableId = { type = "string", required = false },
             description = { type = "string", required = false },
             craftable = { type = Craftable.schema, required = false },
             materials = { type = "table", childType = MaterialRequirementSchema, required = true },

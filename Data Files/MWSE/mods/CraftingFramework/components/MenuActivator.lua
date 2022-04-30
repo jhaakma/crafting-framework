@@ -1,7 +1,7 @@
 local craftingMenu = require("CraftingFramework.controllers.CraftingMenu")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
-local logger = Util.createLogger("MenuActivator")
+local log = Util.createLogger("MenuActivator")
 
 ---@class craftingFrameworkMenuActivator
 local MenuActivator = {
@@ -40,7 +40,7 @@ function MenuActivator:new(data)
         end
     end
     if not data.name then
-        logger:error("MenuActivator:new - no name specified for menu activator %s", data.id)
+        log:error("MenuActivator:new - no name specified for menu activator %s", data.id)
     end
     --Convert to objects
     data.recipes = Util.convertListTypes(data.recipes, Recipe)
@@ -57,6 +57,14 @@ function MenuActivator:new(data)
         end
     end
     menuActivator:registerEvents()
+
+    local eventId = menuActivator.id .. ":Registered"
+    log:info("Registered MenuActivator: " .. menuActivator.id)
+    ---@type MenuActivatorRegisteredEvent
+    local eventData = {
+        menuActivator = menuActivator
+    }
+    event.trigger(eventId, eventData)
     return menuActivator
 end
 

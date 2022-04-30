@@ -1,6 +1,5 @@
 ---@meta
 
-
 ---@alias craftingFrameworkMenuActivatorType
 ---| '"activate"' # These Stations are objects in the game world, and their Crafting Menu is opened when they are activated.
 ---| '"equip"' # These Stations are used by equipping them. Suitable for carriable Crafting Stations.
@@ -19,6 +18,8 @@
 ---| '"skill"' # This will sort the recipe list in the Crafting Menu by the average skill level required to craft the recipe (ascending).
 ---| '"canCraft"' # This will sort the recipe list in the Crafting Menu by putting the recipes the player can craft at the top.
 
+---@class MenuActivatorRegisteredEvent
+---@field menuActivator craftingFrameworkMenuActivator The MenuActivator that was just registered
 
 ---@class craftingFrameworkMenuActivatorData
 ---@field id string **Required** Usually, this is the in-game id of the object used as this Crafting Station. If your `menuActivator.type == 'event'`, then the `id` needs to be the id of the event on which this Crafting Station's crafting menu will be opened. Typically a custom event triggered by your mod.
