@@ -504,11 +504,13 @@ end
 function this.updateMaterialsRequirementsPane(recipe)
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
-
     local list = craftingMenu:findChild(uiids.materialRequirementsPane)
     list:getContentElement():destroyChildren()
     for _, materialReq in ipairs(recipe.materials) do
-        this.createMaterialButton(materialReq, list)
+        local material = Material.getMaterial(materialReq.material)
+        if material:hasValidIngredient() then
+            this.createMaterialButton(materialReq, list)
+        end
     end
 end
 

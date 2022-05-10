@@ -40,7 +40,7 @@ Recipe.registeredRecipes = {}
 ---@param id string
 ---@return craftingFrameworkRecipe recipe
 function Recipe.getRecipe(id)
-    return Recipe.registeredRecipes[id]
+    return Recipe.registeredRecipes[id:lower()]
 end
 
 ---@param data craftingFrameworkRecipeData
@@ -64,7 +64,10 @@ function Recipe:new(data)
         recipe.craftableId = nil
     end
 
+    --Set ID and make sure it's lower case
     recipe.id = data.id or data.craftable.id
+    recipe.id = recipe.id:lower()
+
     recipe.category = recipe.category or "Other"
     recipe.toolRequirements = Util.convertListTypes(data.toolRequirements, ToolRequirement) or {}
     recipe.skillRequirements = Util.convertListTypes(data.skillRequirements, SkillRequirement) or {}
@@ -155,9 +158,13 @@ function Recipe:hasMaterials()
             log:error("Can not craft %s, required material '%s' has not been registered", self.id, materialReq.material)
             return false, "You do not have the required materials"
         end
-        local numRequired = materialReq.count
-        if not material:checkHasIngredient(numRequired) then
-            return false, "You do not have the required materials"
+        --Material requirements only count if at lease one of the ingredients registered to that
+        --  material exists in the game
+        if material:hasValidIngredient() then
+            local numRequired = materialReq.count
+            if not material:checkHasIngredient(numRequired) then
+                return false, "You do not have the required materials"
+            end
         end
     end
     return true

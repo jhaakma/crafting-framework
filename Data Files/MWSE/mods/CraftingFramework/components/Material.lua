@@ -41,7 +41,6 @@ end
 ---@return craftingFrameworkMaterial material
 function Material:new(data)
     Util.validate(data, Material.schema)
-
     if not Material.registeredMaterials[data.id] then
         Material.registeredMaterials[data.id] = {
             id = data.id,
@@ -82,9 +81,23 @@ end
 function Material:checkHasIngredient(numRequired)
     local count = 0
     for id, _ in pairs(self.ids) do
-        count = count + tes3.getItemCount{ reference = tes3.player, item = id }
+        local item = tes3.getObject(id)
+        if item then
+            count = count + tes3.getItemCount{ reference = tes3.player, item = item }
+        end
     end
     return count >= numRequired
+end
+
+--Checks if at least one ingredient in the list is valid
+function Material:hasValidIngredient()
+    for id, _ in pairs(self.ids) do
+        local item = tes3.getObject(id)
+        if item then
+            return true
+        end
+    end
+    return false
 end
 
 return Material
