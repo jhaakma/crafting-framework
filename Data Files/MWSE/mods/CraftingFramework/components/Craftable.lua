@@ -1,5 +1,5 @@
 local Util = require("CraftingFramework.util.Util")
-local log = Util.createLogger("Craftable")
+local logger = Util.createLogger("Craftable")
 local Positioner = require("CraftingFramework.controllers.Positioner")
 local config = require("CraftingFramework.config")
 
@@ -93,8 +93,9 @@ end
 ---@param id string
 ---@return craftingFrameworkCraftable craftable
 function Craftable.getPlacedCraftable(id)
+    id = id:lower()
     for _, craftable in pairs(Craftable.registeredCraftables) do
-        if craftable:getPlacedObjectId() == id:lower() then return craftable end
+        if craftable:getPlacedObjectId() == id then return craftable end
     end
 end
 
@@ -133,8 +134,6 @@ function Craftable:getPlacedObjectId()
     end
 end
 
-
-
 ---@param data craftingFrameworkCraftableData
 ---@return craftingFrameworkCraftable
 function Craftable:new(data)
@@ -149,30 +148,9 @@ function Craftable:new(data)
     local craftable = setmetatable(data, self)
     self.__index = self
     Craftable.registeredCraftables[craftable.id] = craftable
-    craftable:registerEvents()
     return craftable
 end
 
-function Craftable:registerEvents()
-    local placedObject = self:getPlacedObjectId()
-    if placedObject then
-        event.register("CraftingFramework:CraftableActivated", function(e)
-            if Util.isShiftDown() and Util.canBeActivated(e.reference) then
-                e.reference.data.allowActivate = true
-                tes3.player:activate(e.reference)
-                e.reference.data.allowActivate = nil
-            else
-                self:activate(e.reference)
-            end
-        end, { filter = placedObject:lower() })
-
-        event.register("itemDropped", function(e)
-            if placedObject and e.reference.baseObject.id:lower() == self.id then
-                self:swap(e.reference)
-            end
-        end)
-    end
-end
 
 function Craftable:activate(reference)
     Util.messageBox{
