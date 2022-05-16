@@ -106,13 +106,15 @@ function Recipe:craft()
         local remaining = materialReq.count
         for id, _ in pairs(material.ids) do
             materialsUsed[id] = materialsUsed[id] or 0
-
-            local inInventory = tes3.getItemCount{ reference = tes3.player, item = id}
-            local numToRemove = math.min(inInventory, remaining)
-            materialsUsed[id] = materialsUsed[id] + numToRemove
-            tes3.removeItem{ reference = tes3.player, item = id, playSound = false, count = numToRemove}
-            remaining = remaining - numToRemove
-            if remaining == 0 then break end
+            local item = tes3.getObject(id)
+            if item then
+                local inInventory = tes3.getItemCount{ reference = tes3.player, item = id}
+                local numToRemove = math.min(inInventory, remaining)
+                materialsUsed[id] = materialsUsed[id] + numToRemove
+                tes3.removeItem{ reference = tes3.player, item = id, playSound = false, count = numToRemove}
+                remaining = remaining - numToRemove
+                if remaining == 0 then break end
+            end
         end
     end
     for _, toolReq in ipairs(self.toolRequirements) do
