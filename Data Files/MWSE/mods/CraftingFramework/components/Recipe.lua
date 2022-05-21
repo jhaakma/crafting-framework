@@ -65,7 +65,7 @@ function Recipe:new(data)
     end
 
     --Set ID and make sure it's lower case
-    recipe.id = data.id or data.craftable.id
+    recipe.id = data.id or recipe.craftable.id
     recipe.id = recipe.id:lower()
 
     recipe.category = recipe.category or "Other"
@@ -227,6 +227,10 @@ function Recipe:meetsAllRequirements()
     local meetsSkillRequirements, reason = self:meetsSkillRequirements()
     if not meetsSkillRequirements then return false, reason end
     return true
+end
+
+Recipe.__tostring = function(self)
+    return string.format("Recipe: %s", self.id)
 end
 
 return Recipe

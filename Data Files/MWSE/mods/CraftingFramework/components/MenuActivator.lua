@@ -52,7 +52,7 @@ function MenuActivator:new(data)
         MenuActivator.registeredMenuActivators[data.id] = data
         menuActivator = data
     else
-        for _, recipe in pairs(self.recipes) do
+        for _, recipe in pairs(data.recipes) do
             table.insert(menuActivator.recipes, recipe)
         end
     end
@@ -120,6 +120,7 @@ function MenuActivator:registerRecipes(recipes)
     recipes = Util.convertListTypes(recipes, Recipe)
     recipes = recipes or {}
     for _, recipe in ipairs(recipes) do
+        log:debug("Registering Recipe %s", recipe)
         table.insert(self.recipes, recipe)
     end
 end
