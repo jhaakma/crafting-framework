@@ -30,7 +30,8 @@
 ---@field defaultSort craftingFrameworkMenuActivatorDefaultSort *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
 ---@field defaultShowCategories boolean *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
 ---@field blockEvent boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
-
+---@field closeCallback function *Default*: `nil`. This callback is called when the menu is closed.
+---@field collapseByDefault boolean *Default*: `false`. This controls whether the categories will be collapsed by default or not.
 
 ---@class craftingFrameworkMenuActivator This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 ---@field id string Usually, this is the in-game id of the object used as this Crafting Station. If your `menuActivator.type == "event"`, then the `id` needs to be the id of the event on which this Crafting Station's crafting menu will be opened. Typically a custom event triggered by your mod.
@@ -42,6 +43,8 @@
 ---@field defaultShowCategories boolean This controls whether by default the recipes will be grouped in categories or not.
 ---@field blockEvent boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
 ---@field registeredMenuActivators table<string, craftingFrameworkMenuActivator>
+---@field closeCallback function *Default*: `nil`. This callback is called when the menu is closed.
+---@field collapseByDefault boolean *Default*: `false`. This controls whether the categories will be collapsed by default or not.
 craftingFrameworkMenuActivator = {}
 
 ---This method is used to create a new Crafting Station.

@@ -53,9 +53,6 @@ local function addSideBar(component)
 end
 
 
-
-
-
 local function registerMCM()
     local template = mwse.mcm.createTemplate{ name = config.static.modName }
     template.onClose = function()
@@ -77,7 +74,9 @@ local function registerMCM()
         },
         variable =  mwse.mcm.createTableVariable{ id = "logLevel", table = mcmConfig },
         callback = function(self)
-            Util.log:setLogLevel(self.variable.value)
+            for _, logger in pairs(Util.loggers) do
+                logger:setLogLevel(self.variable.value)
+            end
         end
     }
 

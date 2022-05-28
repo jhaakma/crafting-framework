@@ -1,8 +1,8 @@
 local Craftable = require("CraftingFramework.components.Craftable")
 local Util = require("CraftingFramework.util.Util")
+local logger = Util.createLogger("StaticActivator")
 local config = require("CraftingFramework.config")
-local id_indicator = tes3ui.registerID("Ashfall:activatorTooltip")
-local id_label = tes3ui.registerID("Ashfall:activatorTooltipLabel")
+local uiCommon = require("CraftingFramework.util.uiCommon")
 
 local isBlocked
 local function blockScriptedActivate(e)
@@ -10,89 +10,59 @@ local function blockScriptedActivate(e)
 end
 event.register("BlockScriptedActivate", blockScriptedActivate)
 
-local function centerText(element)
-    element.autoHeight = true
-    element.autoWidth = true
-    element.wrapText = true
-    element.justifyText = "center"
-end
-
 local function createActivatorIndicator(reference)
+    local craftable
+    if reference then
+        craftable = Craftable.getPlacedCraftable(reference.object.id)
+    end
+    local hasName = reference and reference.object.name and reference.object.name ~= ""
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
-    if menu then
-        local mainBlock = menu:findChild(id_indicator)
-        if mainBlock then
-            mainBlock:destroy()
-        end
-
-        if not reference then return end
-        --objects that already have a name don't need an activator
-        if reference.object.name and reference.object.name ~= "" then
-            return
-        end
-        if tes3ui.menuMode() then return end
-
-        local craftable = Craftable.getPlacedCraftable(reference.object.id:lower())
-        if craftable then
-            mainBlock = menu:createBlock({id = id_indicator })
-
-            mainBlock.absolutePosAlignX = 0.5
-            mainBlock.absolutePosAlignY = 0.03
-            mainBlock.autoHeight = true
-            mainBlock.autoWidth = true
-
-            local labelBackground = mainBlock:createRect({color = {0, 0, 0}})
-            --labelBackground.borderTop = 4
-            labelBackground.autoHeight = true
-            labelBackground.autoWidth = true
-
-            local labelBorder = labelBackground:createThinBorder({})
-            labelBorder.autoHeight = true
-            labelBorder.autoWidth = true
-            labelBorder.paddingAllSides = 10
-            labelBorder.flowDirection = "top_to_bottom"
-
-            local text = craftable:getName()
-            local label = labelBorder:createLabel{ id=id_label, text = text}
-            label.color = tes3ui.getPalette("header_color")
-            centerText(label)
-        else
-        end
+    local showIndicator = menu and craftable and not hasName
+    if showIndicator then
+        local headerText = craftable and craftable:getName()
+        uiCommon.createOrUpdateTooltipMenu(headerText)
+    else
+        uiCommon.disableTooltipMenu()
     end
 end
 
 local function callRayTest(e)
     local eyePos = tes3.getPlayerEyePosition()
     local eyeDirection = tes3.getPlayerEyeVector()
-
+    if not (eyeDirection or eyeDirection) then return end
+    local activationDistance = tes3.getPlayerActivationDistance()
     local result = tes3.rayTest{
         position = eyePos,
         direction = eyeDirection,
-        ignore = { tes3.player }
+        ignore = { tes3.player },
+        maxDistance = activationDistance,
     }
 
-    if result then
-        if result.reference and result.reference.data and result.reference.data.crafted then
-            local distance = eyePos:distance(result.intersection)
-            if distance < tes3.findGMST(tes3.gmst.iMaxActivateDist).value then
-                createActivatorIndicator(result.reference)
-                return result.reference
-            end
-        end
-    else
-        createActivatorIndicator()
+    if result and result.reference and result.reference.data and result.reference.data.crafted then
+        createActivatorIndicator(result.reference)
+        return result.reference
     end
+    createActivatorIndicator()
 end
-event.register("simulate", function()
-     callRayTest()
-end)
+
+local function startIndicatorTimer()
+    logger:debug("Starting activation indicator timer")
+    timer.start{
+        duration = 0.1,
+        type = timer.real,
+        iterations = -1,
+        callback = callRayTest
+    }
+end
+event.register("loaded", startIndicatorTimer)
 
 local function doTriggerActivate()
     if (not config.persistent.positioningActive)
     and (not isBlocked)
     and (not tes3ui.menuMode())
     then
-        local ref = callRayTest({ returnRef = true})
+        logger:debug("Triggered Activate")
+        local ref = callRayTest()
         if ref then
             local eventData = {
                 reference = ref

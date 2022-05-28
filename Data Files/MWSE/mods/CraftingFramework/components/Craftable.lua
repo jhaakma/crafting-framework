@@ -82,21 +82,20 @@ local Craftable = {
 
 
 Craftable.registeredCraftables = {}
+Craftable.craftablesIdexedByPlacedObject = {}
 --Static functions
 
 ---@param id string
 ---@return craftingFrameworkCraftable craftable
 function Craftable.getCraftable(id)
-    return Craftable.registeredCraftables[id]
+    return Craftable.registeredCraftables[id:lower()]
 end
 
 ---@param id string
 ---@return craftingFrameworkCraftable craftable
 function Craftable.getPlacedCraftable(id)
     id = id:lower()
-    for _, craftable in pairs(Craftable.registeredCraftables) do
-        if craftable:getPlacedObjectId() == id then return craftable end
-    end
+    return Craftable.craftablesIdexedByPlacedObject[id]
 end
 
 function Craftable:isCarryable()
@@ -147,7 +146,21 @@ function Craftable:new(data)
     ---@type craftingFrameworkCraftable
     local craftable = setmetatable(data, self)
     self.__index = self
-    Craftable.registeredCraftables[craftable.id] = craftable
+
+
+    local placedObjectId = craftable:getPlacedObjectId()
+    if placedObjectId then
+        local existingCraftable = Craftable.registeredCraftables[craftable.id]
+        if existingCraftable then
+            logger:warn("Found existing craftable %s, merging", craftable.id)
+            logger:debug("existing.placedObject: %s", existingCraftable.placedObject)
+            logger:debug("craftable.placedObject: %s", craftable.placedObject)
+            --merge
+            table.copymissing(craftable, existingCraftable)
+        end
+        Craftable.registeredCraftables[craftable.id] = craftable
+        Craftable.craftablesIdexedByPlacedObject[placedObjectId:lower()] = craftable
+    end
     return craftable
 end
 

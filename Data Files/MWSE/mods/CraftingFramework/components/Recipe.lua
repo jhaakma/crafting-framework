@@ -25,13 +25,14 @@ local Recipe = {
             craftableId = { type = "string", required = false },
             description = { type = "string", required = false },
             craftable = { type = Craftable.schema, required = false },
-            materials = { type = "table", childType = MaterialRequirementSchema, required = true },
+            materials = { type = "table", childType = MaterialRequirementSchema, required = false, default = {} },
             timeTaken = { type = "number", required = false },
-            knownByDefault = { type = "boolean", required = false },
+            knownByDefault = { type = "boolean", required = false, default = true },
             customRequirements = { type = "table", childType = CustomRequirement.schema, required = false },
             skillRequirements = { type = "table", childType = SkillRequirement.schema, required = false },
             toolRequirements = { type = "table", childType = ToolRequirement.schema, required = false },
             category = { type = "string", required = false },
+            persist = { type = "boolean", required = false, default = true },
         }
     }
 }
@@ -46,11 +47,9 @@ end
 ---@param data craftingFrameworkRecipeData
 ---@return craftingFrameworkRecipe recipe
 function Recipe:new(data)
+    ---@type craftingFrameworkRecipe
     local recipe = table.copy(data, {})
     Util.validate(data, Recipe.schema)
-    if data.knownByDefault == nil then
-        recipe.knownByDefault = true
-    end
     --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
     recipe.craftable = data.craftable or {}
@@ -76,7 +75,9 @@ function Recipe:new(data)
     recipe.craftable = Craftable:new(recipe.craftable)
     setmetatable(recipe, self)
     self.__index = self
-    Recipe.registeredRecipes[recipe.id] = recipe
+    if recipe.persist ~= false then
+        Recipe.registeredRecipes[recipe.id] = recipe
+    end
     return recipe
 end
 
@@ -131,9 +132,9 @@ function Recipe:craft()
     end
 end
 
----@return tes3object object
+---@return tes3object|tes3weapon|tes3armor|tes3misc|tes3light object
 function Recipe:getItem()
-    local id = self.craftable:getPlacedObjectId() or self.id
+    local id = self.craftable:getPlacedObjectId() or self.craftable.id
     if id then
         return tes3.getObject(id)
     end

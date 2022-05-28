@@ -1,4 +1,4 @@
-local craftingMenu = require("CraftingFramework.controllers.CraftingMenu")
+local CraftingMenu = require("CraftingFramework.controllers.CraftingMenu")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("MenuActivator")
@@ -16,6 +16,8 @@ local MenuActivator = {
             defaultSort = { type = "string", values = {"name", "skill", "canCraft"}, default = "name", required = false },
             defaultShowCategories = { type = "boolean", default = true, required = false },
             blockEvent = { type = "boolean", default = true, required = false },
+            closeCallback = { type = "function", required = false },
+            collapseByDefault = { type = "boolean", default = false, required = false },
         }
     }
 }
@@ -51,20 +53,22 @@ function MenuActivator:new(data)
     if not menuActivator then
         MenuActivator.registeredMenuActivators[data.id] = data
         menuActivator = data
+        menuActivator:registerEvents()
+
+        local eventId = menuActivator.id .. ":Registered"
+        log:info("Registered MenuActivator: " .. menuActivator.id)
+        ---@type MenuActivatorRegisteredEvent
+        local eventData = {
+            menuActivator = menuActivator
+        }
+        event.trigger(eventId, eventData)
     else
         for _, recipe in pairs(data.recipes) do
-            table.insert(menuActivator.recipes, recipe)
+            if not table.find(menuActivator.recipes, recipe) then
+                table.insert(menuActivator.recipes, recipe)
+            end
         end
     end
-    menuActivator:registerEvents()
-
-    local eventId = menuActivator.id .. ":Registered"
-    log:info("Registered MenuActivator: " .. menuActivator.id)
-    ---@type MenuActivatorRegisteredEvent
-    local eventData = {
-        menuActivator = menuActivator
-    }
-    event.trigger(eventId, eventData)
     return menuActivator
 end
 
@@ -108,7 +112,8 @@ function MenuActivator:openMenu()
         end
     end
     if knowsRecipe then
-        craftingMenu.openMenu(self)
+        local menu = CraftingMenu:new(self)
+        menu:openMenu()
     else
         tes3.messageBox("You don't know any recipes")
     end
@@ -120,8 +125,12 @@ function MenuActivator:registerRecipes(recipes)
     recipes = Util.convertListTypes(recipes, Recipe)
     recipes = recipes or {}
     for _, recipe in ipairs(recipes) do
-        log:debug("Registering Recipe %s", recipe)
-        table.insert(self.recipes, recipe)
+        if self:hasRecipe(recipe.id) then
+            log:warn("MenuActivator:registerRecipes - recipe %s already registered", recipe.id)
+        else
+            log:debug("Registering Recipe %s", recipe)
+            table.insert(self.recipes, recipe)
+        end
     end
 end
 
@@ -145,6 +154,13 @@ function MenuActivator:addRecipe(recipe)
     table.insert(self.recipes, recipe)
 end
 
-
+function MenuActivator:hasRecipe(id)
+    for _, recipe in pairs(self.recipes) do
+        if recipe.id:lower() == id:lower() then
+            return true
+        end
+    end
+    return false
+end
 
 return MenuActivator

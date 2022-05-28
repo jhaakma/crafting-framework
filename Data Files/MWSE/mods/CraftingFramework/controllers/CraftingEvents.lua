@@ -22,14 +22,17 @@ event.register("CraftingFramework:CraftableActivated", craftableActivated)
 ---@param e itemDroppedEventData
 local function itemDropped(e)
     local craftable = Craftable.getCraftable(e.reference.baseObject.id)
+    if not craftable then return end
+    logger:debug("Craftable: %s", craftable and craftable.id)
     local placedObject = craftable and craftable:getPlacedObjectId()
+    logger:trace("craftable.placedObject: %s", craftable.placedObject)
+    logger:trace("placedObject: %s", placedObject)
     if placedObject then
         logger:trace("placedObject: " .. placedObject)
         if placedObject and e.reference.baseObject.id:lower() == craftable.id then
-            logger:trace("itemDropped placedObject: " .. placedObject)
+            logger:debug("itemDropped placedObject: " .. placedObject)
             craftable:swap(e.reference)
         end
     end
 end
 event.register("itemDropped", itemDropped)
-

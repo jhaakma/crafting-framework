@@ -15,6 +15,7 @@
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
 ---@field craftableId string **Required.** The id of the object crafted by this recipe
 ---@field description string The description of the recipe, displayed in the crafting menu.
+---@field persist boolean *Default*: `true`. If `false`, the recipe will not be saved to the global recipe list and can't be accessed with Recipe.getRecipe.
 ---@field craftable craftingFrameworkCraftableData
 ---@field materials craftingFrameworkMaterialRequirementData[] **Required.** A table with the materials required by this recipe.
 ---@field timeTaken number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
@@ -42,9 +43,11 @@
 ---@field previewScale number **Default 1** Determines the scale of the preview mesh.
 ---@field previewHeight number **Default 1** Determines the height of the mesh in the preview window.
 
+
 ---@class craftingFrameworkRecipe
 ---@field id string The id of the object crafted by this recipe.
 ---@field description string The description of the recipe, displayed in the crafting menu.
+---@field persist boolean *Default*: `true`. If `false`, the recipe will not be saved to the global recipe list and can't be accessed with Recipe.getRecipe.
 ---@field craftable craftingFrameworkCraftable The object that can be crafted with this recipe.
 ---@field materials craftingFrameworkMaterialRequirementData|craftingFrameworkMaterialRequirementData[] **Required.** A table with the materials required by this recipe.
 ---@field timeTaken number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
