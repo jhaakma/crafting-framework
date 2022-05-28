@@ -589,7 +589,7 @@ local function getRotationAxis(recipe)
         [tes3.clothingSlot.amulet] = 'y'
     }
     local armorSlots = {
-        [tes3.armorSlot.cuirass] = 'y',
+       -- [tes3.armorSlot.cuirass] = 'y',
     }
     if recipe.craftable.rotationAxis then
         return recipe.craftable.rotationAxis
