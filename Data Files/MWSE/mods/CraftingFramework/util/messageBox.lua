@@ -67,7 +67,7 @@ local function populateButtons(e)
 
             local disabled = false
             if data.enableRequirements then
-                local enabled = data.enableRequirements()
+                local enabled = data.enableRequirements(callbackParams)
                 if enabled == nil or not enabled then
                     disabled = true
                 end

@@ -49,7 +49,7 @@ end
 function Recipe:new(data)
     ---@type craftingFrameworkRecipe
     local recipe = table.copy(data, {})
-    Util.validate(data, Recipe.schema)
+    Util.validate(recipe, Recipe.schema)
     --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
     recipe.craftable = data.craftable or {}

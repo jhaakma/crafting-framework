@@ -1,8 +1,6 @@
 local Material = require("CraftingFramework.components.Material")
-local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("CraftingMenu")
-local this = {}
 
 local CraftingMenu = {
     menuWidth = 720,
@@ -14,7 +12,7 @@ local CraftingMenu = {
 
 local uiids = {
     titleBlock = tes3ui.registerID("Crafting_Menu_TitleBlock"),
-    craftingMenu = tes3ui.registerID("CraftingFramework_Menu"),
+    craftingMenu = tes3ui.registerID("CF_Menu"),
     midBlock = tes3ui.registerID("Crafting_Menu_MidBlock"),
     previewBorder = tes3ui.registerID("Crafting_Menu_PreviewBorder"),
     previewBlock = tes3ui.registerID("Crafting_Menu_PreviewBlock"),
@@ -40,14 +38,9 @@ local uiids = {
     unlockPackButton = tes3ui.registerID("Crafting_Menu_UnlockPackButton"),
     cancelButton = tes3ui.registerID("Crafting_Menu_CancelButton"),
     searchBar = tes3ui.registerID("Crafting_Menu_SearchBar"),
-
 }
 local m1 = tes3matrix33.new()
 local m2 = tes3matrix33.new()
-
-
-
-
 
 ---@param menuActivator  craftingFrameworkMenuActivator
 function CraftingMenu:new(menuActivator)
@@ -642,6 +635,7 @@ function CraftingMenu:updatePreviewPane()
             end
             log:debug("Loading mesh: %s", mesh)
             local childNif = tes3.loadMesh(mesh, false)
+            log:debug("Mesh loaded: %s", childNif)
             if not nif then return end
             if not childNif then return end
             --Update the layout so the sceneNode becomes available
@@ -789,7 +783,6 @@ function CraftingMenu:populateCategoryList(recipes, list)
 
             if showRecipe then
                 local button = list:createTextSelect({ id = string.format("Button_%s", recipe.id)})
-                local thisRecipeId = recipe.id
                 local buttonCallback = function()
                     self.selectedRecipe = recipe
                     self:updateSidebar()
@@ -819,7 +812,6 @@ function CraftingMenu:createCategoryBlock(category, parent)
     header.widget.idle = tes3ui.getPalette(tes3.palette.headerColor)
     header.widget.idleActive = tes3ui.getPalette(tes3.palette.headerColor)
     header.color = tes3ui.getPalette(tes3.palette.headerColor)
-
     header.borderAllSides = 2
     local recipeBlock = self:createRecipeBlock(block)
     self:populateCategoryList(category.recipes, recipeBlock)
@@ -845,14 +837,11 @@ function CraftingMenu:createCategoryBlock(category, parent)
 end
 
 
-
-
 function CraftingMenu:updateCategoriesList()
     for _, category in pairs(self.categories) do
         log:debug("Clearing recipes for %s", category.name)
         category.recipes = {}
     end
-
     ---@param recipe craftingFrameworkRecipe
     for _, recipe in pairs(self.recipes) do
         local category = recipe.category
@@ -866,7 +855,6 @@ function CraftingMenu:updateCategoriesList()
         end
         table.insert(self.categories[recipe.category].recipes, recipe)
     end
-
     return self.categories
 end
 
@@ -876,18 +864,14 @@ function CraftingMenu:populateRecipeList()
     if not craftingMenu then return end
     local parent = craftingMenu:findChild(uiids.recipeListBlock)
     parent:destroyChildren()
-
     local title = parent:createLabel()
     title.color = tes3ui.getPalette("header_color")
     title.text = "Recipes:"
-
     self:createSearchBar(parent)
-
     local scrollBar = parent:createVerticalScrollPane()
     scrollBar.heightProportional = 1.0
     scrollBar.widthProportional = 1.0
     scrollBar.borderTop = 4
-
     self:updateCategoriesList()
     local sortedList = {}
     for _, category in pairs(self.categories) do
@@ -934,17 +918,14 @@ end
 
 
 function CraftingMenu:createSearchBar(parent)
-
 	local searchBlock = parent:createBlock()
 	searchBlock.flowDirection = "left_to_right"
 	searchBlock.autoHeight = true
 	searchBlock.widthProportional = 1.0
-
     local searchBar = searchBlock:createThinBorder{ id = uiids.searchBar}
     searchBar.flowDirection = "top_to_bottom"
     searchBar.widthProportional= 1
     searchBar.autoHeight = true
-
     -- Create the search input itself.
     local placeholderText = "Search..."
 	local input = searchBar:createTextInput({ id = tes3ui.registerID("ExclusionsSearchInput") })
@@ -956,8 +937,7 @@ function CraftingMenu:createSearchBar(parent)
 	input.borderBottom = 4
 	input.widget.eraseOnFirstKey = true
 	input.consumeMouseEvents = false
-
-    	-- Set up the events to control text input control.
+    -- Set up the events to control text input control.
 	input:register("keyPress", function(e)
 		local inputController = tes3.worldController.inputController
 		local pressedTab = (inputController:isKeyDown(tes3.scanCode.tab))
@@ -1179,19 +1159,13 @@ function CraftingMenu:openMenu()
     self.menu = tes3ui.createMenu{ id = uiids.craftingMenu, fixedFrame = true }
     self.menu.minWidth = self.menuWidth
     self.menu.minHeight = self.menuHeight
-
-    --"Bushcrafting"
     self:createTitleBlock(self.menu)
-
     --Left to Right block. Recipe list on the left, results on the right
     local outerBlock = self:createLeftToRightBlock(self.menu)
-
     -- --recipes on the left
     -- local recipesBlock = self:createLeftBlock(outerBlock)
-
     local recipesList = self:createRecipeList(outerBlock)
     recipesList.widthProportional = 0.9
-
     --Results on the right, consisting of a preview pane, description, and requirements list
     local resultsBlock = self:createTopToBottomBlock(outerBlock)
     resultsBlock.widthProportional = 1.1
@@ -1201,19 +1175,15 @@ function CraftingMenu:openMenu()
     self:createToolsPane(resultsBlock)
     self:createSkillRequirementsPane(resultsBlock)
     self:createMaterialRequirementsPane(resultsBlock)
-
     --Craft and Cancel buttons on the bottom
     local menuButtonBlock = self:createMenuButtonBlock(self.menu)
     self:addMenuButtons(menuButtonBlock)
-
     self:updateMenu()
     self:updateButtons()
-
     local closeButton = menuButtonBlock:createButton({ id = uiids.cancelButton})
     closeButton.text = "Cancel"
     closeButton.borderLeft = 0
     closeButton:register("mouseClick", function() self:closeMenu() end)
-
     self.menu:updateLayout()
     tes3ui.enterMenuMode(uiids.craftingMenu)
     event.unregister("enterFrame", rotateNif)
