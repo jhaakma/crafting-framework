@@ -24,7 +24,11 @@ local MenuActivator = {
             menuHeight = { type = "number", default = 800, required = false },
             previewHeight = { type = "number", default = 270, required = false },
             previewWidth = { type = "number", default = 270, required = false },
-            previewYOffset = { type = "number", default = -200, required = false }
+            previewYOffset = { type = "number", default = -200, required = false },
+            showCollapseCategoriesButton = { type = "boolean", default = true, required = false },
+            showCategoriesButton = { type = "boolean", default = true, required = false },
+            showFilterButton = { type = "boolean", default = true, required = false },
+            showSortButton = { type = "boolean", default = true, required = false },
         }
     }
 }

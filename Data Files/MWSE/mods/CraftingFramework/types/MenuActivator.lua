@@ -39,6 +39,10 @@
 ---@field previewHeight number *Default*: `270`. This controls the height of the preview area.
 ---@field previewWidth number *Default*: `270`. This controls the width of the preview area.
 ---@field previewYOffset number *Default*: `-200`. This controls the y-offset of the preview area.
+---@field showCollapseCategoriesButton boolean *Default*: `true`. This controls whether the collapse categories button will be shown or not.
+---@field showCategoriesButton boolean *Default*: `true`. This controls whether the categories button will be shown or not.
+---@field showFilterButton boolean *Default*: `true`. This controls whether the filter button will be shown or not.
+---@field showSortButton boolean *Default*: `true`. This controls whether the sort button will be shown or not.
 
 ---@class craftingFrameworkMenuActivator This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 ---@field id string Usually, this is the in-game id of the object used as this Crafting Station. If your `menuActivator.type == "event"`, then the `id` needs to be the id of the event on which this Crafting Station's crafting menu will be opened. Typically a custom event triggered by your mod.
@@ -59,6 +63,10 @@
 ---@field previewHeight number *Default*: `270`. This controls the height of the preview area.
 ---@field previewWidth number *Default*: `270`. This controls the width of the preview area.
 ---@field previewYOffset number *Default*: `-200`. This controls the y-offset of the preview area.
+---@field showCollapseCategoriesButton boolean *Default*: `true`. This controls whether the collapse categories button will be shown or not.
+---@field showCategoriesButton boolean *Default*: `true`. This controls whether the categories button will be shown or not.
+---@field showFilterButton boolean *Default*: `true`. This controls whether the filter button will be shown or not.
+---@field showSortButton boolean *Default*: `true`. This controls whether the sort button will be shown or not.
 craftingFrameworkMenuActivator = {}
 
 ---This method is used to create a new Crafting Station.

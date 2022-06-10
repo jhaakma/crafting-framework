@@ -160,6 +160,13 @@ local menuButtons = {
             button.text = self.collapseCategories and "Expand [+]" or "Collapse [-]"
             self:updateMenu()
         end,
+        showRequirements = function(self)
+            if not self.showCategories then return false end
+            if self.showCollapseCategoriesButton ~= nil then
+                return self.showCollapseCategoriesButton
+            end
+            return true
+        end
     },
     {
         id = tes3ui.registerID("CraftingFramework_Button_ShowCategories"),
@@ -171,6 +178,12 @@ local menuButtons = {
             self:toggleAllCategories()
             self.showCategories = not self.showCategories
             self:updateMenu()
+        end,
+        showRequirements = function(self)
+            if self.showCategoriesButton ~= nil then
+                return self.showCategoriesButton
+            end
+            return true
         end
     },
     {
@@ -185,6 +198,12 @@ local menuButtons = {
             self.collapseCategories = false
             self:toggleAllCategories()
             self:updateMenu()
+        end,
+        showRequirements = function(self)
+            if self.showFilterButton ~= nil then
+                return self.showFilterButton
+            end
+            return true
         end
     },
     {
@@ -199,6 +218,12 @@ local menuButtons = {
             self.collapseCategories = false
             self:toggleAllCategories()
             self:updateMenu()
+        end,
+        showRequirements = function(self)
+            if self.showSortButton ~= nil then
+                return self.showSortButton
+            end
+            return true
         end
     },
     {
@@ -716,25 +741,30 @@ function CraftingMenu:updateButtons()
     if not craftingMenu then return end
     for _, buttonConf in ipairs(menuButtons) do
         local button = craftingMenu:findChild(buttonConf.id)
-        button.text = buttonConf.name(self)
-        if buttonConf.requirements and buttonConf.requirements(self)== false then
-            self:toggleButtonDisabled(button, true, true)
-        else
-            self:toggleButtonDisabled(button, true, false)
-            button:register("mouseClick", function()
-                buttonConf.callback(self, button)
-            end)
-        end
-        --help event doesn't override so we set it once and do logic inside
-        button:register("help", function()
-            local tooltip = tes3ui.createTooltipMenu()
-            if buttonConf.requirements then
-                local meetsRequirements, reason = buttonConf.requirements(self)
-                if reason and not meetsRequirements then
-                    tooltip:createLabel{ text = reason }
-                end
+        if button then
+            button.text = buttonConf.name(self)
+            if buttonConf.requirements and buttonConf.requirements(self)== false then
+                self:toggleButtonDisabled(button, true, true)
+            else
+                self:toggleButtonDisabled(button, true, false)
+                button:register("mouseClick", function()
+                    buttonConf.callback(self, button)
+                end)
             end
-        end)
+            --help event doesn't override so we set it once and do logic inside
+            button:register("help", function()
+                local tooltip = tes3ui.createTooltipMenu()
+                if buttonConf.requirements then
+                    local meetsRequirements, reason = buttonConf.requirements(self)
+                    if reason and not meetsRequirements then
+                        tooltip:createLabel{ text = reason }
+                    end
+                end
+            end)
+            if buttonConf.showRequirements then
+                button.visible = buttonConf.showRequirements(self)
+            end
+        end
     end
 end
 
@@ -1137,10 +1167,12 @@ end
 
 function CraftingMenu:addMenuButtons(parent)
     for _, buttonConf in ipairs(menuButtons) do
-        local button = parent:createButton({ id = buttonConf.id})
-        button.minWidth = 0
-        button.text = buttonConf.name(self)
-        button.borderLeft = 0
+        --if (not buttonConf.showRequirements) or buttonConf.showRequirements(self) then
+            local button = parent:createButton({ id = buttonConf.id})
+            button.minWidth = 0
+            button.text = buttonConf.name(self)
+            button.borderLeft = 0
+        --end
     end
 end
 
