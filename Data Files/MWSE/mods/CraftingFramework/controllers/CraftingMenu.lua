@@ -2,13 +2,7 @@ local Material = require("CraftingFramework.components.Material")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("CraftingMenu")
 
-local CraftingMenu = {
-    menuWidth = 720,
-    menuHeight = 800,
-    previewHeight = 270,
-    previewWidth= 270,
-    previewYOffset = -200
-}
+local CraftingMenu = {}
 
 local uiids = {
     titleBlock = tes3ui.registerID("Crafting_Menu_TitleBlock"),
@@ -44,17 +38,11 @@ local m2 = tes3matrix33.new()
 
 ---@param menuActivator  craftingFrameworkMenuActivator
 function CraftingMenu:new(menuActivator)
-    local craftingMenu = {
-        name = menuActivator.name,
-        recipes = menuActivator.recipes,
-        currentFilter = menuActivator.defaultFilter or "All",
-        currentSorter = menuActivator.defaultSort or "Name",
-        showCategories = menuActivator.defaultShowCategories ~= nil and menuActivator.defaultShowCategories or true,
-        closeCallback = menuActivator.closeCallback,
-        categories = {},
-        collapseCategories = menuActivator.collapseByDefault ~= nil and menuActivator.collapseByDefault or false,
-    }
-    setmetatable(craftingMenu, self)
+    local craftingMenu = setmetatable(menuActivator, self)
+    craftingMenu.showCategories = menuActivator.defaultShowCategories
+    craftingMenu.currentFilter = menuActivator.defaultFilter
+    craftingMenu.currentSorter = menuActivator.defaultSort
+    craftingMenu.categories = {}
     self.__index = self
     return craftingMenu
 end
@@ -215,7 +203,7 @@ local menuButtons = {
     },
     {
         id = tes3ui.registerID("CraftingFramework_Button_CraftItem"),
-        name = function(self) return "Craft" end,
+        name = function(self) return self.craftButtonText end,
         callback = function(self, button)
             self:craftItem(button)
         end,
@@ -773,7 +761,7 @@ function CraftingMenu:recipeMatchesSearch(recipe)
 end
 
 ---@param recipes craftingFrameworkRecipe[]
-function CraftingMenu:populateCategoryList(recipes, list)
+function CraftingMenu:populateCategoryList(recipes, parent)
     table.sort(recipes, sorters[self.currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
         if recipe:isKnown() then
@@ -782,7 +770,7 @@ function CraftingMenu:populateCategoryList(recipes, list)
                 and filters[self.currentFilter].filter(recipe)
 
             if showRecipe then
-                local button = list:createTextSelect({ id = string.format("Button_%s", recipe.id)})
+                local button = parent:createTextSelect({ id = string.format("Button_%s", recipe.id)})
                 local buttonCallback = function()
                     self.selectedRecipe = recipe
                     self:updateSidebar()
@@ -799,10 +787,14 @@ function CraftingMenu:populateCategoryList(recipes, list)
             end
         end
     end
+    if parent.widget and parent.widget.contentsChanged then
+        parent:updateLayout()
+        parent.widget:contentsChanged()
+    end
 end
 
-function CraftingMenu:createCategoryBlock(category, parent)
-    local block = parent:createBlock{}
+function CraftingMenu:createCategoryBlock(category, scrollbar)
+    local block = scrollbar:createBlock{}
     block.flowDirection = "top_to_bottom"
     block.autoHeight = true
     block.widthProportional = 1.0
@@ -866,7 +858,7 @@ function CraftingMenu:populateRecipeList()
     parent:destroyChildren()
     local title = parent:createLabel()
     title.color = tes3ui.getPalette("header_color")
-    title.text = "Recipes:"
+    title.text = self.recipeHeaderText .. ":"
     self:createSearchBar(parent)
     local scrollBar = parent:createVerticalScrollPane()
     scrollBar.heightProportional = 1.0
@@ -1191,7 +1183,7 @@ function CraftingMenu:openMenu()
 end
 
 local RightClickMenuExit = include("mer.RightClickMenuExit")
-if RightClickMenuExit then
+if RightClickMenuExit and RightClickMenuExit.registerMenu then
     log:debug("Registering Crafting Menu Exit button")
     RightClickMenuExit.registerMenu{
         menuId = uiids.craftingMenu,

@@ -18,6 +18,13 @@ local MenuActivator = {
             blockEvent = { type = "boolean", default = true, required = false },
             closeCallback = { type = "function", required = false },
             collapseByDefault = { type = "boolean", default = false, required = false },
+            craftButtonText = { type = "string", default = "Craft", required = false },
+            recipeHeaderText = { type = "string", default = "Recipes", required = false },
+            menuWidth = { type = "number", default = 720, required = false },
+            menuHeight = { type = "number", default = 800, required = false },
+            previewHeight = { type = "number", default = 270, required = false },
+            previewWidth = { type = "number", default = 270, required = false },
+            previewYOffset = { type = "number", default = -200, required = false }
         }
     }
 }
