@@ -64,6 +64,10 @@ local function doTriggerActivate()
         logger:debug("Triggered Activate")
         local ref = callRayTest()
         if ref then
+            event.trigger("BlockScriptedActivate", { doBlock = true })
+            timer.delayOneFrame(function()
+                event.trigger("BlockScriptedActivate", { doBlock = false })
+            end)
             local eventData = {
                 reference = ref
             }
@@ -77,14 +81,14 @@ local function triggerActivateKey(e)
         doTriggerActivate()
     end
 end
-event.register("keyDown", triggerActivateKey )
+event.register("keyDown", triggerActivateKey, { priority = 50})
 
 local function triggerActivateMouse(e)
     if (e.button == tes3.getInputBinding(tes3.keybind.activate).code) and (tes3.getInputBinding(tes3.keybind.activate).device == 1) then
         doTriggerActivate()
     end
 end
-event.register("mouseButtonUp", triggerActivateMouse)
+event.register("mouseButtonUp", triggerActivateMouse, { priority = 50})
 
 local function blockActivate(e)
     if e.activator ~= tes3.player then return end
