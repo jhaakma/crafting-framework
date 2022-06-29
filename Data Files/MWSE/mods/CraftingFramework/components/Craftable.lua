@@ -166,10 +166,10 @@ end
 
 
 function Craftable:activate(reference)
-    Util.messageBox{
+    tes3ui.showMessageMenu{
         message = self:getName(),
         buttons = self:getMenuButtons(reference),
-        doesCancel = true,
+        cancels = true,
         callbackParams = { reference = reference }
     }
 end
@@ -260,7 +260,7 @@ function Craftable:getMenuButtons(reference)
                 return not self:isCarryable()
             end,
             callback = function()
-                Util.messageBox{
+                tes3ui.showMessageMenu{
                     message = string.format("Destroy %s?", self:getName()),
                     buttons = {
                         {
@@ -271,7 +271,7 @@ function Craftable:getMenuButtons(reference)
                         },
 
                     },
-                    doesCancel = true
+                    cancels = true
                 }
 
             end
@@ -366,12 +366,14 @@ function Craftable:destroy(reference)
         position = { 0, 0, 0, },
     }
     reference:disable()
+    if self.destroyCallback then
+        self:destroyCallback({
+            reference = reference
+        })
+    end
     timer.delayOneFrame(function()
         mwscript.setDelete{ reference = reference}
     end)
-    if self.destroyCallback then
-        self:destroyCallback()
-    end
 end
 
 function Craftable:getName()
@@ -408,10 +410,13 @@ function Craftable:playDeconstructionSound()
 end
 
 function Craftable:craft(materialsUsed)
+    local reference
+    local item
     if not self:isCarryable() then
-        self:position(self:place(materialsUsed))
+        reference = self:place(materialsUsed)
+        self:position(reference)
     else
-        local item = tes3.getObject(self.id)
+        item = tes3.getObject(self.id)
         if item then
             local count = self.resultAmount or 1
             tes3.addItem{
@@ -435,7 +440,10 @@ function Craftable:craft(materialsUsed)
     end
     self:playCraftingSound()
     if self.craftCallback then
-        self:craftCallback()
+        self:craftCallback{
+            item = item,
+            reference = reference
+        }
     end
 end
 
@@ -450,22 +458,24 @@ function Craftable:place(materialsUsed)
     local rayDist = ray and ray.intersection and math.min(ray.distance -5, 200) or 0
     local position = eyePos + eyeOri * rayDist
 
-    local ref = tes3.createReference{
+    local reference = tes3.createReference{
         object = self:getPlacedObjectId(),
         cell = tes3.player.cell,
         orientation = tes3.player.orientation:copy() + tes3vector3.new(0, 0, math.pi),
         position = position
     }
-    ref.data.crafted = true
-    ref.data.positionerMaxSteepness = self.maxSteepness
-    ref.data.materialsUsed = materialsUsed
-    ref.data.materialRecovery = self.materialRecovery
-    ref:updateSceneGraph()
-    ref.sceneNode:updateNodeEffects()
+    reference.data.crafted = true
+    reference.data.positionerMaxSteepness = self.maxSteepness
+    reference.data.materialsUsed = materialsUsed
+    reference.data.materialRecovery = self.materialRecovery
+    reference:updateSceneGraph()
+    reference.sceneNode:updateNodeEffects()
     if self.placeCallback then
-        self:placeCallback()
+        self:placeCallback{
+            reference = reference
+        }
     end
-    return ref
+    return reference
 end
 
 return Craftable
