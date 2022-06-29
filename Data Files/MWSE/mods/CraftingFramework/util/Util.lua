@@ -19,9 +19,7 @@ do --logger
     end
 end
 
-
 Util.validate = require("CraftingFramework.util.validator").validate
-Util.messageBox = require("CraftingFramework.util.messageBox")
 Util.traverseRoots = function(roots)
     local function iter(nodes)
         for _, node in ipairs(nodes or roots) do

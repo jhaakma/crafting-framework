@@ -36,7 +36,7 @@ local function showRecoverMaterialsMessage(e)
 
     if isBroken and materialsUsed then
         logger:debug("Item is broken, showing recover materials message")
-        Util.messageBox{
+        tes3ui.showMessageMenu{
             message = string.format("%s is broken.", e.item.name),
             buttons = {
                 {
@@ -46,7 +46,7 @@ local function showRecoverMaterialsMessage(e)
                     end
                 }
             },
-            doesCancel = true,
+            cancels = true,
         }
         return false
     end
