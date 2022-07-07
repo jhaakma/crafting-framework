@@ -141,6 +141,7 @@ function this.orientRefToGround(params)
     if result then
         this.positionRef(ref, result)
         this.orientRef(ref, result)
+        event.trigger("Ashfall:VerticaliseNodes", {reference = ref})
     end
 end
 

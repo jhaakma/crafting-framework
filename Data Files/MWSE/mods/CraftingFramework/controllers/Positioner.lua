@@ -363,23 +363,8 @@ end
 
 ---@param ref tes3reference
 local function recreateRef(ref)
-
     ref:disable()
-
     ref:enable()
-    -- Util.log:trace("Recreating Ref: %s", ref.id)
-    -- local data = ref.data
-    -- local newRef = tes3.createReference{
-    --     position = ref.position:copy(),
-    --     orientation = ref.orientation:copy(),
-    --     cell = ref.cell,
-    --     object = ref.object,
-    --     scale = ref.scale,
-    -- }
-    -- copyRefData(ref, newRef)
-    -- ref:delete()
-
-    -- Util.log:trace("New Ref data crafted: %s", newRef.data.crafted)
 end
 
 --pre-declared above
@@ -388,7 +373,7 @@ endPlacement = function()
     if (this.matchTimer) then
         this.matchTimer:cancel()
     end
-
+    local ref = this.active
     recreateRef(this.active)
 
     decals.applyDecals(this.active)
