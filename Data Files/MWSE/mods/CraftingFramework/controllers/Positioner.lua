@@ -294,7 +294,6 @@ this.togglePlacement = function(e)
         this.offset = tes3vector3.new(0, 0, 0)
     end
 
-
     if not target then
         Util.log:trace("togglePlacement: no e.target or ray target, return")
         return
@@ -338,9 +337,6 @@ this.togglePlacement = function(e)
     decals.applyDecals(this.active, config.persistent.placementSetting)
     tes3.playSound{ sound = "Menu Click" }
 
-
-
-
     event.register("cellChanged", cellChanged)
     tes3ui.suppressTooltip(true)
 
@@ -373,14 +369,11 @@ endPlacement = function()
     if (this.matchTimer) then
         this.matchTimer:cancel()
     end
-    local ref = this.active
     recreateRef(this.active)
-
     decals.applyDecals(this.active)
     event.unregister("simulate", simulatePlacement)
     event.unregister("cellChanged", cellChanged)
     tes3ui.suppressTooltip(false)
-
     this.active.hasNoCollision = false
     this.active = nil
     this.rotateMode = nil
@@ -390,7 +383,6 @@ endPlacement = function()
     if (menu) then
         menu:destroy()
     end
-
     timer.delayOneFrame(function()timer.delayOneFrame(function()
         config.persistent.positioningActive = nil
     end)end)
