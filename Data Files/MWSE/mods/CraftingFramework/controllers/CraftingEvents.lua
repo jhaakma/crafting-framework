@@ -36,3 +36,12 @@ local function itemDropped(e)
     end
 end
 event.register("itemDropped", itemDropped)
+
+event.register("CraftingFramework:EndPlacement", function(e)
+    local reference = e.reference
+    local craftable = Craftable.getCraftable(e.reference.baseObject.id)
+    if not craftable then return end
+    if craftable.positionCallback then
+        craftable:positionCallback{ reference = reference}
+    end
+end)

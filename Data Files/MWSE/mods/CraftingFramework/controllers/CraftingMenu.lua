@@ -582,7 +582,7 @@ end
 
 ---@param recipe craftingFrameworkRecipe
 ---@return craftingFrameworkRotationAxis
-local function getRotationAxis(recipe)
+local function getRotationAxis(recipe, isSheathMesh)
     local item = recipe:getItem()---@type tes3object|tes3clothing
 
     local rotationObjectTypes = {
@@ -597,7 +597,9 @@ local function getRotationAxis(recipe)
     local armorSlots = {
        -- [tes3.armorSlot.cuirass] = 'y',
     }
-    if recipe.craftable.rotationAxis then
+    if item.objectType == tes3.objectType.weapon and isSheathMesh then
+        return '-y'
+    elseif recipe.craftable.rotationAxis then
         return recipe.craftable.rotationAxis
     elseif rotationObjectTypes[item.objectType] then
         return rotationObjectTypes[item.objectType]
@@ -633,11 +635,13 @@ function CraftingMenu:updatePreviewPane()
             local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
             local mesh = self.selectedRecipe.craftable.previewMesh or item.mesh
 
+            local isSheathMesh = false
             --Get sheath mesh if item is a weapon
             if item.objectType == tes3.objectType.weapon then
                 local sheathMesh = mesh:sub(1, -5) .. "_sh.nif"
                 if tes3.getFileExists("meshes\\" .. sheathMesh) then
                     mesh = sheathMesh
+                    isSheathMesh = true
                 end
             end
 
@@ -691,7 +695,7 @@ function CraftingMenu:updatePreviewPane()
             end
 
             do --Apply rotation
-                rotationAxis = getRotationAxis(self.selectedRecipe)
+                rotationAxis = getRotationAxis(self.selectedRecipe, isSheathMesh)
                 local offset = -20
                 if rotationAxis == 'x' then
                     m1:toRotationZ(math.rad(-15))

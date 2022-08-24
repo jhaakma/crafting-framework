@@ -23,6 +23,7 @@ local Craftable = {
             destroyCallback = { type = "function", required = false },
             placeCallback = { type = "function", required = false },
             craftCallback = { type = "function", required = false },
+            positionCallback = { type = "function", required = false },
             mesh = { type = "string", required = false},
             previewMesh = { type = "string", required = false},
             rotationAxis = { type = "string", required = false},

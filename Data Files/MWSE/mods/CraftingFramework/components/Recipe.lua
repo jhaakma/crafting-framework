@@ -153,7 +153,7 @@ function Recipe:getAverageSkillLevel()
 end
 
 ---@return boolean
----@return string reason
+---@return string|nil reason
 function Recipe:hasMaterials()
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
@@ -174,7 +174,7 @@ function Recipe:hasMaterials()
 end
 
 ---@return boolean
----@return string reason
+---@return string|nil reason
 function Recipe:meetsToolRequirements()
     for _, toolRequirement in ipairs(self.toolRequirements) do
         local tool = toolRequirement.tool
@@ -192,7 +192,7 @@ function Recipe:meetsToolRequirements()
 end
 
 ---@return boolean
----@return string reason
+---@return string|nil reason
 function Recipe:meetsSkillRequirements()
     for _, skillRequirement in ipairs(self.skillRequirements) do
         if not skillRequirement:check() then
@@ -203,7 +203,7 @@ function Recipe:meetsSkillRequirements()
 end
 
 ---@return boolean
----@return string reason
+---@return string|nil reason
 function Recipe:meetsCustomRequirements()
     if self.customRequirements then
         for _, requirement in ipairs(self.customRequirements) do
@@ -217,7 +217,7 @@ function Recipe:meetsCustomRequirements()
 end
 
 ---@return boolean
----@return string reason
+---@return string|nil reason
 function Recipe:meetsAllRequirements()
     local meetsCustomRequirements, reason = self:meetsCustomRequirements()
     if not meetsCustomRequirements then return false, reason end

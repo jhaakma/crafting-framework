@@ -374,6 +374,7 @@ endPlacement = function()
     event.unregister("simulate", simulatePlacement)
     event.unregister("cellChanged", cellChanged)
     tes3ui.suppressTooltip(false)
+    local ref = this.active
     this.active.hasNoCollision = false
     this.active = nil
     this.rotateMode = nil
@@ -386,6 +387,7 @@ endPlacement = function()
     timer.delayOneFrame(function()timer.delayOneFrame(function()
         config.persistent.positioningActive = nil
     end)end)
+    event.trigger("CraftingFramework:EndPlacement", { reference = ref })
 end
 
 
