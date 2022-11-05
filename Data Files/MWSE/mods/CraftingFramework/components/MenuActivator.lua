@@ -115,16 +115,18 @@ end
 
 
 function MenuActivator:openMenu()
+    log:debug("enuActivator:openMenu()")
     local knowsRecipe = false
     for _, recipe in pairs(self.recipes) do
         if recipe:isKnown() then
+            log:debug("knows %s, so menu can open", recipe.id)
             knowsRecipe = true
             break
         end
     end
     if knowsRecipe then
         local menu = CraftingMenu:new(self)
-        menu:openMenu()
+        menu:openCraftingMenu()
     else
         tes3.messageBox("You don't know any recipes")
     end
@@ -133,7 +135,7 @@ end
 -- Adds a list of recipes to the menu activator from recipe schemas
 ---@param recipes craftingFrameworkRecipeData[]
 function MenuActivator:registerRecipes(recipes)
-    recipes = Util.convertListTypes(recipes, Recipe)
+    local recipes = Util.convertListTypes(recipes, Recipe)
     recipes = recipes or {}
     for _, recipe in ipairs(recipes) do
         if self:hasRecipe(recipe.id) then

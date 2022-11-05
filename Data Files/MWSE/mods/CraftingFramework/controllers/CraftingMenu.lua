@@ -38,7 +38,7 @@ local m2 = tes3matrix33.new()
 
 ---@param menuActivator  craftingFrameworkMenuActivator
 function CraftingMenu:new(menuActivator)
-    local craftingMenu = setmetatable(menuActivator, self)
+    local craftingMenu = setmetatable(table.copy(menuActivator), self)
     craftingMenu.showCategories = menuActivator.defaultShowCategories
     craftingMenu.currentFilter = menuActivator.defaultFilter
     craftingMenu.currentSorter = menuActivator.defaultSort
@@ -1180,7 +1180,8 @@ function CraftingMenu:addMenuButtons(parent)
     end
 end
 
-function CraftingMenu:openMenu()
+function CraftingMenu:openCraftingMenu()
+    log:debug("CraftingMenu:openCraftingMenu()")
     tes3.playSound{sound="Menu Click", reference=tes3.player}
     self.menu = tes3ui.findMenu(uiids.craftingMenu)
     if self.menu then self.menu:destroy() end
