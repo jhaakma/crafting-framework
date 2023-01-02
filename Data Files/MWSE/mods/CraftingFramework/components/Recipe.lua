@@ -15,8 +15,7 @@ local MaterialRequirementSchema = {
     }
 }
 
-
----@class craftingFrameworkRecipe
+---@type craftingFrameworkRecipe
 local Recipe = {
     schema = {
         name = "Recipe",

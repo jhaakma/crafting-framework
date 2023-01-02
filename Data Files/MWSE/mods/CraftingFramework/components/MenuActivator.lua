@@ -87,7 +87,9 @@ function MenuActivator:registerEvents()
     if self.type == "activate" then
         event.register("activate", function(e)
             if e.target.baseObject.id:lower() == self.id:lower() then
-                self:openMenu()
+                if not tes3.mobilePlayer.controlsDisabled then
+                    self:openMenu()
+                end
                 if self.blockEvent ~= false then
                     return false
                 end

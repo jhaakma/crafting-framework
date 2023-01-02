@@ -60,6 +60,9 @@ end
 
 ---@param materialList craftingFrameworkMaterialData[]
 function Material:registerMaterials(materialList)
+    if materialList.id then
+        logger:error("You passed a single material to registerMaterials, use registerMaterial instead or pass a list of materials")
+    end
     for _, data in ipairs(materialList) do
         Material:new(data)
     end

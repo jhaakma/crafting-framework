@@ -57,10 +57,12 @@ end
 event.register("loaded", startIndicatorTimer)
 
 local function doTriggerActivate()
-    if (not config.persistent.positioningActive)
-    and (not isBlocked)
-    and (not tes3ui.menuMode())
-    then
+    local activationBlocked =
+        config.persistent.positioningActive
+        or isBlocked
+        or tes3ui.menuMode()
+        or tes3.mobilePlayer.controlsDisabled
+    if not activationBlocked then
         logger:debug("Triggered Activate")
         local ref = callRayTest()
         if ref then
