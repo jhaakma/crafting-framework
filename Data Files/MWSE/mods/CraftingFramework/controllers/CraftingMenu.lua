@@ -532,6 +532,10 @@ function CraftingMenu:updateMaterialsRequirementsPane()
         materialsBlock.visible = true
         for _, materialReq in ipairs(self.selectedRecipe.materials) do
             local material = Material.getMaterial(materialReq.material)
+            if not material then
+                log:error("Material not found: " .. materialReq.material)
+                return
+            end
             if material:hasValidIngredient() then
                 self:createMaterialButton(materialReq, list)
             end
@@ -1113,6 +1117,7 @@ function CraftingMenu:createRequirementsPane(parent, name, blockId, paneId)
     requirementsPane.borderTop = 4
     requirementsPane.widthProportional = 1.0
     requirementsPane.autoHeight = true
+    requirementsPane.flowDirection = "top_to_bottom"
 end
 
 function CraftingMenu:createCustomRequirementsPane(parent)
