@@ -2,6 +2,7 @@ local MenuActivator = require("CraftingFramework.components.MenuActivator")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Material = require("CraftingFramework.components.Material")
 local Tool = require("CraftingFramework.components.Tool")
+local Positioner = require("CraftingFramework.controllers.Positioner")
 ---@class craftingFrameworkInterop
 local interop = {}
 
@@ -83,5 +84,16 @@ end
 function interop.getTools(id)
     return Tool.registeredTools[id]
 end
+
+--[[
+    Activates the Positioner mechanic for the given reference
+]]
+function interop.activatePositioner(reference)
+    Positioner.togglePlacement{
+        target = reference,
+        nonCrafted = true
+    }
+end
+
 
 return interop

@@ -6,6 +6,7 @@ local uiCommon = require("CraftingFramework.util.uiCommon")
 
 local isBlocked
 local function blockScriptedActivate(e)
+    logger:debug("BlockScriptedActivate doBlock: %s", e.doBlock)
     isBlocked = e.doBlock
 end
 event.register("BlockScriptedActivate", blockScriptedActivate)

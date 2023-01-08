@@ -255,20 +255,20 @@ end
 -- On grabbing / dropping an item.
 this.togglePlacement = function(e)
     config.persistent.placementSetting = config.persistent.placementSetting or "ground"
-    Util.log:trace("togglePlacement")
+    Util.log:debug("togglePlacement")
     toggleBlockActivate()
     e = e or { target = nil }
     if this.active then
-        Util.log:trace("togglePlacement: isActive, calling finalPlacement()")
+        Util.log:debug("togglePlacement: isActive, calling finalPlacement()")
         finalPlacement()
         return
     end
 
     local target
     if not e.target then
-        Util.log:trace("togglePlacement: no target")
+        Util.log:debug("togglePlacement: no target")
         if tes3.menuMode() then
-            Util.log:trace("togglePlacement: menuMode, return")
+            Util.log:debug("togglePlacement: menuMode, return")
             return
         end
         local ray = tes3.rayTest({
@@ -282,12 +282,12 @@ this.togglePlacement = function(e)
 
         target = ray and ray.reference
         if target then
-            Util.log:trace("togglePlacement: ray found target, doing reach stuff")
+            Util.log:debug("togglePlacement: ray found target, doing reach stuff")
             this.offset = target.position - ray.intersection
             this.currentReach = ray and math.min(ray.distance, this.maxReach)
         end
     else
-        Util.log:trace("togglePlacement: e.target, doing reach stuff")
+        Util.log:debug("togglePlacement: e.target, doing reach stuff")
         target = e.target
         local dist = target.position:distance(tes3.getPlayerEyePosition())
         this.currentReach = math.min(dist, this.maxReach)
@@ -295,18 +295,18 @@ this.togglePlacement = function(e)
     end
 
     if not target then
-        Util.log:trace("togglePlacement: no e.target or ray target, return")
+        Util.log:debug("togglePlacement: no e.target or ray target, return")
         return
     end
 
     -- Filter by allowed object type.
-    if not isPlaceable(target) then
-        Util.log:trace("togglePlacement: not placeable")
+    if not (isPlaceable(target) or e.nonCrafted ) then
+        Util.log:debug("togglePlacement: not placeable")
         return
     end
 
     if target.position:distance(tes3.player.position) > this.maxReach  then
-        Util.log:trace("togglePlacement: out of reach, return")
+        Util.log:debug("togglePlacement: out of reach, return")
         return
     end
 
@@ -316,7 +316,7 @@ this.togglePlacement = function(e)
         return
     end
 
-    Util.log:trace("togglePlacement: passed checks, setting position variables")
+    Util.log:debug("togglePlacement: passed checks, setting position variables")
 
     -- Calculate effective bounds including scale.
     this.boundMin = target.object.boundingBox.min * target.scale
@@ -340,7 +340,7 @@ this.togglePlacement = function(e)
     event.register("cellChanged", cellChanged)
     tes3ui.suppressTooltip(true)
 
-    Util.log:trace("togglePlacement: showing guide")
+    Util.log:debug("togglePlacement: showing guide")
     showGuide()
 
     config.persistent.positioningActive = true
