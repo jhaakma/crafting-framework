@@ -293,7 +293,7 @@ function Craftable:position(reference)
         elseif (tes3.mobilePlayer.castReady) then
             tes3.mobilePlayer.castReady = false
         end
-        Positioner.togglePlacement{ target = reference }
+        Positioner.startPositioning{ target = reference }
     end)
 end
 

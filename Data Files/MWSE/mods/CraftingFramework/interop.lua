@@ -88,10 +88,20 @@ end
 --[[
     Activates the Positioner mechanic for the given reference
 ]]
-function interop.activatePositioner(reference)
-    Positioner.togglePlacement{
-        target = reference,
-        nonCrafted = true
+---@class CraftingFramework.interop.activatePositionerParams
+---@field reference tes3reference
+---@field pinToWall boolean
+---@field placementSetting string
+---@field blockToggle boolean
+
+---@param e CraftingFramework.interop.activatePositionerParams
+function interop.activatePositioner(e)
+    Positioner.startPositioning{
+        target = e.reference,
+        nonCrafted = true,
+        pinToWall = e.pinToWall,
+        placementSetting = e.placementSetting,
+        blockToggle = e.blockToggle,
     }
 end
 

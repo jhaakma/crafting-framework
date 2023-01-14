@@ -82,13 +82,6 @@ local function finalPlacement()
     if Util.isShiftDown() then
         this.active.position = this.itemInitialPos
         this.active.orientation = this.itemInitialOri
-    -- elseif config.persistent.placementSetting == settings.drop then
-    --     -- Drop to ground.
-    --     local from = this.active.position + tes3vector3.new(0, 0, this.height + const_epsilon + 10)
-    --     local rayhit = tes3.rayTest{ position = from, direction = tes3vector3.new(0, 0, -1), ignore = { this.active} }
-    --     if (rayhit) then
-    --         this.active.position = rayhit.intersection + tes3vector3.new(0, 0, this.height + const_epsilon)
-    --     end
     end
 
     tes3.playSound{ sound = "Menu Click" }
@@ -98,6 +91,11 @@ local function finalPlacement()
     end
 
     endPlacement()
+end
+
+local function doPinToWall()
+    return config.persistent.placementSetting == settings.ground
+        or this.pinToWall == true
 end
 
 -- Called every simulation frame to reposition the item.
@@ -147,7 +145,7 @@ local function simulatePlacement()
     local distance
 
     local width = math.min(this.boundMax.x - this.boundMin.x, this.boundMax.y - this.boundMin.y, this.boundMax.z - this.boundMin.z)
-    if rayhit and config.persistent.placementSetting == settings.ground then
+    if rayhit and doPinToWall() then
         distance = math.min(rayhit.distance - width, this.currentReach)
     else
         distance = this.currentReach
@@ -155,7 +153,13 @@ local function simulatePlacement()
 
     local d_theta = tes3.player.orientation.z - this.playerLastOri.z
     m1:toRotationZ(d_theta)
-    this.offset = m1 * this.offset
+
+    if this.offset == nil then
+        this.offset =  (((eyePos ) + (eyeVec* distance ) ) - this.active.position) * -1
+    else
+        this.offset = m1 * this.offset
+    end
+
     pos = (eyePos ) + (eyeVec* distance ) + this.offset
     pos.z = pos.z + const_epsilon
 
@@ -183,7 +187,6 @@ local function simulatePlacement()
         local mouseX = tes3.worldController.inputController.mouseState.x
         Util.log:trace("mouse x: %s", tes3.worldController.inputController.mouseState.x)
         d_theta = 0.001 * 15 * mouseX
-        Util.log:trace(d_theta)
     end
 
     --this.orientation.z = wrapRadians(this.orientation.z + d_theta)
@@ -254,10 +257,14 @@ end
 
 -- On grabbing / dropping an item.
 this.togglePlacement = function(e)
+    e = e or { target = nil }
+    --init settings
+    this.pinToWall = e.pinToWall or false
+    this.blockToggle = e.blockToggle or false
+
     config.persistent.placementSetting = config.persistent.placementSetting or "ground"
     Util.log:debug("togglePlacement")
     toggleBlockActivate()
-    e = e or { target = nil }
     if this.active then
         Util.log:debug("togglePlacement: isActive, calling finalPlacement()")
         finalPlacement()
@@ -281,7 +288,7 @@ this.togglePlacement = function(e)
         })
 
         target = ray and ray.reference
-        if target then
+        if target and ray then
             Util.log:debug("togglePlacement: ray found target, doing reach stuff")
             this.offset = target.position - ray.intersection
             this.currentReach = ray and math.min(ray.distance, this.maxReach)
@@ -291,7 +298,7 @@ this.togglePlacement = function(e)
         target = e.target
         local dist = target.position:distance(tes3.getPlayerEyePosition())
         this.currentReach = math.min(dist, this.maxReach)
-        this.offset = tes3vector3.new(0, 0, 0)
+        this.offset = nil
     end
 
     if not target then
@@ -331,6 +338,7 @@ this.togglePlacement = function(e)
     this.itemInitialPos = target.position:copy()
     this.itemInitialOri = target.orientation:copy()
     this.orientation = target.orientation:copy()
+
 
     this.active = target
     this.active.hasNoCollision = true
@@ -421,6 +429,7 @@ end
 
 local function toggleMode(e)
     if not config.persistent then return end
+    if this.blockToggle then return end
     this.shadow_model = tes3.loadMesh("craftingFramework/shadow.nif")
     if (config.persistent.positioningActive) then
         if (e.keyCode == config.mcm.keybindModeCycle.keyCode) then
@@ -486,7 +495,22 @@ end
 event.register("keyDown", onActiveKey, { priority = 100 })
 
 
-event.register("CraftingFramework:startPositioning", this.togglePlacement)
+this.startPositioning = function(e)
+    -- Put those hands away.
+    if (tes3.mobilePlayer.weaponReady) then
+        tes3.mobilePlayer.weaponReady = false
+    elseif (tes3.mobilePlayer.castReady) then
+        tes3.mobilePlayer.castReady = false
+    end
+    if e.placementSetting then
+        config.persistent.placementSetting = e.placementSetting
+    end
+    this.togglePlacement(e)
+end
+
+event.register("CraftingFramework:startPositioning", function(e)
+    this.startPositioning(e)
+end)
 
 return this
 
