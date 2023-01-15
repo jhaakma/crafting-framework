@@ -715,7 +715,7 @@ function CraftingMenu:updatePreviewPane()
                     m1:toRotationX(math.rad(-15))
                     local lowestPoint = bb.min.z * node.scale
                     offset = offset - lowestPoint
-                    m2:toRotationZ(math.rad(180))
+                    --m2:toRotationZ(math.rad(180))
                 --Vertically flipped
                 elseif rotationAxis == '-x' then
                     m1:toRotationZ(math.rad(15))
@@ -731,7 +731,7 @@ function CraftingMenu:updatePreviewPane()
                     m1:toRotationX(math.rad(15))
                     local lowestPoint = bb.max.z * node.scale
                     offset = offset + lowestPoint
-                    m2:toRotationY(math.rad(180))
+                    --m2:toRotationY(math.rad(180))
                 end
                 node.translation.z = node.translation.z + offset + self.selectedRecipe.craftable.previewHeight
                 node.rotation = node.rotation * m1:copy() * m2:copy()
