@@ -38,7 +38,12 @@ local function callRayTest(e)
         ignore = { tes3.player },
         maxDistance = activationDistance,
     }
-
+    if e.triggerEvent and result and result.reference then
+        local eventData = {
+            reference = result.reference
+        }
+        event.trigger("CraftingFramework:StaticActivation", eventData)
+    end
     if result and result.reference and result.reference.data and result.reference.data.crafted then
         createActivatorIndicator(result.reference)
         return result.reference
@@ -65,7 +70,9 @@ local function doTriggerActivate()
         or tes3.mobilePlayer.controlsDisabled
     if not activationBlocked then
         logger:debug("Triggered Activate")
-        local ref = callRayTest()
+        local ref = callRayTest{
+            triggerEvent = true
+        }
         if ref then
             event.trigger("BlockScriptedActivate", { doBlock = true })
             timer.delayOneFrame(function()
