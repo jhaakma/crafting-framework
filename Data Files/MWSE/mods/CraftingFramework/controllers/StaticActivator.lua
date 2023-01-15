@@ -38,11 +38,12 @@ local function callRayTest(e)
         ignore = { tes3.player },
         maxDistance = activationDistance,
     }
-    if e.triggerEvent and result and result.reference then
+    if e.eventName then
         local eventData = {
-            reference = result.reference
+            rayResult = result,
+            reference = result and result.reference
         }
-        event.trigger("CraftingFramework:StaticActivation", eventData)
+        event.trigger(e.eventName, eventData)
     end
     if result and result.reference and result.reference.data and result.reference.data.crafted then
         createActivatorIndicator(result.reference)
@@ -57,7 +58,11 @@ local function startIndicatorTimer()
         duration = 0.1,
         type = timer.real,
         iterations = -1,
-        callback = callRayTest
+        callback = function()
+            callRayTest{
+                eventName = "CraftingFramework:StaticActivatorIndicator"
+            }
+        end
     }
 end
 event.register("loaded", startIndicatorTimer)
@@ -71,7 +76,7 @@ local function doTriggerActivate()
     if not activationBlocked then
         logger:debug("Triggered Activate")
         local ref = callRayTest{
-            triggerEvent = true
+            eventName = "CraftingFramework:StaticActivation"
         }
         if ref then
             event.trigger("BlockScriptedActivate", { doBlock = true })
