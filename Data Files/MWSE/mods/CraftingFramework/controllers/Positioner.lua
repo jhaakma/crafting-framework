@@ -3,10 +3,10 @@ local Util = require("CraftingFramework.util.Util")
 local config = require("CraftingFramework.config")
 local decals = require('CraftingFramework.controllers.Decals')
 local m1 = tes3matrix33.new()
-
+local logger = Util.createLogger("Positioner")
 
 local this = {
-    maxReach = 700,
+    maxReach = 100,
     minReach = 100,
     currentReach = 500,
     holdKeyTime = 0.75,
@@ -75,7 +75,7 @@ local function showGuide()
 end
 
 local function finalPlacement()
-    Util.log:trace("finalPlacement()")
+    logger:debug("finalPlacement()")
     this.shadow_model.appCulled = true
     this.lastItemOri = this.active.orientation:copy()
 
@@ -100,17 +100,19 @@ end
 
 -- Called every simulation frame to reposition the item.
 local function simulatePlacement()
+    this.maxReach = tes3.getPlayerActivationDistance()
+    this.currentReach = math.min(this.currentReach, this.maxReach)
     if not this.active then
         return
     end
     -- Stop if player takes the object.
     if (this.active.deleted) then
-        Util.log:trace("simulatePlacement: this.active is deleted, ending placement")
+        logger:debug("simulatePlacement: this.active is deleted, ending placement")
         endPlacement()
         return
     -- Check for glitches.
     elseif (this.active.sceneNode == nil) then
-        Util.log:trace("simulatePlacement: sceneNode missing, ending placement")
+        logger:debug("simulatePlacement: sceneNode missing, ending placement")
         tes3.messageBox{ message = "Item location was lost. Placement reset."}
         this.active.position = this.itemInitialPos
         this.active.orientation = this.itemInitialOri
@@ -118,94 +120,98 @@ local function simulatePlacement()
         return
     -- Drop item if player readies combat or casts a spell.
     elseif (tes3.mobilePlayer.weaponReady) then
-        Util.log:trace("simulatePlacement: weapon ready, drop active")
+        logger:debug("simulatePlacement: weapon ready, drop active")
         finalPlacement()
         return
     --Drop item if no longer able to manipulate
     elseif not config.persistent.positioningActive then
-        Util.log:trace("simulatePlacement: not positioningActive, drop active")
+        logger:debug("simulatePlacement: not positioningActive, drop active")
         finalPlacement()
         return
     end
 
+    local d_theta = tes3.player.orientation.z - this.playerLastOri.z
     -- Cast ray along initial pickup direction rotated by the 1st person camera.
     this.shadow_model.appCulled = true
     this.active.sceneNode.appCulled = true
 
     local eyePos = tes3.getPlayerEyePosition()
     local eyeVec = tes3.getPlayerEyeVector()
-    local rayhit = tes3.rayTest{
-        position = eyePos,
-        direction = eyeVec,
-        ignore = { tes3.player },
-        -- root = config.persistent.placementSetting == "ground"
-        --     and tes3.game.worldLandscapeRoot or nil
-    }
-    local pos
-    local distance
-
-    local width = math.min(this.boundMax.x - this.boundMin.x, this.boundMax.y - this.boundMin.y, this.boundMax.z - this.boundMin.z)
-    if rayhit and doPinToWall() then
-        distance = math.min(rayhit.distance - width, this.currentReach)
-    else
-        distance = this.currentReach
-    end
-
-    local d_theta = tes3.player.orientation.z - this.playerLastOri.z
-    m1:toRotationZ(d_theta)
+    ---The position from the player's view to the max distance
+    local lookPos = eyePos + eyeVec * this.currentReach
+    logger:trace("eyePos: %s, eyeVec: %s, lookPos: %s", eyePos, eyeVec, lookPos)
 
     if this.offset == nil then
-        this.offset =  (((eyePos ) + (eyeVec* distance ) ) - this.active.position) * -1
+        logger:trace("this.offset is nil, setting to lookPos - active.position")
+        this.offset = lookPos - this.active.position
     else
-        this.offset = m1 * this.offset
+        m1:toRotationZ(d_theta)
     end
+    logger:trace("this.offset: %s", this.offset)
 
-    pos = (eyePos ) + (eyeVec* distance ) + this.offset
-    pos.z = pos.z + const_epsilon
+    ---The position to place the object
+    local targetPos = eyePos + eyeVec * this.currentReach - this.offset
+    logger:trace("targetPos: %s", targetPos)
 
-
-    -- Find drop position for shadow spot.
-    local dropPos = pos:copy()
-    rayhit = tes3.rayTest{
-        position = this.active.position - tes3vector3.new(0, 0, this.offset.z),
-        direction = tes3vector3.new(0, 0, -1),
-        ignore = { this.active, tes3.player }
-    }
-    if (rayhit ) then
-        dropPos = rayhit.intersection:copy()
-        if config.persistent.placementSetting == settings.ground then
-            pos.z = math.max(pos.z, dropPos.z + (this.height or 0) )
+    if doPinToWall() then
+        logger:trace("Pin to wall")
+        local rayVec = (targetPos - eyePos):normalized()
+        logger:trace("rayVec: %s", rayVec)
+        local ray = tes3.rayTest{
+            position = eyePos,
+            direction = rayVec,
+            ignore = { this.active, tes3.player },
+            maxDistance = this.currentReach,
+        }
+        if ray then
+            local width = math.min(this.boundMax.x - this.boundMin.x, this.boundMax.y - this.boundMin.y, this.boundMax.z - this.boundMin.z)
+            logger:trace("width: %s", width)
+            local distance = math.min(ray.distance, this.currentReach) - width
+            logger:trace("distance: %s", distance)
+            local diff = targetPos:distance(eyePos) - distance
+            logger:trace("diff: %s", diff)
+            targetPos = targetPos - rayVec * diff ---@diagnostic disable-line
+            logger:trace("new targetPos: %s", targetPos)
         end
+
+        local dropPos = targetPos:copy()
+        local rayhit = tes3.rayTest{
+            position = this.active.position - tes3vector3.new(0, 0, this.offset.z),
+            direction = tes3vector3.new(0, 0, -1),
+            ignore = { this.active, tes3.player }
+        }
+        if (rayhit ) then
+            dropPos = rayhit.intersection:copy()
+            targetPos.z = math.max(targetPos.z, dropPos.z + (this.height or 0) )
+        end
+
     end
+
+    --targetPos.z = targetPos.z + const_epsilon
+
 
     -- Incrementally rotate the same amount as the player, to keep relative alignment with player.
 
     this.playerLastOri = tes3.player.orientation:copy()
     if (this.rotateMode) then
         -- Use inputController, as the player orientation is locked.
-        Util.log:trace("rotate mode is active")
+        logger:debug("rotate mode is active")
         local mouseX = tes3.worldController.inputController.mouseState.x
-        Util.log:trace("mouse x: %s", tes3.worldController.inputController.mouseState.x)
+        logger:debug("mouse x: %s", tes3.worldController.inputController.mouseState.x)
         d_theta = 0.001 * 15 * mouseX
     end
 
-    --this.orientation.z = wrapRadians(this.orientation.z + d_theta)
-
-
-    --Util.log:trace("simulatePlacement: position: %s", pos)
+    --logger:debug("simulatePlacement: position: %s", pos)
     -- Update item and shadow spot.
     this.active.sceneNode.appCulled = false
-    this.active.position = pos
+    this.active.position = targetPos
     this.active.orientation.z = wrapRadians(this.active.orientation.z + d_theta)
-    this.shadow_model.appCulled = false
-    this.shadow_model.translation = dropPos
-    this.shadow_model:propagatePositionChange()
 
     local doOrient = config.persistent.placementSetting == settings.ground
 
     if doOrient then
         orienter.orientRefToGround{ ref = this.active, mode = config.persistent.placementSetting }
-        --Util.log:trace("simulatePlacement: orienting %s", this.active.orientation)
+        --logger:debug("simulatePlacement: orienting %s", this.active.orientation)
     else
         this.active.orientation = tes3vector3.new(0, 0, this.active.orientation.z)
     end
@@ -257,25 +263,26 @@ end
 
 -- On grabbing / dropping an item.
 this.togglePlacement = function(e)
+    this.maxReach = tes3.getPlayerActivationDistance()
     e = e or { target = nil }
     --init settings
     this.pinToWall = e.pinToWall or false
     this.blockToggle = e.blockToggle or false
 
     config.persistent.placementSetting = config.persistent.placementSetting or "ground"
-    Util.log:debug("togglePlacement")
+    logger:debug("togglePlacement")
     toggleBlockActivate()
     if this.active then
-        Util.log:debug("togglePlacement: isActive, calling finalPlacement()")
+        logger:debug("togglePlacement: isActive, calling finalPlacement()")
         finalPlacement()
         return
     end
 
     local target
     if not e.target then
-        Util.log:debug("togglePlacement: no target")
+        logger:debug("togglePlacement: no target")
         if tes3.menuMode() then
-            Util.log:debug("togglePlacement: menuMode, return")
+            logger:debug("togglePlacement: menuMode, return")
             return
         end
         local ray = tes3.rayTest({
@@ -289,12 +296,12 @@ this.togglePlacement = function(e)
 
         target = ray and ray.reference
         if target and ray then
-            Util.log:debug("togglePlacement: ray found target, doing reach stuff")
+            logger:debug("togglePlacement: ray found target, doing reach stuff")
             this.offset = target.position - ray.intersection
             this.currentReach = ray and math.min(ray.distance, this.maxReach)
         end
     else
-        Util.log:debug("togglePlacement: e.target, doing reach stuff")
+        logger:debug("togglePlacement: e.target, doing reach stuff")
         target = e.target
         local dist = target.position:distance(tes3.getPlayerEyePosition())
         this.currentReach = math.min(dist, this.maxReach)
@@ -302,20 +309,20 @@ this.togglePlacement = function(e)
     end
 
     if not target then
-        Util.log:debug("togglePlacement: no e.target or ray target, return")
+        logger:debug("togglePlacement: no e.target or ray target, return")
         return
     end
 
     -- Filter by allowed object type.
     if not (isPlaceable(target) or e.nonCrafted ) then
-        Util.log:debug("togglePlacement: not placeable")
+        logger:debug("togglePlacement: not placeable")
         return
     end
 
-    if target.position:distance(tes3.player.position) > this.maxReach  then
-        Util.log:debug("togglePlacement: out of reach, return")
-        return
-    end
+    -- if target.position:distance(tes3.player.position) > this.maxReach  then
+    --     logger:debug("togglePlacement: out of reach, return")
+    --     return
+    -- end
 
     -- Workaround to avoid dupe-on-load bug when moving non-persistent refs into another cell.
     if (target.sourceMod and not target.cell.isInterior) then
@@ -323,7 +330,7 @@ this.togglePlacement = function(e)
         return
     end
 
-    Util.log:debug("togglePlacement: passed checks, setting position variables")
+    logger:debug("togglePlacement: passed checks, setting position variables")
 
     -- Calculate effective bounds including scale.
     this.boundMin = target.object.boundingBox.min * target.scale
@@ -348,7 +355,7 @@ this.togglePlacement = function(e)
     event.register("cellChanged", cellChanged)
     tes3ui.suppressTooltip(true)
 
-    Util.log:debug("togglePlacement: showing guide")
+    logger:debug("togglePlacement: showing guide")
     showGuide()
 
     config.persistent.positioningActive = true
@@ -373,7 +380,7 @@ end
 
 --pre-declared above
 endPlacement = function()
-    Util.log:trace("endPlacement()")
+    logger:debug("endPlacement()")
     if (this.matchTimer) then
         this.matchTimer:cancel()
     end
@@ -409,7 +416,7 @@ end
 local function rotateKeyDown(e)
     if (this.active) then
         if (e.keyCode == config.mcm.keybindRotate.keyCode) then
-            Util.log:trace("rotateKeyDown")
+            logger:debug("rotateKeyDown")
             this.rotateMode = true
             tes3.mobilePlayer.mouseLookDisabled = true
             return false
@@ -420,7 +427,7 @@ end
 local function rotateKeyUp(e)
     if (this.active) then
         if (e.keyCode == config.mcm.keybindRotate.keyCode) then
-            Util.log:trace("rotateKeyUp")
+            logger:debug("rotateKeyUp")
             this.rotateMode = false
             tes3.mobilePlayer.mouseLookDisabled = false
         end
@@ -474,9 +481,9 @@ event.register("mouseWheel", onMouseScroll)
 
 
 local function blockActivation(e)
-    Util.log:trace("blockActivation")
+    logger:debug("blockActivation")
     if config.persistent.positioningActive then
-        Util.log:trace("Positioning Active")
+        logger:debug("Positioning Active")
         return (e.activator ~= tes3.player)
     end
 end
