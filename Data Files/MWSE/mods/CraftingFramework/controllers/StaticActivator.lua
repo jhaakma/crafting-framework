@@ -30,6 +30,17 @@ end
 local function callRayTest(e)
     local eyePos = tes3.getPlayerEyePosition()
     local eyeDirection = tes3.getPlayerEyeVector()
+    --If in menu, use cursor position
+    if tes3ui.menuMode() then
+        local inventory = tes3ui.findMenu("MenuInventory")
+        local inventoryVisible = inventory and inventory.visible == true
+        if inventoryVisible then
+            local cursor = tes3.getCursorPosition()
+            local camera = tes3.worldController.worldCamera.camera
+            eyePos, eyeDirection = camera:windowPointToRay{cursor.x, cursor.y}
+        end
+    end
+
     if not (eyeDirection or eyeDirection) then return end
     local activationDistance = tes3.getPlayerActivationDistance()
     local result = tes3.rayTest{
