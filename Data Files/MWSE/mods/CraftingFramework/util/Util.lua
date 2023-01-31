@@ -158,6 +158,7 @@ function Util.canBeActivated(ref)
         and ref.object.script
 end
 
+---@return any
 function Util.convertListTypes(list, classType)
     if list == nil then
         return nil

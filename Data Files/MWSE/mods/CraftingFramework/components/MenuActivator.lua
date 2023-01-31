@@ -3,7 +3,7 @@ local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("MenuActivator")
 
----@class craftingFrameworkMenuActivator
+---@class craftingFrameworkMenuActivator : craftingFrameworkMenuActivatorData This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 local MenuActivator = {
     schema = {
         name = "MenuActivator",
@@ -30,10 +30,9 @@ local MenuActivator = {
             showFilterButton = { type = "boolean", default = true, required = false },
             showSortButton = { type = "boolean", default = true, required = false },
         }
-    }
+    },
+    registeredMenuActivators = {}
 }
-
-MenuActivator.registeredMenuActivators = {}
 
 ---@param data craftingFrameworkMenuActivatorData
 ---@return craftingFrameworkMenuActivator menuActivator
@@ -56,10 +55,12 @@ function MenuActivator:new(data)
         log:error("MenuActivator:new - no name specified for menu activator %s", data.id)
     end
     --Convert to objects
-    data.recipes = Util.convertListTypes(data.recipes, Recipe)
+    data.recipes = Util.convertListTypes(data.recipes, Recipe) or {}
 
+    ---@cast data craftingFrameworkMenuActivator
 
     --Merge with existing or register new Menu Activator
+    ---@type craftingFrameworkMenuActivator
     local menuActivator = MenuActivator.registeredMenuActivators[data.id]
     if not menuActivator then
         MenuActivator.registeredMenuActivators[data.id] = data
@@ -137,9 +138,14 @@ end
 -- Adds a list of recipes to the menu activator from recipe schemas
 ---@param recipes craftingFrameworkRecipeData[]
 function MenuActivator:registerRecipes(recipes)
+    log:debug("MenuActivator:registerRecipes")
     local recipes = Util.convertListTypes(recipes, Recipe)
-    recipes = recipes or {}
+    if recipes == nil then
+        log:error("MenuActivator:registerRecipes - recipes is nil")
+        return
+    end
     for _, recipe in ipairs(recipes) do
+        log:debug("Recipe: %s", recipe.id)
         if self:hasRecipe(recipe.id) then
             log:warn("MenuActivator:registerRecipes - recipe %s already registered", recipe.id)
         else

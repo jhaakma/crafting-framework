@@ -64,11 +64,13 @@ end
 
 function CraftingMenu:craftItem(button)
     if not self.selectedRecipe then return end
+    log:debug("CraftingMenu:craftItem")
     self.selectedRecipe:craft()
-    button.widget.state = 2
-    button.disabled = true
+    log:debug("crafting done, setting widget")
 
     if self.selectedRecipe.craftable:isCarryable() then
+        button.widget.state = 2
+        button.disabled = true
         self:updateMenu()
     else
         self:closeMenu()
@@ -154,7 +156,13 @@ local menuButtons = {
         name = function(self)
             return self.collapseCategories and "Expand [+]" or "Collapse [-]"
         end,
-        callback = function(self, button)
+        callback = function(self)
+            local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
+            if not craftingMenu then
+                log:error("Crafting Menu not found")
+                return
+            end
+            local button = craftingMenu:findChild('CraftingFramework_Button_collapse')
             self.collapseCategories = not self.collapseCategories
             self:toggleAllCategories()
             button.text = self.collapseCategories and "Expand [+]" or "Collapse [-]"
@@ -229,7 +237,13 @@ local menuButtons = {
     {
         id = tes3ui.registerID("CraftingFramework_Button_CraftItem"),
         name = function(self) return self.craftButtonText end,
-        callback = function(self, button)
+        callback = function(self)
+            local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
+            if not craftingMenu then
+                log:error("Crafting Menu not found")
+                return
+            end
+            local button = craftingMenu:findChild('CraftingFramework_Button_CraftItem')
             self:craftItem(button)
         end,
         requirements = function(self)
@@ -588,7 +602,7 @@ end
 ---@return craftingFrameworkRotationAxis
 local function getRotationAxis(recipe, isSheathMesh)
     local item = recipe:getItem()---@type tes3object|tes3clothing
-
+    if not item then return 'z' end
     local rotationObjectTypes = {
         [tes3.objectType.weapon] = 'y',
         [tes3.objectType.ammunition] = 'y',
@@ -618,137 +632,172 @@ end
 
 local rotationAxis = 'z'
 function CraftingMenu:updatePreviewPane()
+    log:debug("Updating preview pane")
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
-    if not craftingMenu then return end
-    if not self.selectedRecipe then return end
-    local item = self.selectedRecipe:getItem()
-    if item then
-        log:debug("preview pane item: %s", item.id)
-        --nifPreviewBLock
+    if not craftingMenu then
+        log:debug("No crafting menu found")
+        return
+    end
+    if not self.selectedRecipe then
+        log:debug("No selected recipe")
+        return
+    end
+    if self.selectedRecipe.noResult and not self.selectedRecipe.previewMesh then
+        log:debug("No result or preview mesh, hiding preview pane")
         local nifPreviewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
         if nifPreviewBlock then
-            nifPreviewBlock:destroyChildren()
+            nifPreviewBlock.visible = false
+        end
+        return
+    end
+    local item = self.selectedRecipe:getItem()
+    if item == nil and not self.selectedRecipe.previewMesh then
+        log:debug("No item or preview mesh, nothing to render")
+        return
+    end
+    --nifPreviewBLock
+    local nifPreviewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
+    if not nifPreviewBlock then
+        log:debug("No nif preview block found")
+        return
+    end
+    nifPreviewBlock:destroyChildren()
 
-            --[[
-                Morrowind UI has a weird bug where if a mesh does not have two parent
-                    niNodes above the trishape, it will be rendered incorrectly.
+    --[[
+        Morrowind UI has a weird bug where if a mesh does not have t1wo parent
+            niNodes above the trishape, it will be rendered incorrectly.
 
-                To get around this, we create the UI Nif with an empty niNode, then
-                    attach the object's mesh as a child of that.
-            ]]
-            local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
-            local mesh = self.selectedRecipe.craftable.previewMesh or item.mesh
+        To get around this, we create the UI Nif with an empty niNode, then
+            attach the object's mesh as a child of that.
+    ]]
+    local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
+    if not nif then
+        log:error("No nif found")
+        return
+    end
 
-            local isSheathMesh = false
-            --Get sheath mesh if item is a weapon
-            if item.objectType == tes3.objectType.weapon then
-                local sheathMesh = mesh:sub(1, -5) .. "_sh.nif"
-                if tes3.getFileExists("meshes\\" .. sheathMesh) then
-                    mesh = sheathMesh
-                    isSheathMesh = true
-                end
-            end
+    local mesh = self.selectedRecipe.previewMesh or (item and item.mesh)
+    if not mesh then
+        log:error("No mesh found")
+        return
+    end
 
-            --Avoid popups/CTDs if the mesh is missing.
-            if not tes3.getFileExists(string.format("Meshes\\%s", mesh)) then
-                log:error("Mesh does not exist: %s", mesh)
-                return
-            end
-            log:debug("Loading mesh: %s", mesh)
-            local childNif = tes3.loadMesh(mesh, false)
-            log:debug("Mesh loaded: %s", childNif)
-            if not nif then return end
-            if not childNif then return end
-            --Update the layout so the sceneNode becomes available
-            craftingMenu:updateLayout()
-            local node = nif.sceneNode ---@type any
-            --Attach the object's mesh to the empty niNode
-            node:attachChild(childNif)
-
-            --Remove parts of the mesh that fuck with bounding box calculations
-            Util.removeLight(node)
-            self:removeCollision(node)
-            node:update()
-
-            --get size from bounding box. This still sucks for autogenerated bounding boxes
-            local maxDimension
-            local bb = node:createBoundingBox(node.scale)
-            local height = bb.max.z - bb.min.z
-            local width = bb.max.y - bb.min.y
-            local depth = bb.max.x - bb.min.x
-            maxDimension = math.max(width, depth, height)
-
-            local targetHeight = 160
-            node.scale = targetHeight / maxDimension
-            if self.selectedRecipe.craftable.previewScale then
-                node.scale = node.scale * self.selectedRecipe.craftable.previewScale
-            end
-            do --add properties
-                ---@diagnostic disable-next-line: undefined-field
-                local vertexColorProperty = niVertexColorProperty.new()
-                vertexColorProperty.name = "vcol yo"
-                vertexColorProperty.source = 2
-                node:attachProperty(vertexColorProperty)
-
-                ---@diagnostic disable-next-line: undefined-global
-                local zBufferProperty = niZBufferProperty.new()
-                zBufferProperty.name = "zbuf yo"
-                zBufferProperty:setFlag(true, 0)
-                zBufferProperty:setFlag(true, 1)
-                node:attachProperty(zBufferProperty)
-            end
-
-            do --Apply rotation
-                rotationAxis = getRotationAxis(self.selectedRecipe, isSheathMesh)
-                local offset = -20
-                if rotationAxis == 'x' then
-                    m1:toRotationZ(math.rad(-15))
-                    local lowestPoint = bb.min.x * node.scale
-                    offset = offset - lowestPoint
-                    m2:toRotationY(math.rad(90))
-                elseif rotationAxis == 'y' then
-                    m1:toRotationZ(math.rad(-15))
-                    local lowestPoint = bb.min.y * node.scale
-                    offset = offset - lowestPoint
-                    m2:toRotationX(math.rad(270))
-                elseif rotationAxis == 'z' then
-                    m1:toRotationX(math.rad(-15))
-                    local lowestPoint = bb.min.z * node.scale
-                    offset = offset - lowestPoint
-                    --m2:toRotationZ(math.rad(180))
-                --Vertically flipped
-                elseif rotationAxis == '-x' then
-                    m1:toRotationZ(math.rad(15))
-                    local lowestPoint = bb.max.x * node.scale
-                    offset = offset + lowestPoint
-                    m2:toRotationY(math.rad(-90))
-                elseif rotationAxis == '-y' then
-                    m1:toRotationZ(math.rad(15))
-                    local lowestPoint = bb.max.y * node.scale
-                    offset = offset + lowestPoint
-                    m2:toRotationX(math.rad(90))
-                elseif rotationAxis == '-z' then
-                    m1:toRotationX(math.rad(15))
-                    local lowestPoint = bb.max.z * node.scale
-                    offset = offset + lowestPoint
-                    --m2:toRotationY(math.rad(180))
-                end
-                node.translation.z = node.translation.z + offset + self.selectedRecipe.craftable.previewHeight
-                node.rotation = node.rotation * m1:copy() * m2:copy()
-            end
-            node.appCulled = false
-            node:updateProperties()
-            node:update()
-            nifPreviewBlock:updateLayout()
+    local isSheathMesh = false
+    --Get sheath mesh if item is a weapon
+    if item and item.objectType == tes3.objectType.weapon then
+        local sheathMesh = mesh:sub(1, -5) .. "_sh.nif"
+        if tes3.getFileExists("meshes\\" .. sheathMesh) then
+            mesh = sheathMesh
+            isSheathMesh = true
         end
     end
-    --updateBuyButtons()
+
+    --Avoid popups/CTDs if the mesh is missing.
+    if not tes3.getFileExists(string.format("Meshes\\%s", mesh)) then
+        log:error("Mesh does not exist: %s", mesh)
+        return
+    end
+
+    log:debug("Loading mesh: %s", mesh)
+    local childNif = tes3.loadMesh(mesh, false)
+    log:debug("Mesh loaded: %s", childNif)
+
+
+    if not childNif then
+        log:error("No child nif found")
+        return
+    end
+
+    --Update the layout so the sceneNode becomes available
+    craftingMenu:updateLayout()
+    local node = nif.sceneNode ---@type any
+    --Attach the object's mesh to the empty niNode
+    node:attachChild(childNif)
+
+    --Remove parts of the mesh that fuck with bounding box calculations
+    Util.removeLight(node)
+    self:removeCollision(node)
+    node:update()
+
+    --get size from bounding box. This still sucks for autogenerated bounding boxes
+    local maxDimension
+    local bb = node:createBoundingBox(node.scale)
+    local height = bb.max.z - bb.min.z
+    local width = bb.max.y - bb.min.y
+    local depth = bb.max.x - bb.min.x
+    maxDimension = math.max(width, depth, height)
+
+    local targetHeight = 160
+    node.scale = targetHeight / maxDimension
+    if self.selectedRecipe.craftable.previewScale then
+        node.scale = node.scale * self.selectedRecipe.craftable.previewScale
+    end
+    do --add properties
+        ---@diagnostic disable-next-line: undefined-field
+        local vertexColorProperty = niVertexColorProperty.new()
+        vertexColorProperty.name = "vcol yo"
+        vertexColorProperty.source = 2
+        node:attachProperty(vertexColorProperty)
+
+        ---@diagnostic disable-next-line: undefined-global
+        local zBufferProperty = niZBufferProperty.new()
+        zBufferProperty.name = "zbuf yo"
+        zBufferProperty:setFlag(true, 0)
+        zBufferProperty:setFlag(true, 1)
+        node:attachProperty(zBufferProperty)
+    end
+
+    do --Apply rotation
+        rotationAxis = getRotationAxis(self.selectedRecipe, isSheathMesh)
+        local offset = -20
+        if rotationAxis == 'x' then
+            m1:toRotationZ(math.rad(-15))
+            local lowestPoint = bb.min.x * node.scale
+            offset = offset - lowestPoint
+            m2:toRotationY(math.rad(90))
+        elseif rotationAxis == 'y' then
+            m1:toRotationZ(math.rad(-15))
+            local lowestPoint = bb.min.y * node.scale
+            offset = offset - lowestPoint
+            m2:toRotationX(math.rad(270))
+        elseif rotationAxis == 'z' then
+            m1:toRotationX(math.rad(-15))
+            local lowestPoint = bb.min.z * node.scale
+            offset = offset - lowestPoint
+            --m2:toRotationZ(math.rad(180))
+        --Vertically flipped
+        elseif rotationAxis == '-x' then
+            m1:toRotationZ(math.rad(15))
+            local lowestPoint = bb.max.x * node.scale
+            offset = offset + lowestPoint
+            m2:toRotationY(math.rad(-90))
+        elseif rotationAxis == '-y' then
+            m1:toRotationZ(math.rad(15))
+            local lowestPoint = bb.max.y * node.scale
+            offset = offset + lowestPoint
+            m2:toRotationX(math.rad(90))
+        elseif rotationAxis == '-z' then
+            m1:toRotationX(math.rad(15))
+            local lowestPoint = bb.max.z * node.scale
+            offset = offset + lowestPoint
+            --m2:toRotationY(math.rad(180))
+        end
+        node.translation.z = node.translation.z + offset + self.selectedRecipe.craftable.previewHeight
+        node.rotation = node.rotation * m1:copy() * m2:copy()
+    end
+    node.appCulled = false
+    node:updateProperties()
+    node:update()
+    nifPreviewBlock:updateLayout()
 end
+
 function CraftingMenu:updateButtons()
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
     for _, buttonConf in ipairs(menuButtons) do
+        log:debug("id: %s", buttonConf.id)
         local button = craftingMenu:findChild(buttonConf.id)
+        log:debug("Found button %s", button)
         if button then
             button.text = buttonConf.name(self)
             if buttonConf.requirements and buttonConf.requirements(self)== false then
@@ -756,7 +805,8 @@ function CraftingMenu:updateButtons()
             else
                 self:toggleButtonDisabled(button, true, false)
                 button:register("mouseClick", function()
-                    buttonConf.callback(self, button)
+                    log:debug("clicked button %s", buttonConf.id)
+                    buttonConf.callback(self)
                 end)
             end
             --help event doesn't override so we set it once and do logic inside
@@ -803,11 +853,12 @@ function CraftingMenu:populateCategoryList(recipes, parent)
     table.sort(recipes, sorters[self.currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
         if recipe:isKnown() then
-            if not self.selectedRecipe then self.selectedRecipe = recipe end
+
             local showRecipe = self:recipeMatchesSearch(recipe)
                 and filters[self.currentFilter].filter(recipe)
 
             if showRecipe then
+                if not self.selectedRecipe then self.selectedRecipe = recipe end
                 local button = parent:createTextSelect({ id = string.format("Button_%s", recipe.id)})
                 local buttonCallback = function()
                     self.selectedRecipe = recipe
@@ -825,6 +876,7 @@ function CraftingMenu:populateCategoryList(recipes, parent)
             end
         end
     end
+    if not self.selectedRecipe then self.selectedRecipe = recipes[1] end
     if parent.widget and parent.widget.contentsChanged then
         parent:updateLayout()
         parent.widget:contentsChanged()
@@ -1176,12 +1228,10 @@ end
 
 function CraftingMenu:addMenuButtons(parent)
     for _, buttonConf in ipairs(menuButtons) do
-        --if (not buttonConf.showRequirements) or buttonConf.showRequirements(self) then
-            local button = parent:createButton({ id = buttonConf.id})
-            button.minWidth = 0
-            button.text = buttonConf.name(self)
-            button.borderLeft = 0
-        --end
+        local button = parent:createButton({ id = buttonConf.id})
+        button.minWidth = 0
+        button.text = buttonConf.name(self)
+        button.borderLeft = 0
     end
 end
 
@@ -1214,12 +1264,14 @@ function CraftingMenu:openCraftingMenu()
     self:addMenuButtons(menuButtonBlock)
     self:updateMenu()
     self:updateButtons()
+
     local closeButton = menuButtonBlock:createButton({ id = uiids.cancelButton})
     closeButton.text = "Cancel"
     closeButton.borderLeft = 0
     closeButton:register("mouseClick", function() self:closeMenu() end)
-    self.menu:updateLayout()
+    --self.menu:updateLayout()
     tes3ui.enterMenuMode(uiids.craftingMenu)
+
     event.unregister("enterFrame", rotateNif)
     event.register("enterFrame", rotateNif)
 end

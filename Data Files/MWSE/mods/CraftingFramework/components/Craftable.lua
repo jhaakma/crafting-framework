@@ -11,6 +11,7 @@ local Craftable = {
             id = { type = "string", required = true },
             name = { type = "string", required = false },
             placedObject = { type = "string", required = false },
+            noResult = { type = "boolean", required = false },
             uncarryable = { type = "boolean", required = false },
             additionalMenuOptions = { type = "table", required = false },
             soundId = { type = "string", required = false },
@@ -144,10 +145,11 @@ function Craftable:new(data)
         data.previewMesh = data.mesh
         data.mesh = nil
     end
-    ---@type craftingFrameworkCraftable
-    local craftable = setmetatable(data, self)
-    self.__index = self
+    setmetatable(data, self)
 
+    ---@cast data craftingFrameworkCraftable
+    local craftable = data
+    self.__index = self
 
     local placedObjectId = craftable:getPlacedObjectId()
     if placedObjectId then
@@ -335,7 +337,7 @@ function Craftable:recoverMaterials(materialsUsed, materialRecovery)
             recoverMessage = recoverMessage .. string.format("\n- %s x%d", item.name, recoveredCount )
             tes3.addItem{
                 reference = tes3.player,
-                item = item,
+                item = item, ---@diagnostic disable-line: assign-type-mismatch
                 count = recoveredCount,
                 playSound = false,
                 updateGUI = false
@@ -373,7 +375,7 @@ function Craftable:destroy(reference)
         })
     end
     timer.delayOneFrame(function()
-        mwscript.setDelete{ reference = reference}
+        reference:delete()
     end)
 end
 
@@ -410,42 +412,52 @@ function Craftable:playDeconstructionSound()
     tes3.playSound{soundPath = soundPick }
 end
 
+
+---@param materialsUsed table<string, number> A table of material ids and the number of each used.
 function Craftable:craft(materialsUsed)
+    logger:debug("Craftable:craft %s", self.id)
+    logger:debug("Materials used: %s", inspect(materialsUsed))
     local reference
     local item
-    if not self:isCarryable() then
-        reference = self:place(materialsUsed)
-        self:position(reference)
-    else
-        item = tes3.getObject(self.id)
-        if item then
-            local count = self.resultAmount or 1
-            tes3.addItem{
-                reference = tes3.player,
-                item = item, playSound = false,
-                count = count,
-            }
-            if count == 1 and item.maxCondition and self.recoverEquipmentMaterials then
-                local itemData = tes3.addItemData{
-                    to = tes3.player,
-                    item = item,
+    if not self.noResult then
+        if not self:isCarryable() then
+            reference = self:place(materialsUsed)
+            self:position(reference)
+        else
+            item = tes3.getObject(self.id)
+            if item then
+                local count = self.resultAmount or 1
+                tes3.addItem{
+                    reference = tes3.player,
+                    item = item, ---@diagnostic disable-line: assign-type-mismatch
+                    playSound = false,
+                    count = count,
                 }
-                itemData.data.materialsUsed = materialsUsed
-                itemData.data.materialRecovery = self.materialRecovery
+                if count == 1 and item.maxCondition and self.recoverEquipmentMaterials then
+                    local itemData = tes3.addItemData{
+                        to = tes3.player,
+                        item = item,---@diagnostic disable-line: assign-type-mismatch
+                    }
+                    itemData.data.materialsUsed = materialsUsed
+                    itemData.data.materialRecovery = self.materialRecovery
+                end
+                tes3.messageBox("You successfully crafted %s%s.",
+                    item.name,
+                    self.resultAmount and string.format(" x%d", self.resultAmount) or ""
+                )
             end
-            tes3.messageBox("You successfully crafted %s%s.",
-                item.name,
-                self.resultAmount and string.format(" x%d", self.resultAmount) or ""
-            )
         end
     end
     self:playCraftingSound()
     if self.craftCallback then
+        logger:debug("Craftable:craft %s calling callback", self.id)
         self:craftCallback{
+            reference = reference,
             item = item,
-            reference = reference
+            materialsUsed = materialsUsed
         }
     end
+    logger:debug("Craftable:craft %s done", self.id)
 end
 
 function Craftable:place(materialsUsed)
@@ -462,6 +474,7 @@ function Craftable:place(materialsUsed)
     local reference = tes3.createReference{
         object = self:getPlacedObjectId(),
         cell = tes3.player.cell,
+        ---@diagnostic disable-next-line: assign-type-mismatch
         orientation = tes3.player.orientation:copy() + tes3vector3.new(0, 0, math.pi),
         position = position
     }
@@ -470,7 +483,7 @@ function Craftable:place(materialsUsed)
     reference.data.materialsUsed = materialsUsed
     reference.data.materialRecovery = self.materialRecovery
     reference:updateSceneGraph()
-    reference.sceneNode:updateNodeEffects()
+    reference.sceneNode:updateEffects()
     if self.placeCallback then
         self:placeCallback{
             reference = reference
