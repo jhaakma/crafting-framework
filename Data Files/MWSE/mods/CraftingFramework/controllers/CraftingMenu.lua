@@ -478,7 +478,7 @@ function CraftingMenu:updateSkillsRequirementsPane()
     end
 end
 
----@param material craftingFrameworkMaterial
+---@param material CraftingFramework.Material
 function CraftingMenu:createMaterialTooltip(material)
     local name = material:getName()
     local tooltip = tes3ui.createTooltipMenu()

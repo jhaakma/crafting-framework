@@ -2,7 +2,11 @@ local Util = require("CraftingFramework.util.Util")
 local Indicator = require("CraftingFramework.controllers.Indicator")
 local logger = Util.createLogger("StaticActivator")
 local config = require("CraftingFramework.config")
+---@class CraftingFramework
+---@field StaticActivator CraftingFramework.StaticActivator
 local CF = require("CraftingFramework")
+
+---@class CraftingFramework.StaticActivator
 CF.StaticActivator = {
     registeredObjects = {}
 }

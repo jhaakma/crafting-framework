@@ -2,6 +2,8 @@ local CraftingMenu = require("CraftingFramework.controllers.CraftingMenu")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("MenuActivator")
+---@class CraftingFramework
+---@field MenuActivator CraftingFramework.MenuActivator
 local CF = require("CraftingFramework")
 
 ---@alias CraftingFramework.MenuActivator.Type

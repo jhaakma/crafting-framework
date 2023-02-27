@@ -1,5 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("Tool")
+---@class CraftingFramework
+---@field Tool CraftingFramework.Tool
 local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.Tool.data

@@ -1,6 +1,10 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Indicator")
+---@class CraftingFramework
+---@field Indicator CraftingFramework.Indicator
 local CF = require("CraftingFramework")
+
+---@class CraftingFramework.Indicator
 CF.Indicator = {}
 CF.Indicator.registeredObjects = {}
 ---@class CraftingFramework.Indicator.data

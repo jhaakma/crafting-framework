@@ -2,6 +2,8 @@ local Util = require("CraftingFramework.util.Util")
 local config = require("CraftingFramework.config")
 local skillsModule = include("OtherSkills.skillModule")
 local logger = Util.createLogger("SkillRequirement")
+---@class CraftingFramework
+---@field SkillRequirement CraftingFramework.SkillRequirement
 local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.SkillRequirement.data

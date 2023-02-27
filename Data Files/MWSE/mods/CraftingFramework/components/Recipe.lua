@@ -6,6 +6,8 @@ local SkillRequirement = require("CraftingFramework.components.SkillRequirement"
 local CustomRequirement = require("CraftingFramework.components.CustomRequirement")
 local ToolRequirement = require("CraftingFramework.components.ToolRequirement")
 local config = require("CraftingFramework.config")
+---@class CraftingFramework
+---@field Recipe CraftingFramework.Recipe
 local CF = require("CraftingFramework")
 
 

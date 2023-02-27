@@ -1,14 +1,16 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Material")
+---@class CraftingFramework
+---@field Material CraftingFramework.Material
 local CF = require("CraftingFramework")
 
----@class craftingFrameworkMaterialData
+---@class CraftingFramework.Material.data
 ---@field id string **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `material`.
 ---@field name string The name of the material. Used in various UIs.
 ---@field ids table<number, string> **Required.**  This is the list of item ids that are considered as identical material.
 
 
----@class craftingFrameworkMaterial : craftingFrameworkMaterialData
+---@class CraftingFramework.Material : CraftingFramework.Material.data
 ---@field ids table<string, boolean>
 CF.Material = {
     schema = {
@@ -23,7 +25,7 @@ CF.Material = {
 
 CF.Material.registeredMaterials = {}
 ---@param id string
----@return craftingFrameworkMaterial material
+---@return CraftingFramework.Material material
 function CF.Material.getMaterial(id)
     local material = CF.Material.registeredMaterials[id:lower()]
     if not material then
@@ -46,8 +48,8 @@ function CF.Material.getMaterial(id)
     return material
 end
 
----@param data craftingFrameworkMaterialData
----@return craftingFrameworkMaterial material
+---@param data CraftingFramework.Material.data
+---@return CraftingFramework.Material material
 function CF.Material:new(data)
     Util.validate(data, CF.Material.schema)
     if not CF.Material.registeredMaterials[data.id] then
@@ -67,7 +69,7 @@ function CF.Material:new(data)
     return material
 end
 
----@param materialList craftingFrameworkMaterialData[]
+---@param materialList CraftingFramework.Material.data[]
 function CF.Material:registerMaterials(materialList)
     if materialList.id then ---@diagnostic disable-line: undefined-field
         logger:error("You passed a single material to registerMaterials, use registerMaterial instead or pass a list of materials")

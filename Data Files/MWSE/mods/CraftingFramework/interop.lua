@@ -53,18 +53,18 @@ end
 
 --Material APIs
 
----@param data craftingFrameworkMaterialData[]
+---@param data CraftingFramework.Material.data[]
 function CF.interop.registerMaterials(data)
     for _, material in ipairs(data) do
         CF.interop.registerMaterial(material)
     end
 end
----@param data craftingFrameworkMaterialData
+---@param data CraftingFramework.Material.data
 function CF.interop.registerMaterial(data)
     Material:new(data)
 end
 ---@param id string
----@return craftingFrameworkMaterial material
+---@return CraftingFramework.Material material
 function CF.interop.getMaterials(id)
     return Material.registeredMaterials[id]
 end

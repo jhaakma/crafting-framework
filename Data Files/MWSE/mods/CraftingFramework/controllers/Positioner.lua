@@ -4,7 +4,11 @@ local config = require("CraftingFramework.config")
 local decals = require('CraftingFramework.controllers.Decals')
 local m1 = tes3matrix33.new()
 local logger = Util.createLogger("Positioner")
+---@class CraftingFramework
+---@field Positioner CraftingFramework.Positioner
 local CF = require("CraftingFramework")
+
+---@class CraftingFramework.Positioner
 CF.Positioner = {
     maxReach = 100,
     minReach = 100,
@@ -14,7 +18,6 @@ CF.Positioner = {
     verticalMode = 0,
     wallAlignMode = true
 }
-local const_epsilon = 0.001
 local function wrapRadians(x)
     return x % (2 * math.pi)
 end
@@ -383,9 +386,6 @@ end
 --pre-declared above
 endPlacement = function()
     logger:debug("endPlacement()")
-    if (CF.Positioner.matchTimer) then
-        CF.Positioner.matchTimer:cancel()
-    end
     recreateRef(CF.Positioner.active)
     decals.applyDecals(CF.Positioner.active)
     event.unregister("simulate", simulatePlacement)

@@ -3,6 +3,8 @@ local logger = Util.createLogger("Craftable")
 local Positioner = require("CraftingFramework.controllers.Positioner")
 local StaticActivator = require("CraftingFramework.controllers.StaticActivator")
 local config = require("CraftingFramework.config")
+---@class CraftingFramework
+---@field Craftable CraftingFramework.Craftable
 local CF = require("CraftingFramework")
 
 ---@alias CraftingFramework.Craftable.SoundType
