@@ -6,6 +6,54 @@ local SkillRequirement = require("CraftingFramework.components.SkillRequirement"
 local CustomRequirement = require("CraftingFramework.components.CustomRequirement")
 local ToolRequirement = require("CraftingFramework.components.ToolRequirement")
 local config = require("CraftingFramework.config")
+local CF = require("CraftingFramework")
+
+
+---@alias craftingFrameworkRotationAxis
+---| '"x"'
+---| '"y"'
+---| '"z"'
+---| '"-x"'
+---| '"-y"'
+---| '"-z"'
+
+---@class CraftingFramework.MaterialRequirement
+---@field material string **Required.** The id of either a Crafting Framework Material, or an object id. Using an object id will register it as its own Material where the object itself is the only item in the list.
+---@field count number *Default*: `1`. The required amount of the material.
+
+---@class CraftingFramework.Recipe.data
+---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
+---@field craftableId string **Required.** The id of the object crafted by this recipe
+---@field description string The description of the recipe, displayed in the crafting menu.
+---@field persist boolean *Default*: `true`. If `false`, the recipe will not be saved to the global recipe list and can't be accessed with Recipe.getRecipe.
+---@field noResult boolean *Defualt*: `false`. If `true`, no object or item will actually be crafted. Instead, use craftCallback to implement a custom result.
+---@field craftable CraftingFramework.Craftable.data
+---@field materials CraftingFramework.MaterialRequirement[] **Required.** A table with the materials required by this recipe.
+---@field timeTaken number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
+---@field knownByDefault boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
+---@field customRequirements CraftingFramework.CustomRequirement.data[] A table with the custom requirements that need to be met in order to craft the associated item.
+---@field skillRequirements CraftingFramework.SkillRequirement.data[] A table with the skill requirements needed to craft the associated item.
+---@field toolRequirements CraftingFramework.ToolRequirement.data[] A table with the tool requirements needed to craft the associated item.
+---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
+---@field name string The name of the craftable displayed in the menu. If not set, it will use the name of the craftable object
+---@field placedObject string If the object being placed is different from the object that is picked up by the player, use `id` for the held object id and `placedObject` for the id of the object that is placed in the world
+---@field uncarryable boolean Treats the crafted item as uncarryable even if the object type otherwise would be carryable. This will make the object be crafted immediately into the world and remove the Pick Up button from the menu. Not required if the crafted object is already uncarryable, such as a static or activator
+---@field additionalMenuOptions craftingFrameworkMenuButtonData[] A list of additional menu options that will be displayed in the craftable menu
+---@field soundId string Provide a sound ID (for a sound registered in the CS) that will be played when the craftable is crafted
+---@field soundPath string Provide a custom sound path that will be played when an craftable is crafted
+---@field soundType CraftingFramework.Craftable.SoundType Determines the crafting sound used, using sounds from the framework or added by interop. These include: "fabric", "wood", "leather", "rope", "straw", "metal" and "carve."
+---@field materialRecovery number The percentage of materials used to craft the item that will be recovered. Overrides the default amount set in the Crafting Framework MCM
+---@field maxSteepness number The max angle a crafted object will be oriented to while repositioning
+---@field resultAmount number The amount of the item to be crafted
+---@field recoverEquipmentMaterials boolean When set to true, and the craftable is an armor or weapon item, equipping it when it has 0 condition will destroy it and salvage its materials
+---@field destroyCallback function Custom function called after a craftable has been destroyed
+---@field placeCallback function Custom function called after a craftable has been placed
+---@field positionCallback function
+---@field craftCallback function Custom function called after a craftable has been crafted
+---@field previewMesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
+---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
+---@field previewScale number **Default 1** Determines the scale of the preview mesh.
+---@field previewHeight number **Default 1** Determines the height of the mesh in the preview window.
 
 local MaterialRequirementSchema = {
     name = "MaterialRequirement",
@@ -15,8 +63,13 @@ local MaterialRequirementSchema = {
     }
 }
 
----@class craftingFrameworkRecipe : craftingFrameworkRecipeData
-local Recipe = {
+
+---@class CraftingFramework.Recipe : CraftingFramework.Recipe.data
+---@field craftable CraftingFramework.Craftable
+---@field customRequirements CraftingFramework.CustomRequirement[]
+---@field skillRequirements CraftingFramework.SkillRequirement[]
+---@field toolRequirements CraftingFramework.ToolRequirement[]
+CF.Recipe = {
     schema = {
         name = "Recipe",
         fields = {
@@ -36,23 +89,23 @@ local Recipe = {
     }
 }
 
-Recipe.registeredRecipes = {}
+CF.Recipe.registeredRecipes = {}
 ---@param id string
----@return craftingFrameworkRecipe recipe
-function Recipe.getRecipe(id)
-    return Recipe.registeredRecipes[id:lower()]
+---@return CraftingFramework.Recipe recipe
+function CF.Recipe.getRecipe(id)
+    return CF.Recipe.registeredRecipes[id:lower()]
 end
 
----@param data craftingFrameworkRecipeData
----@return craftingFrameworkRecipe recipe
-function Recipe:new(data)
-    ---@type craftingFrameworkRecipe
+---@param data CraftingFramework.Recipe.data
+---@return CraftingFramework.Recipe recipe
+function CF.Recipe:new(data)
+    ---@type CraftingFramework.Recipe
     local recipe = table.copy(data, {})
-    Util.validate(recipe, Recipe.schema)
+    Util.validate(recipe, CF.Recipe.schema)
     --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
 
-    ---@cast data craftingFrameworkRecipe
+    ---@cast data CraftingFramework.Recipe
     recipe.craftable = data.craftable or {}
     for field, _ in pairs(craftableFields) do
         if not recipe.craftable[field] then
@@ -77,22 +130,22 @@ function Recipe:new(data)
     setmetatable(recipe, self)
     self.__index = self
     if recipe.persist ~= false then
-        Recipe.registeredRecipes[recipe.id] = recipe
+        CF.Recipe.registeredRecipes[recipe.id] = recipe
     end
     return recipe
 end
 
 
-function Recipe:learn()
+function CF.Recipe:learn()
     config.persistent.knownRecipes[self.id] = true
 end
 
-function Recipe:unlearn()
+function CF.Recipe:unlearn()
     self.knownByDefault = false
     config.persistent.knownRecipes[self.id] = nil
 end
 
-function Recipe:isKnown()
+function CF.Recipe:isKnown()
     if self.knownByDefault then
         return true
     end
@@ -100,7 +153,7 @@ function Recipe:isKnown()
     return knownRecipe
 end
 
-function Recipe:craft()
+function CF.Recipe:craft()
     log:debug("Crafting %s", self.id)
     local materialsUsed = {}
     for _, materialReq in ipairs(self.materials) do
@@ -137,7 +190,7 @@ function Recipe:craft()
 end
 
 ---@return tes3object|tes3weapon|tes3armor|tes3misc|tes3light|nil object
-function Recipe:getItem()
+function CF.Recipe:getItem()
     local id = self.craftable:getPlacedObjectId() or self.craftable.id
     if id then
         return tes3.getObject(id)
@@ -145,7 +198,7 @@ function Recipe:getItem()
 end
 
 ---@return number
-function Recipe:getAverageSkillLevel()
+function CF.Recipe:getAverageSkillLevel()
     local total = 0
     local count = 0
     for _, skillRequirement in ipairs(self.skillRequirements) do
@@ -158,7 +211,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function Recipe:hasMaterials()
+function CF.Recipe:hasMaterials()
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
         if not material then
@@ -179,7 +232,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function Recipe:meetsToolRequirements()
+function CF.Recipe:meetsToolRequirements()
     for _, toolRequirement in ipairs(self.toolRequirements) do
         local tool = toolRequirement.tool
         if not tool then
@@ -197,7 +250,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function Recipe:meetsSkillRequirements()
+function CF.Recipe:meetsSkillRequirements()
     for _, skillRequirement in ipairs(self.skillRequirements) do
         if not skillRequirement:check() then
             return false, "Your skill is not high enough"
@@ -208,7 +261,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function Recipe:meetsCustomRequirements()
+function CF.Recipe:meetsCustomRequirements()
     if self.customRequirements then
         for _, requirement in ipairs(self.customRequirements) do
             local meetsRequirements, reason = requirement:check()
@@ -222,7 +275,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function Recipe:meetsAllRequirements()
+function CF.Recipe:meetsAllRequirements()
     local meetsCustomRequirements, reason = self:meetsCustomRequirements()
     if not meetsCustomRequirements then return false, reason end
     local hasMaterials, reason = self:hasMaterials()
@@ -234,8 +287,8 @@ function Recipe:meetsAllRequirements()
     return true
 end
 
-Recipe.__tostring = function(self)
+CF.Recipe.__tostring = function(self)
     return string.format("Recipe: %s", self.id)
 end
 
-return Recipe
+return CF.Recipe

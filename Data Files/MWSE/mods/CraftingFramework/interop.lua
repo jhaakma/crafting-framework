@@ -1,87 +1,100 @@
+local CF = require("CraftingFramework")
 local MenuActivator = require("CraftingFramework.components.MenuActivator")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Material = require("CraftingFramework.components.Material")
 local Tool = require("CraftingFramework.components.Tool")
 local Positioner = require("CraftingFramework.controllers.Positioner")
+local StaticActivator = require("CraftingFramework.controllers.StaticActivator")
+local Indicator = require("CraftingFramework.controllers.Indicator")
 ---@class craftingFrameworkInterop
-local interop = {}
+CF.interop = {}
 
 --MenuActivator APIs
 
----@param menuActivator craftingFrameworkMenuActivatorData
----@return craftingFrameworkMenuActivator
-function interop.registerMenuActivator(menuActivator)
+---@param menuActivator CraftingFramework.MenuActivator.data
+---@return CraftingFramework.MenuActivator
+function CF.interop.registerMenuActivator(menuActivator)
     local catalogue = MenuActivator:new(menuActivator)
     return catalogue
 end
 ---@param id string
----@return craftingFrameworkMenuActivator menuActivator
-function interop.getMenuActivator(id)
+---@return CraftingFramework.MenuActivator menuActivator
+function CF.interop.getMenuActivator(id)
     return MenuActivator.registeredMenuActivators[id]
 end
 
 --Recipe APIs
 
----@param data craftingFrameworkRecipeData[]
-function interop.registerRecipes(data)
+---@param data CraftingFramework.Recipe.data[]
+function CF.interop.registerRecipes(data)
     for _, recipe in ipairs(data) do
-        interop.registerRecipe(recipe)
+        CF.interop.registerRecipe(recipe)
     end
 end
----@param recipe craftingFrameworkRecipeData
-function interop.registerRecipe(recipe)
+---@param recipe CraftingFramework.Recipe.data
+function CF.interop.registerRecipe(recipe)
     Recipe:new(recipe)
 end
 ---@param id string
----@return craftingFrameworkRecipe recipe
-function interop.getRecipe(id)
+---@return CraftingFramework.Recipe recipe
+function CF.interop.getRecipe(id)
     return Recipe.registeredRecipes[id]
 end
 ---@param id string
-function interop.learnRecipe(id)
-    local recipe = interop.getRecipe(id)
+function CF.interop.learnRecipe(id)
+    local recipe = CF.interop.getRecipe(id)
     recipe:learn()
 end
 ---@param id string
-function interop.unlearnRecipe(id)
-    local recipe = interop.getRecipe(id)
+function CF.interop.unlearnRecipe(id)
+    local recipe = CF.interop.getRecipe(id)
     recipe:unlearn()
 end
 
 --Material APIs
 
 ---@param data craftingFrameworkMaterialData[]
-function interop.registerMaterials(data)
+function CF.interop.registerMaterials(data)
     for _, material in ipairs(data) do
-        interop.registerMaterial(material)
+        CF.interop.registerMaterial(material)
     end
 end
 ---@param data craftingFrameworkMaterialData
-function interop.registerMaterial(data)
+function CF.interop.registerMaterial(data)
     Material:new(data)
 end
 ---@param id string
 ---@return craftingFrameworkMaterial material
-function interop.getMaterials(id)
+function CF.interop.getMaterials(id)
     return Material.registeredMaterials[id]
 end
 
 --Tool APIs
 
----@param data craftingFrameworkToolData[]
-function interop.registerTools(data)
+---@param data CraftingFramework.Tool.data[]
+function CF.interop.registerTools(data)
     for _, tool in ipairs(data) do
-        interop.registerTool(tool)
+        CF.interop.registerTool(tool)
     end
 end
----@param data craftingFrameworkToolData
-function interop.registerTool(data)
+---@param data CraftingFramework.Tool.data
+function CF.interop.registerTool(data)
     Tool:new(data)
 end
 
+-- Activator APIs
+function CF.interop.registerStaticActivator(data)
+    StaticActivator:new(data)
+end
+
+-- Indicator APIs
+function CF.interop.registerIndicator(data)
+    Indicator:new(data)
+end
+
 ---@param id string
----@return craftingFrameworkTool tool
-function interop.getTools(id)
+---@return CraftingFramework.Tool tool
+function CF.interop.getTools(id)
     return Tool.registeredTools[id]
 end
 
@@ -95,7 +108,7 @@ end
 ---@field blockToggle boolean
 
 ---@param e CraftingFramework.interop.activatePositionerParams
-function interop.activatePositioner(e)
+function CF.interop.activatePositioner(e)
     Positioner.startPositioning{
         target = e.reference,
         nonCrafted = true,
@@ -106,4 +119,4 @@ function interop.activatePositioner(e)
 end
 
 
-return interop
+return CF.interop

@@ -1,23 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local Craftable = require("CraftingFramework.components.Craftable")
+local StaticActivator = require("CraftingFramework.controllers.StaticActivator")
 local logger = Util.createLogger("CraftingEvents")
-
-local function craftableActivated(e)
-    logger:trace("craftableActivated object id: %s", e.reference.baseObject.id)
-    local craftable = Craftable.getPlacedCraftable(e.reference.baseObject.id:lower())
-    if craftable then
-        logger:trace("craftableActivated placedObject id: %s", craftable:getPlacedObjectId())
-        if Util.isShiftDown() and Util.canBeActivated(e.reference) then
-            e.reference.data.allowActivate = true
-            tes3.player:activate(e.reference)
-            e.reference.data.allowActivate = nil
-        else
-            craftable:activate(e.reference)
-        end
-    end
-end
-event.register("CraftingFramework:CraftableActivated", craftableActivated)
-
 
 ---@param e itemDroppedEventData
 local function itemDropped(e)
@@ -45,3 +29,43 @@ event.register("CraftingFramework:EndPlacement", function(e)
         craftable:positionCallback{ reference = reference}
     end
 end)
+
+local function startIndicatorTimer()
+    logger:debug("Starting activation indicator timer")
+    timer.start{
+        duration = 0.1,
+        type = timer.real,
+        iterations = -1,
+        callback = function()
+            StaticActivator.callRayTest{
+                eventName = "CraftingFramework:StaticActivatorIndicator"
+            }
+        end
+    }
+end
+event.register("loaded", startIndicatorTimer)
+
+local function triggerActivateKey(e)
+    if (e.keyCode == tes3.getInputBinding(tes3.keybind.activate).code) and (tes3.getInputBinding(tes3.keybind.activate).device == 0) then
+        StaticActivator.doTriggerActivate()
+    end
+end
+event.register("keyDown", triggerActivateKey, { priority = 50})
+
+local function triggerActivateMouse(e)
+    if (e.button == tes3.getInputBinding(tes3.keybind.activate).code) and (tes3.getInputBinding(tes3.keybind.activate).device == 1) then
+        StaticActivator.doTriggerActivate()
+    end
+end
+event.register("mouseButtonUp", triggerActivateMouse, { priority = 50})
+
+local function blockActivate(e)
+    if e.activator ~= tes3.player then return end
+    if e.target.data and e.target.data.crafted then
+        if not e.target.data.allowActivate then
+            logger:debug("Crafted, block activation")
+            return false
+        end
+    end
+end
+event.register("activate", blockActivate)

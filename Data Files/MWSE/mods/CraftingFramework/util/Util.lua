@@ -5,10 +5,6 @@ Util.loggers = {}
 do --logger
     local logLevel = config.mcm.logLevel
     local logger = require("logging.logger")
-    Util.log = logger.new{
-        name = config.static.modName,
-        logLevel = logLevel
-    }
     Util.createLogger = function(serviceName)
         local logger = logger.new{
             name = string.format("%s: %s", config.static.modName, serviceName),
@@ -17,7 +13,9 @@ do --logger
         Util.loggers[serviceName] = logger
         return logger
     end
+
 end
+local logger = Util.createLogger("Util")
 
 Util.validate = require("CraftingFramework.util.validator").validate
 Util.traverseRoots = function(roots)
@@ -57,6 +55,7 @@ Util.onLight = function(lightRef)
             lightRef.sceneNode:attachChild(newNode.children[i], true)
         end
     end
+    ---@type any
     local lightNode = niPointLight.new()
     lightNode.name = "LIGHTNODE"
     if lightRef.object.color then
@@ -80,7 +79,7 @@ Util.onLight = function(lightRef)
     lightRef.sceneNode:update()
     lightRef.sceneNode:updateNodeEffects()
     lightRef:getOrCreateAttachedDynamicLight(lightNode, 1.0)
-    Util.log:debug("onlight done")
+    logger:debug("onlight done")
 end
 Util.removeLight = function(lightNode)
 
@@ -133,9 +132,10 @@ Util.removeLight = function(lightNode)
 end
 function Util.deleteRef(ref, no)
     if no then
-        mwse.error("You called deleteRef() with a colon, didn't you?")
+        error("You called deleteRef() with a colon, didn't you?")
     end
     ref:disable()
+    ---@diagnostic disable-next-line: deprecated
     mwscript.setDelete{ reference = ref}
 end
 function Util.isShiftDown()

@@ -36,7 +36,7 @@ local uiids = {
 local m1 = tes3matrix33.new()
 local m2 = tes3matrix33.new()
 
----@param menuActivator  craftingFrameworkMenuActivator
+---@param menuActivator  CraftingFramework.MenuActivator
 function CraftingMenu:new(menuActivator)
     local craftingMenu = setmetatable(table.copy(menuActivator), self)
     craftingMenu.showCategories = menuActivator.defaultShowCategories
@@ -267,7 +267,7 @@ function CraftingMenu:toggleButtonDisabled(button, isVisible, isDisabled)
     button.disabled = isDisabled
 end
 
----@param toolReq craftingFrameworkToolRequirement
+---@param toolReq CraftingFramework.ToolRequirement
 function CraftingMenu:createToolTooltip(toolReq)
     local tool = toolReq.tool
     if not tool then return end
@@ -292,7 +292,8 @@ function CraftingMenu:createToolTooltip(toolReq)
         local item = tes3.getObject(id)
         if item then
             log:debug("checking toolId: %s", id)
-            local itemCount =tes3.getItemCount{ reference = tes3.player, item = item }
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            local itemCount = tes3.getItemCount{ reference = tes3.player, item = item }
             local block = outerBlock:createBlock{}
             block.flowDirection = "left_to_right"
             block.autoHeight = true
@@ -327,7 +328,7 @@ end
 
 
 
----@param toolReq craftingFrameworkToolRequirement
+---@param toolReq CraftingFramework.ToolRequirement
 ---@param parentList table
 function CraftingMenu:createToolLabel(toolReq, parentList)
     local tool = toolReq.tool
@@ -376,7 +377,7 @@ function CraftingMenu:updateToolsPane()
     end
 end
 
----@param customRequirement craftingFrameworkCustomRequirement
+---@param customRequirement CraftingFramework.CustomRequirement
 function CraftingMenu:createCustomRequirementLabel(customRequirement, list)
     local requirement = list:createLabel()
     requirement.borderAllSides = 2
@@ -403,17 +404,16 @@ function CraftingMenu:updateCustomRequirementsPane()
     local list = craftingMenu:findChild(uiids.customRequirementsPane)
     list:getContentElement():destroyChildren()
     local customRequirements = self.selectedRecipe.customRequirements
-    if #customRequirements < 1 or customRequirements.showInMenu == false then
-        customRequirementsBlock.visible = false
-    else
-        customRequirementsBlock.visible = true
-        for _, customReq in ipairs(customRequirements) do
+    customRequirementsBlock.visible = false
+    for _, customReq in ipairs(customRequirements) do
+        if customReq.showInMenu then
+            customRequirementsBlock.visible = true
             self:createCustomRequirementLabel(customReq, list)
         end
     end
 end
 
----@param skillReq craftingFrameworkSkillRequirement
+---@param skillReq CraftingFramework.SkillRequirement
 function CraftingMenu:createSkillTooltip(skillReq)
     local name = skillReq:getSkillName()
     local tooltip = tes3ui.createTooltipMenu()
@@ -440,7 +440,7 @@ function CraftingMenu:createSkillTooltip(skillReq)
     }
 end
 
----@param skillReq craftingFrameworkSkillRequirement
+---@param skillReq CraftingFramework.SkillRequirement
 function CraftingMenu:createSkillLabel(skillReq, parentList)
     local current = skillReq:getCurrent()
     local skillText = string.format("%s: %s/%s",
@@ -497,6 +497,7 @@ function CraftingMenu:createMaterialTooltip(material)
     for id, _ in pairs(material.ids) do
         local item = tes3.getObject(id)
         if item then
+            ---@diagnostic disable-next-line: assign-type-mismatch
             local itemCount = tes3.getItemCount{ reference = tes3.player, item = item }
             local block = outerBlock:createBlock{}
             block.flowDirection = "left_to_right"
@@ -516,7 +517,7 @@ function CraftingMenu:createMaterialTooltip(material)
     end
 end
 
----@param materialReq craftingFrameworkMaterialRequirementData
+---@param materialReq CraftingFramework.MaterialRequirement
 function CraftingMenu:createMaterialButton(materialReq, list)
     local material = Material.getMaterial(materialReq.material)
     local materialText = string.format("%s x %G", material:getName(), materialReq.count )
@@ -598,10 +599,10 @@ function CraftingMenu:updateDescriptionPane()
 end
 
 
----@param recipe craftingFrameworkRecipe
+---@param recipe CraftingFramework.Recipe
 ---@return craftingFrameworkRotationAxis
 local function getRotationAxis(recipe, isSheathMesh)
-    local item = recipe:getItem()---@type tes3object|tes3clothing
+    local item = recipe:getItem()---@type tes3object|tes3clothing|nil
     if not item then return 'z' end
     local rotationObjectTypes = {
         [tes3.objectType.weapon] = 'y',
@@ -842,13 +843,13 @@ function CraftingMenu:updateMenu()
     self:updateButtons()
 end
 
----@param recipe craftingFrameworkRecipe
+---@param recipe CraftingFramework.Recipe
 function CraftingMenu:recipeMatchesSearch(recipe)
     if (not self.searchText) or self.searchText == "" then return true end
     return string.find(recipe.craftable:getName():lower(), self.searchText:lower())
 end
 
----@param recipes craftingFrameworkRecipe[]
+---@param recipes CraftingFramework.Recipe[]
 function CraftingMenu:populateCategoryList(recipes, parent)
     table.sort(recipes, sorters[self.currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
@@ -924,7 +925,7 @@ function CraftingMenu:updateCategoriesList()
         log:debug("Clearing recipes for %s", category.name)
         category.recipes = {}
     end
-    ---@param recipe craftingFrameworkRecipe
+    ---@param recipe CraftingFramework.Recipe
     for _, recipe in pairs(self.recipes) do
         local category = recipe.category
         if not self.categories[category] then

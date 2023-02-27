@@ -1,4 +1,5 @@
 local Util = require("CraftingFramework.util.Util")
+local logger = Util.createLogger("Decals")
 local this = {}
 
 local function traverseNIF(roots)
@@ -25,7 +26,7 @@ local states = {
 local textures = {}
 
 local function preloadTextures()
-    Util.log:debug("preloading textures for Crafting Framework")
+    logger:debug("preloading textures for Crafting Framework")
     for state, path in pairs(states) do
         local texture = niSourceTexture.createFromPath(path)
         textures[state] = texture

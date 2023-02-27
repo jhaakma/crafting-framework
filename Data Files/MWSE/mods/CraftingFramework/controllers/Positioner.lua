@@ -4,8 +4,8 @@ local config = require("CraftingFramework.config")
 local decals = require('CraftingFramework.controllers.Decals')
 local m1 = tes3matrix33.new()
 local logger = Util.createLogger("Positioner")
-
-local this = {
+local CF = require("CraftingFramework")
+CF.Positioner = {
     maxReach = 100,
     minReach = 100,
     currentReach = 500,
@@ -34,7 +34,7 @@ local function getKeybindName(scancode)
 end
 -- Show keybind help overlay.
 local function showGuide()
-    local menu = tes3ui.findHelpLayerMenu(this.id_guide)
+    local menu = tes3ui.findHelpLayerMenu(CF.Positioner.id_guide)
 
     if (menu) then
         menu.visible = true
@@ -42,7 +42,7 @@ local function showGuide()
         return
     end
 
-    menu = tes3ui.createHelpLayerMenu{ id = this.id_guide, fixedFrame = true }
+    menu = tes3ui.createHelpLayerMenu{ id = CF.Positioner.id_guide, fixedFrame = true }
     menu:destroyChildren()
     menu.disabled = true
     menu.absolutePosAlignX = 0.02
@@ -76,18 +76,18 @@ end
 
 local function finalPlacement()
     logger:debug("finalPlacement()")
-    this.shadow_model.appCulled = true
-    this.lastItemOri = this.active.orientation:copy()
+    CF.Positioner.shadow_model.appCulled = true
+    CF.Positioner.lastItemOri = CF.Positioner.active.orientation:copy()
 
     if Util.isShiftDown() then
-        this.active.position = this.itemInitialPos
-        this.active.orientation = this.itemInitialOri
+        CF.Positioner.active.position = CF.Positioner.itemInitialPos
+        CF.Positioner.active.orientation = CF.Positioner.itemInitialOri
     end
 
     tes3.playSound{ sound = "Menu Click" }
-    if this.active.baseObject.objectType == tes3.objectType.light then
-        Util.removeLight(this.active.sceneNode)
-        Util.onLight(this.active)
+    if CF.Positioner.active.baseObject.objectType == tes3.objectType.light then
+        Util.removeLight(CF.Positioner.active.sceneNode)
+        Util.onLight(CF.Positioner.active)
     end
 
     endPlacement()
@@ -95,27 +95,27 @@ end
 
 local function doPinToWall()
     return config.persistent.placementSetting == settings.ground
-        or this.pinToWall == true
+        or CF.Positioner.pinToWall == true
 end
 
 -- Called every simulation frame to reposition the item.
 local function simulatePlacement()
-    this.maxReach = tes3.getPlayerActivationDistance()
-    this.currentReach = math.min(this.currentReach, this.maxReach)
-    if not this.active then
+    CF.Positioner.maxReach = tes3.getPlayerActivationDistance()
+    CF.Positioner.currentReach = math.min(CF.Positioner.currentReach, CF.Positioner.maxReach)
+    if not CF.Positioner.active then
         return
     end
     -- Stop if player takes the object.
-    if (this.active.deleted) then
-        logger:debug("simulatePlacement: this.active is deleted, ending placement")
+    if (CF.Positioner.active.deleted) then
+        logger:debug("simulatePlacement: CF.Positioner.active is deleted, ending placement")
         endPlacement()
         return
     -- Check for glitches.
-    elseif (this.active.sceneNode == nil) then
+    elseif (CF.Positioner.active.sceneNode == nil) then
         logger:debug("simulatePlacement: sceneNode missing, ending placement")
         tes3.messageBox{ message = "Item location was lost. Placement reset."}
-        this.active.position = this.itemInitialPos
-        this.active.orientation = this.itemInitialOri
+        CF.Positioner.active.position = CF.Positioner.itemInitialPos
+        CF.Positioner.active.orientation = CF.Positioner.itemInitialOri
         endPlacement()
         return
     -- Drop item if player readies combat or casts a spell.
@@ -130,27 +130,28 @@ local function simulatePlacement()
         return
     end
 
-    local d_theta = tes3.player.orientation.z - this.playerLastOri.z
+    local d_theta = tes3.player.orientation.z - CF.Positioner.playerLastOri.z
     -- Cast ray along initial pickup direction rotated by the 1st person camera.
-    this.shadow_model.appCulled = true
-    this.active.sceneNode.appCulled = true
+    CF.Positioner.shadow_model.appCulled = true
+    CF.Positioner.active.sceneNode.appCulled = true
 
     local eyePos = tes3.getPlayerEyePosition()
     local eyeVec = tes3.getPlayerEyeVector()
     ---The position from the player's view to the max distance
-    local lookPos = eyePos + eyeVec * this.currentReach
+    local lookPos = eyePos + eyeVec * CF.Positioner.currentReach
     logger:trace("eyePos: %s, eyeVec: %s, lookPos: %s", eyePos, eyeVec, lookPos)
 
-    if this.offset == nil then
-        logger:trace("this.offset is nil, setting to lookPos - active.position")
-        this.offset = lookPos - this.active.position
+    if CF.Positioner.offset == nil then
+        logger:trace("CF.Positioner.offset is nil, setting to lookPos - active.position")
+        CF.Positioner.offset = lookPos - CF.Positioner.active.position
     else
         m1:toRotationZ(d_theta)
     end
-    logger:trace("this.offset: %s", this.offset)
+    logger:trace("CF.Positioner.offset: %s", CF.Positioner.offset)
 
     ---The position to place the object
-    local targetPos = eyePos + eyeVec * this.currentReach - this.offset
+    ---@type any
+    local targetPos = eyePos + eyeVec * CF.Positioner.currentReach - CF.Positioner.offset
     logger:trace("targetPos: %s", targetPos)
 
     if doPinToWall() then
@@ -160,29 +161,30 @@ local function simulatePlacement()
         local ray = tes3.rayTest{
             position = eyePos,
             direction = rayVec,
-            ignore = { this.active, tes3.player },
-            maxDistance = this.currentReach,
+            ignore = { CF.Positioner.active, tes3.player },
+            maxDistance = CF.Positioner.currentReach,
         }
         if ray then
-            local width = math.min(this.boundMax.x - this.boundMin.x, this.boundMax.y - this.boundMin.y, this.boundMax.z - this.boundMin.z)
+            local width = math.min(CF.Positioner.boundMax.x - CF.Positioner.boundMin.x, CF.Positioner.boundMax.y - CF.Positioner.boundMin.y, CF.Positioner.boundMax.z - CF.Positioner.boundMin.z)
             logger:trace("width: %s", width)
-            local distance = math.min(ray.distance, this.currentReach) - width
+            local distance = math.min(ray.distance, CF.Positioner.currentReach) - width
             logger:trace("distance: %s", distance)
             local diff = targetPos:distance(eyePos) - distance
             logger:trace("diff: %s", diff)
-            targetPos = targetPos - rayVec * diff ---@diagnostic disable-line
+            targetPos = targetPos - rayVec * diff
+            ---@cast targetPos tes3vector3
             logger:trace("new targetPos: %s", targetPos)
         end
 
         local dropPos = targetPos:copy()
         local rayhit = tes3.rayTest{
-            position = this.active.position - tes3vector3.new(0, 0, this.offset.z),
+            position = CF.Positioner.active.position - tes3vector3.new(0, 0, CF.Positioner.offset.z),
             direction = tes3vector3.new(0, 0, -1),
-            ignore = { this.active, tes3.player }
+            ignore = { CF.Positioner.active, tes3.player }
         }
         if (rayhit ) then
             dropPos = rayhit.intersection:copy()
-            targetPos.z = math.max(targetPos.z, dropPos.z + (this.height or 0) )
+            targetPos.z = math.max(targetPos.z, dropPos.z + (CF.Positioner.height or 0) )
         end
 
     end
@@ -192,38 +194,38 @@ local function simulatePlacement()
 
     -- Incrementally rotate the same amount as the player, to keep relative alignment with player.
 
-    this.playerLastOri = tes3.player.orientation:copy()
-    if (this.rotateMode) then
+    CF.Positioner.playerLastOri = tes3.player.orientation:copy()
+    if (CF.Positioner.rotateMode) then
         -- Use inputController, as the player orientation is locked.
-        logger:debug("rotate mode is active")
+        logger:trace("rotate mode is active")
         local mouseX = tes3.worldController.inputController.mouseState.x
-        logger:debug("mouse x: %s", tes3.worldController.inputController.mouseState.x)
+        logger:trace("mouse x: %s", tes3.worldController.inputController.mouseState.x)
         d_theta = 0.001 * 15 * mouseX
     end
 
     --logger:debug("simulatePlacement: position: %s", pos)
     -- Update item and shadow spot.
-    this.active.sceneNode.appCulled = false
-    this.active.position = targetPos
-    this.active.orientation.z = wrapRadians(this.active.orientation.z + d_theta)
+    CF.Positioner.active.sceneNode.appCulled = false
+    CF.Positioner.active.position = targetPos
+    CF.Positioner.active.orientation.z = wrapRadians(CF.Positioner.active.orientation.z + d_theta)
 
     local doOrient = config.persistent.placementSetting == settings.ground
 
     if doOrient then
-        orienter.orientRefToGround{ ref = this.active, mode = config.persistent.placementSetting }
-        --logger:debug("simulatePlacement: orienting %s", this.active.orientation)
+        orienter.orientRefToGround{ ref = CF.Positioner.active, mode = config.persistent.placementSetting }
+        --logger:debug("simulatePlacement: orienting %s", CF.Positioner.active.orientation)
     else
-        this.active.orientation = tes3vector3.new(0, 0, this.active.orientation.z)
+        CF.Positioner.active.orientation = tes3vector3.new(0, 0, CF.Positioner.active.orientation.z)
     end
 end
 
 -- cellChanged event handler.
 local function cellChanged(e)
     -- To avoid problems, reset item if moving in or out of an interior cell.
-    if (this.active.cell.isInterior or e.cell.isInterior) then
+    if (CF.Positioner.active.cell.isInterior or e.cell.isInterior) then
         tes3.messageBox{ message = "You cannot move items between cells. Placement reset."}
-        this.active.position = this.itemInitialPos
-        this.active.orientation = this.itemInitialOri
+        CF.Positioner.active.position = CF.Positioner.itemInitialPos
+        CF.Positioner.active.orientation = CF.Positioner.itemInitialOri
         endPlacement()
     end
 end
@@ -234,21 +236,21 @@ local function matchVerticalMode(orient)
     if (math.abs(orient.x) > 0.1) then
         local k = math.floor(0.5 + orient.z / (0.5 * math.pi))
         if (k == 0) then
-            this.verticalMode = 1
-            this.height = -this.boundMin.y
+            CF.Positioner.verticalMode = 1
+            CF.Positioner.height = -CF.Positioner.boundMin.y
         elseif (k == -1) then
-            this.verticalMode = 2
-            this.height = -this.boundMin.x
+            CF.Positioner.verticalMode = 2
+            CF.Positioner.height = -CF.Positioner.boundMin.x
         elseif (k == 2) then
-            this.verticalMode = 3
-            this.height = this.boundMax.y
+            CF.Positioner.verticalMode = 3
+            CF.Positioner.height = CF.Positioner.boundMax.y
         elseif (k == 1) then
-            this.verticalMode = 4
-            this.height = this.boundMax.x
+            CF.Positioner.verticalMode = 4
+            CF.Positioner.height = CF.Positioner.boundMax.x
         end
     else
-        this.verticalMode = 0
-        this.height = -this.boundMin.z
+        CF.Positioner.verticalMode = 0
+        CF.Positioner.height = -CF.Positioner.boundMin.z
     end
 end
 
@@ -262,17 +264,17 @@ end
 
 
 -- On grabbing / dropping an item.
-this.togglePlacement = function(e)
-    this.maxReach = tes3.getPlayerActivationDistance()
+CF.Positioner.togglePlacement = function(e)
+    CF.Positioner.maxReach = tes3.getPlayerActivationDistance()
     e = e or { target = nil }
     --init settings
-    this.pinToWall = e.pinToWall or false
-    this.blockToggle = e.blockToggle or false
+    CF.Positioner.pinToWall = e.pinToWall or false
+    CF.Positioner.blockToggle = e.blockToggle or false
 
     config.persistent.placementSetting = config.persistent.placementSetting or "ground"
     logger:debug("togglePlacement")
     toggleBlockActivate()
-    if this.active then
+    if CF.Positioner.active then
         logger:debug("togglePlacement: isActive, calling finalPlacement()")
         finalPlacement()
         return
@@ -289,7 +291,7 @@ this.togglePlacement = function(e)
             position = tes3.getPlayerEyePosition(),
             direction = tes3.getPlayerEyeVector(),
             ignore = { tes3.player },
-            maxDistance = this.maxReach,
+            maxDistance = CF.Positioner.maxReach,
             root = config.persistent.placementSetting == "ground"
                 and tes3.game.worldLandscapeRoot or nil
         })
@@ -297,15 +299,15 @@ this.togglePlacement = function(e)
         target = ray and ray.reference
         if target and ray then
             logger:debug("togglePlacement: ray found target, doing reach stuff")
-            this.offset = target.position - ray.intersection
-            this.currentReach = ray and math.min(ray.distance, this.maxReach)
+            CF.Positioner.offset = target.position - ray.intersection
+            CF.Positioner.currentReach = ray and math.min(ray.distance, CF.Positioner.maxReach)
         end
     else
         logger:debug("togglePlacement: e.target, doing reach stuff")
         target = e.target
         local dist = target.position:distance(tes3.getPlayerEyePosition())
-        this.currentReach = math.min(dist, this.maxReach)
-        this.offset = nil
+        CF.Positioner.currentReach = math.min(dist, CF.Positioner.maxReach)
+        CF.Positioner.offset = nil
     end
 
     if not target then
@@ -319,37 +321,37 @@ this.togglePlacement = function(e)
         return
     end
 
-    -- if target.position:distance(tes3.player.position) > this.maxReach  then
+    -- if target.position:distance(tes3.player.position) > CF.Positioner.maxReach  then
     --     logger:debug("togglePlacement: out of reach, return")
     --     return
     -- end
 
     -- Workaround to avoid dupe-on-load bug when moving non-persistent refs into another cell.
     if (target.sourceMod and not target.cell.isInterior) then
-        tes3.messageBox{ message = "You must pick up and drop this item first." }
+        tes3.messageBox{ message = "You must pick up and drop Positioner item first." }
         return
     end
 
     logger:debug("togglePlacement: passed checks, setting position variables")
 
     -- Calculate effective bounds including scale.
-    this.boundMin = target.object.boundingBox.min * target.scale
-    this.boundMax = target.object.boundingBox.max * target.scale
+    CF.Positioner.boundMin = target.object.boundingBox.min * target.scale
+    CF.Positioner.boundMax = target.object.boundingBox.max * target.scale
     matchVerticalMode(target.orientation)
 
     -- Get exact ray to selection point, relative to 1st person camera.
     local eye = tes3.getPlayerEyePosition()
-    local basePos = target.position - tes3vector3.new(0, 0, this.height or 0)
-    this.ray = tes3.worldController.armCamera.cameraRoot.worldTransform.rotation:transpose() * (basePos - eye)
-    this.playerLastOri = tes3.player.orientation:copy()
-    this.itemInitialPos = target.position:copy()
-    this.itemInitialOri = target.orientation:copy()
-    this.orientation = target.orientation:copy()
+    local basePos = target.position - tes3vector3.new(0, 0, CF.Positioner.height or 0)
+    CF.Positioner.ray = tes3.worldController.armCamera.cameraRoot.worldTransform.rotation:transpose() * (basePos - eye)
+    CF.Positioner.playerLastOri = tes3.player.orientation:copy()
+    CF.Positioner.itemInitialPos = target.position:copy()
+    CF.Positioner.itemInitialOri = target.orientation:copy()
+    CF.Positioner.orientation = target.orientation:copy()
 
 
-    this.active = target
-    this.active.hasNoCollision = true
-    decals.applyDecals(this.active, config.persistent.placementSetting)
+    CF.Positioner.active = target
+    CF.Positioner.active.hasNoCollision = true
+    decals.applyDecals(CF.Positioner.active, config.persistent.placementSetting)
     tes3.playSound{ sound = "Menu Click" }
 
     event.register("cellChanged", cellChanged)
@@ -381,21 +383,21 @@ end
 --pre-declared above
 endPlacement = function()
     logger:debug("endPlacement()")
-    if (this.matchTimer) then
-        this.matchTimer:cancel()
+    if (CF.Positioner.matchTimer) then
+        CF.Positioner.matchTimer:cancel()
     end
-    recreateRef(this.active)
-    decals.applyDecals(this.active)
+    recreateRef(CF.Positioner.active)
+    decals.applyDecals(CF.Positioner.active)
     event.unregister("simulate", simulatePlacement)
     event.unregister("cellChanged", cellChanged)
     tes3ui.suppressTooltip(false)
-    local ref = this.active
-    this.active.hasNoCollision = false
-    this.active = nil
-    this.rotateMode = nil
+    local ref = CF.Positioner.active
+    CF.Positioner.active.hasNoCollision = false
+    CF.Positioner.active = nil
+    CF.Positioner.rotateMode = nil
     tes3.mobilePlayer.mouseLookDisabled = false
 
-    local menu = tes3ui.findHelpLayerMenu(this.id_guide)
+    local menu = tes3ui.findHelpLayerMenu(CF.Positioner.id_guide)
     if (menu) then
         menu:destroy()
     end
@@ -406,18 +408,18 @@ endPlacement = function()
 end
 
 
--- End placement on load game. this.active would be invalid after load.
+-- End placement on load game. CF.Positioner.active would be invalid after load.
 local function onLoad()
-    if (this.active) then
+    if (CF.Positioner.active) then
         endPlacement()
     end
 end
 
 local function rotateKeyDown(e)
-    if (this.active) then
+    if (CF.Positioner.active) then
         if (e.keyCode == config.mcm.keybindRotate.keyCode) then
             logger:debug("rotateKeyDown")
-            this.rotateMode = true
+            CF.Positioner.rotateMode = true
             tes3.mobilePlayer.mouseLookDisabled = true
             return false
         end
@@ -425,10 +427,10 @@ local function rotateKeyDown(e)
 end
 
 local function rotateKeyUp(e)
-    if (this.active) then
+    if (CF.Positioner.active) then
         if (e.keyCode == config.mcm.keybindRotate.keyCode) then
             logger:debug("rotateKeyUp")
-            this.rotateMode = false
+            CF.Positioner.rotateMode = false
             tes3.mobilePlayer.mouseLookDisabled = false
         end
     end
@@ -436,8 +438,8 @@ end
 
 local function toggleMode(e)
     if not config.persistent then return end
-    if this.blockToggle then return end
-    this.shadow_model = tes3.loadMesh("craftingFramework/shadow.nif")
+    if CF.Positioner.blockToggle then return end
+    CF.Positioner.shadow_model = tes3.loadMesh("craftingFramework/shadow.nif")
     if (config.persistent.positioningActive) then
         if (e.keyCode == config.mcm.keybindModeCycle.keyCode) then
 
@@ -447,8 +449,8 @@ local function toggleMode(e)
             }
 
             config.persistent.placementSetting = cycle[config.persistent.placementSetting]
-            if this.active then
-                decals.applyDecals(this.active, config.persistent.placementSetting)
+            if CF.Positioner.active then
+                decals.applyDecals(CF.Positioner.active, config.persistent.placementSetting)
             end
             tes3.playSound{ sound = "Menu Click" }
 
@@ -457,9 +459,9 @@ local function toggleMode(e)
 end
 
 local function onInitialized()
-    this.shadow_model = tes3.loadMesh("craftingFramework/shadow.nif")
+    CF.Positioner.shadow_model = tes3.loadMesh("craftingFramework/shadow.nif")
 
-    this.id_guide = tes3ui.registerID("ObjectPlacement:GuideMenu")
+    CF.Positioner.id_guide = tes3ui.registerID("ObjectPlacement:GuideMenu")
     event.register("load", onLoad)
     event.register("keyDown", rotateKeyDown, { priority = -100})
     event.register("keyUp", rotateKeyUp)
@@ -470,11 +472,11 @@ event.register("initialized", onInitialized)
 
 
 local function onMouseScroll(e)
-    if this.active then
+    if CF.Positioner.active then
         local multi = Util.isShiftDown() and 0.02 or 0.1
         local change = multi * e.delta
-        local newMaxReach = math.clamp(this.currentReach + change, this.minReach, this.maxReach)
-        this.currentReach = newMaxReach
+        local newMaxReach = math.clamp(CF.Positioner.currentReach + change, CF.Positioner.minReach, CF.Positioner.maxReach)
+        CF.Positioner.currentReach = newMaxReach
     end
 end
 event.register("mouseWheel", onMouseScroll)
@@ -495,14 +497,14 @@ local function onActiveKey(e)
     local keyTest = inputController:keybindTest(tes3.keybind.activate)
     if keyTest then
         if config.persistent.positioningActive then
-            this.togglePlacement()
+            CF.Positioner.togglePlacement()
         end
     end
 end
 event.register("keyDown", onActiveKey, { priority = 100 })
 
 
-this.startPositioning = function(e)
+CF.Positioner.startPositioning = function(e)
     -- Put those hands away.
     if (tes3.mobilePlayer.weaponReady) then
         tes3.mobilePlayer.weaponReady = false
@@ -512,13 +514,11 @@ this.startPositioning = function(e)
     if e.placementSetting then
         config.persistent.placementSetting = e.placementSetting
     end
-    this.togglePlacement(e)
+    CF.Positioner.togglePlacement(e)
 end
 
 event.register("CraftingFramework:startPositioning", function(e)
-    this.startPositioning(e)
+    CF.Positioner.startPositioning(e)
 end)
 
-return this
-
-
+return CF.Positioner
