@@ -22,7 +22,9 @@ function CF.StaticActivator.register(data)
         logger:warn("Object %s is already registered", data.objectId)
     end
     CF.StaticActivator.registeredObjects[data.objectId:lower()] = data
-    Indicator.register(data)
+    if data.name then
+        Indicator.register(data)
+    end
     logger:debug("Registered %s as StaticActivator", data.objectId)
 end
 

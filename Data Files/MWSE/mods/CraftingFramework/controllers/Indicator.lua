@@ -81,16 +81,19 @@ function CF.Indicator.update(reference)
     --get menu
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     --If its an activator with a name, it'll already have a tooltip
-    local hasName = reference and reference.object.name and reference.object.name ~= ""
+    local hasObjectName = reference and reference.object.name and reference.object.name ~= ""
+    local hasRegisteredName = registeredObject and registeredObject.name and registeredObject.name ~= ""
 
-    logger:trace("Indicator.update: %s, %s, %s, %s",
-        (registeredObject and registeredObject.name),
-        menu,
-        hasName,
+    logger:trace("Indicator.update: %s, %s, %s, %s, %s",
+        reference,
+        registeredObject,
+        hasObjectName,
+        hasRegisteredName,
         blockNonCrafted)
     local showIndicator = menu
         and registeredObject
-        and (not hasName)
+        --and hasRegisteredName
+        and (not hasObjectName)
         and (not blockNonCrafted)
     if showIndicator then
         createOrUpdateTooltipMenu(registeredObject.name)
