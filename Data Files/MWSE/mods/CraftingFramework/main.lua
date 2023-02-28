@@ -1,4 +1,5 @@
 require("CraftingFramework.mcm")
+require("CraftingFramework.components.MenuActivator")
 require("CraftingFramework.controllers.StaticActivator")
 require("CraftingFramework.controllers.Positioner")
 require("CraftingFramework.controllers.RecoverMaterials")
