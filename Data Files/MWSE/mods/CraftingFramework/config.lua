@@ -20,6 +20,9 @@ this.mcmDefault = {
     keybindModeCycle = {
         keyCode = tes3.scanCode.lAlt
     },
+    quickModifierHotkey = {
+        keyCode = tes3.scanCode.lShift
+    },
     defaultMaterialRecovery = 75
 }
 this.save = function(newConfig)

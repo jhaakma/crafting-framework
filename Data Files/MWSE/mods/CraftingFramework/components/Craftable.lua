@@ -13,29 +13,14 @@ local config = require("CraftingFramework.config")
 ---| '"metal"'
 ---| '"carve"'
 
----@class CraftingFramework.Craftable.data
----@field id string **Required.**
----@field name string The name of the craftable
----@field placedObject string
----@field uncarryable boolean
----@field additionalMenuOptions craftingFrameworkMenuButtonData[]
----@field soundId string
----@field soundPath string
----@field soundType CraftingFramework.Craftable.SoundType
----@field materialRecovery number
----@field maxSteepness number
----@field resultAmount number
----@field recoverEquipmentMaterials boolean
----@field destroyCallback function
----@field placeCallback function
----@field positionCallback function
----@field craftCallback function
----@field mesh string
----@field previewMesh string
----@field rotationAxis craftingFrameworkRotationAxis
----@field previewScale number
----@field previewHeight number
----@field noResult boolean
+---@class CraftingFramework.Craftable.callback.params
+---@field reference tes3reference? The reference that was crafted
+
+---@class CraftingFramework.Craftable.craftCallback.params : CraftingFramework.Craftable.callback.params
+---@field item tes3item? The item that was crafted
+---@field materialsUsed table<string, number> The materials used in the craft, with the material id as key and the amount as value
+
+---@class CraftingFramework.Craftable.data : CraftingFramework.Recipe.data
 
 ---@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
 Craftable = {
@@ -45,7 +30,6 @@ Craftable = {
             id = { type = "string", required = true },
             name = { type = "string", required = false },
             placedObject = { type = "string", required = false },
-            noResult = { type = "boolean", required = false },
             uncarryable = { type = "boolean", required = false },
             additionalMenuOptions = { type = "table", required = false },
             soundId = { type = "string", required = false },
@@ -57,13 +41,15 @@ Craftable = {
             recoverEquipmentMaterials = { type = "boolean", required = false},
             destroyCallback = { type = "function", required = false },
             placeCallback = { type = "function", required = false },
-            craftCallback = { type = "function", required = false },
             positionCallback = { type = "function", required = false },
+            craftCallback = { type = "function", required = false },
+            quickActivateCallback = { type = "function", required = false },
             mesh = { type = "string", required = false},
             previewMesh = { type = "string", required = false},
             rotationAxis = { type = "string", required = false},
             previewScale = { type = "number", required = false},
-            previewHeight = { type = "number", required = false, default = 0}
+            previewHeight = { type = "number", required = false, default = 0},
+            noResult = { type = "boolean", required = false},
         }
     },
     constructionSounds = {
@@ -170,15 +156,23 @@ function Craftable:getPlacedObjectId()
 end
 
 local function craftableActivated(reference)
-    logger:trace("craftableActivated object id: %s", reference.baseObject.id)
+    logger:debug("craftableActivated: %s", reference)
     local craftable = Craftable.getPlacedCraftable(reference.baseObject.id:lower())
     if craftable then
         logger:trace("craftableActivated placedObject id: %s", craftable:getPlacedObjectId())
-        if Util.isShiftDown() and Util.canBeActivated(reference) then
+        if Util.isQuickModifierDown() and craftable.quickActivateCallback then
+            logger:debug("quickActivateCallback: %s", require("inspect")(craftable.quickActivateCallback))
+            craftable:quickActivateCallback{reference = reference}
+        elseif Util.isQuickModifierDown() and Util.canBeActivated(reference) then
+            logger:debug("vanilla activate")
             reference.data.allowActivate = true
             tes3.player:activate(reference)
             reference.data.allowActivate = nil
+        elseif Util.isQuickModifierDown() and craftable:isCarryable() then
+            logger:debug("pickUp")
+            craftable:pickUp(reference)
         else
+            logger:debug("activate")
             craftable:activate(reference)
         end
     end
@@ -223,6 +217,7 @@ function Craftable:new(data)
 end
 
 function Craftable:activate(reference)
+    logger:debug("Craftable:activate: %s", reference)
     tes3ui.showMessageMenu{
         message = self:getName(),
         buttons = self:getMenuButtons(reference),
@@ -424,9 +419,9 @@ function Craftable:destroy(reference)
     }
     reference:disable()
     if self.destroyCallback then
-        self:destroyCallback({
+        self:destroyCallback{
             reference = reference
-        })
+        }
     end
     timer.delayOneFrame(function()
         reference:delete()
@@ -506,7 +501,7 @@ function Craftable:craft(materialsUsed)
         logger:debug("Craftable:craft %s calling callback", self.id)
         self:craftCallback{
             reference = reference,
-            item = item,
+            item = item, ---@diagnostic disable-line: assign-type-mismatch
             materialsUsed = materialsUsed
         }
     end

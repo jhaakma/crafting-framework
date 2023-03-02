@@ -88,5 +88,12 @@ local function registerMCM()
         step = 1,
         variable = mwse.mcm.createTableVariable{ id = "defaultMaterialRecovery", table = mcmConfig },
     }
+
+    page:createKeyBinder{
+        label = "Assign QuickActivate Hotkey",
+        description = "Key Modifier for recipes registered with a `quickActivateCallback`. Default: Left Shift",
+        allowCombinations = false,
+        variable = mwse.mcm.createTableVariable{ id = "quickModifierHotkey", table = mcmConfig },
+    }
 end
 event.register("modConfigReady", registerMCM)

@@ -2,6 +2,17 @@ local Material = require("CraftingFramework.components.Material")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("CraftingMenu")
 
+---@class CraftingFramework.CraftingMenu.category
+---@field name string The name of the category
+---@field recipes CraftingFramework.Recipe[] The recipes in the category
+---@field visible boolean Whether the category is visible
+
+---@class CraftingFramework.CraftingMenu : CraftingFramework.MenuActivator
+---@field collapseCategories boolean Whether to collapse categories when there is only one
+---@field showCategories boolean Whether to show categories
+---@field categories CraftingFramework.CraftingMenu.category[] The categories in the menu
+---@field currentFilter string The current filter
+---@field currentSorter string The current sorter
 local CraftingMenu = {}
 
 local uiids = {
@@ -55,7 +66,7 @@ function CraftingMenu:closeMenu()
         menu:destroy()
         tes3ui.leaveMenuMode()
         if self.closeCallback then
-            self.closeCallback()
+            self:closeCallback()
         end
     else
         log:error("Can't find menu!!!")
@@ -927,14 +938,16 @@ function CraftingMenu:updateCategoriesList()
     end
     ---@param recipe CraftingFramework.Recipe
     for _, recipe in pairs(self.recipes) do
-        local category = recipe.category
-        if not self.categories[category] then
-            log:debug("Category %s doesn't exist yet", category)
-            self.categories[category] = {
-                name = category,
+        local categoryName = recipe.category
+        if not self.categories[categoryName] then
+            log:debug("Category %s doesn't exist yet", categoryName)
+            ---@type CraftingFramework.CraftingMenu.category
+            local menuCategory = {
+                name = categoryName,
                 recipes = {},
                 visible = not self.collapseCategories,
             }
+            self.categories[categoryName] = menuCategory
         end
         table.insert(self.categories[recipe.category].recipes, recipe)
     end

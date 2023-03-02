@@ -142,6 +142,13 @@ function Util.isShiftDown()
     local ic = tes3.worldController.inputController
 	return ic:isKeyDown(tes3.scanCode.leftShift) or ic:isKeyDown(tes3.scanCode.rightShift)
 end
+
+function Util.isQuickModifierDown()
+    local quickModifier = config.mcm.quickModifierHotkey
+    local ic = tes3.worldController.inputController
+    return ic:isKeyDown(quickModifier.keyCode)
+end
+
 function Util.isKeyPressed(pressed, expected)
     return (
         pressed.keyCode == expected.keyCode
@@ -154,8 +161,14 @@ end
 
 ---@param ref tes3reference
 function Util.canBeActivated(ref)
-    return ref.baseObject.objectType ~= tes3.objectType.activator
-        and ref.object.script
+    local isActivator = ref.baseObject.objectType == tes3.objectType.activator
+    local hasScript = ref.baseObject.script ~= nil
+    local isStatic = ref.baseObject.objectType == tes3.objectType.static
+    if isActivator then
+        return hasScript
+    else
+        return not isStatic
+    end
 end
 
 ---@return any

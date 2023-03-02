@@ -19,6 +19,7 @@ local config = require("CraftingFramework.config")
 ---@field material string **Required.** The id of either a Crafting Framework Material, or an object id. Using an object id will register it as its own Material where the object itself is the only item in the list.
 ---@field count number *Default*: `1`. The required amount of the material.
 
+
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
 ---@field craftableId string **Required.** The id of the object crafted by this recipe
@@ -44,10 +45,11 @@ local config = require("CraftingFramework.config")
 ---@field maxSteepness number The max angle a crafted object will be oriented to while repositioning
 ---@field resultAmount number The amount of the item to be crafted
 ---@field recoverEquipmentMaterials boolean When set to true, and the craftable is an armor or weapon item, equipping it when it has 0 condition will destroy it and salvage its materials
----@field destroyCallback function Custom function called after a craftable has been destroyed
----@field placeCallback function Custom function called after a craftable has been placed
----@field positionCallback function
----@field craftCallback function Custom function called after a craftable has been crafted
+---@field destroyCallback fun(self : CraftingFramework.Craftable, reference: tes3reference) Called when the object is destroyed
+---@field placeCallback fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is placed
+---@field positionCallback fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is positioned
+---@field craftCallback fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.craftCallback.params) Called when the object is crafted
+---@field quickActivateCallback fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is shift-activated
 ---@field previewMesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
 ---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale number **Default 1** Determines the scale of the preview mesh.
