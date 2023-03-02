@@ -1,12 +1,9 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Indicator")
----@class CraftingFramework
----@field Indicator CraftingFramework.Indicator
-local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.Indicator
-CF.Indicator = {}
-CF.Indicator.registeredObjects = {}
+Indicator = {}
+Indicator.registeredObjects = {}
 ---@class CraftingFramework.Indicator.data
 ---@field objectId string The object id to register the indicator for
 ---@field name string The name to display in the tooltip.
@@ -14,12 +11,12 @@ CF.Indicator.registeredObjects = {}
 ---@field additionalUI fun(parentElement: tes3uiElement, reference: tes3reference) Add more UI to the tooltip
 
 ---@param data CraftingFramework.Indicator.data
-function CF.Indicator.register(data)
+function Indicator.register(data)
     logger:assert(type(data.objectId) == "string" , "data.objectId is required")
-    if CF.Indicator.registeredObjects[data.objectId:lower()] then
+    if Indicator.registeredObjects[data.objectId:lower()] then
         logger:warn("Indicator.register: %s is already registered", data.objectId)
     end
-    CF.Indicator.registeredObjects[data.objectId:lower()] = data
+    Indicator.registeredObjects[data.objectId:lower()] = data
     logger:debug("Registered %s as Indicator", data.objectId)
 end
 
@@ -69,9 +66,9 @@ local function createOrUpdateTooltipMenu(headerText)
 end
 
 --- Update the indicator with the given reference
-function CF.Indicator.update(reference)
+function Indicator.update(reference)
     --get registered object
-    local registeredObject = CF.Indicator.registeredObjects[reference.object.id:lower()]
+    local registeredObject = Indicator.registeredObjects[reference.object.id:lower()]
     --If craftedOnly, check the crafted flag
     local blockNonCrafted = registeredObject
         and registeredObject.craftedOnly
@@ -98,16 +95,16 @@ function CF.Indicator.update(reference)
     if showIndicator then
         createOrUpdateTooltipMenu(registeredObject.name)
     else
-        CF.Indicator.disable()
+        Indicator.disable()
     end
 end
 
 ---Hide the indicator if it's visible
-function CF.Indicator.disable()
+function Indicator.disable()
     local tooltipMenu = getTooltip()
     if tooltipMenu then
         tooltipMenu.visible = false
     end
 end
 
-return CF.Indicator
+return Indicator

@@ -1,8 +1,5 @@
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("Tool")
----@class CraftingFramework
----@field Tool CraftingFramework.Tool
-local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.Tool.data
 ---@field id string **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `tool`.
@@ -13,7 +10,7 @@ local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.Tool : CraftingFramework.Tool.data
 ---@field ids table<string, boolean>
-CF.Tool = {
+Tool = {
     schema = {
         name = "Tool",
         fields = {
@@ -26,26 +23,26 @@ CF.Tool = {
 }
 
 
-CF.Tool.registeredTools = {}
+Tool.registeredTools = {}
 ---@param id string
 ---@return CraftingFramework.Tool tool
-function CF.Tool.getTool(id)
-    return CF.Tool.registeredTools[id]
+function Tool.getTool(id)
+    return Tool.registeredTools[id]
 end
 
 ---@param data CraftingFramework.Tool.data
 ---@return CraftingFramework.Tool Tool
-function CF.Tool:new(data)
-    Util.validate(data, CF.Tool.schema)
-    if not CF.Tool.registeredTools[data.id] then
-        CF.Tool.registeredTools[data.id] = {
+function Tool:new(data)
+    Util.validate(data, Tool.schema)
+    if not Tool.registeredTools[data.id] then
+        Tool.registeredTools[data.id] = {
             id = data.id,
             name = data.name,
             ids = {},
             requirement = data.requirement
         }
     end
-    local tool = CF.Tool.registeredTools[data.id]
+    local tool = Tool.registeredTools[data.id]
     --add tool ids
     if data.ids then
         for _, id in ipairs(data.ids) do
@@ -58,12 +55,12 @@ function CF.Tool:new(data)
 end
 
 ---@return string name
-function CF.Tool:getName()
+function Tool:getName()
     return self.name
 end
 
 ---@param amount number
-function CF.Tool:use(amount)
+function Tool:use(amount)
     amount = amount or 1
     log:debug("Using tool, degrading by %s", amount)
     for id, _ in pairs(self:getToolIds()) do
@@ -95,7 +92,7 @@ function CF.Tool:use(amount)
 end
 
 ---@return table<string, true>
-function CF.Tool:getToolIds()
+function Tool:getToolIds()
     if self.ids and #self.ids > 0 then return self.ids end
     if self.requirement then
         local ids = {}
@@ -110,4 +107,4 @@ function CF.Tool:getToolIds()
     return {}
 end
 
-return CF.Tool
+return Tool

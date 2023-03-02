@@ -1176,7 +1176,7 @@ end
 function CraftingMenu:createCustomRequirementsPane(parent)
     self:createRequirementsPane(
         parent,
-        "Requirements:",
+        self.customRequirementsHeaderText .. ":",
         uiids.customRequirementsBlock,
         uiids.customRequirementsPane
     )
@@ -1185,7 +1185,7 @@ end
 function CraftingMenu:createSkillRequirementsPane(parent)
     self:createRequirementsPane(
         parent,
-        "Skills:",
+        self.skillsHeaderText .. ":",
         uiids.skillRequirementsBlock,
         uiids.skillRequirementsPane
     )
@@ -1194,7 +1194,7 @@ end
 function CraftingMenu:createToolsPane(parent)
     self:createRequirementsPane(
         parent,
-        "Tools:",
+        self.toolsHeaderText .. ":",
         uiids.toolRequirementsBlock,
         uiids.toolRequirementsPane
     )
@@ -1209,7 +1209,7 @@ function CraftingMenu:createMaterialRequirementsPane(parent)
 
     local title = block:createLabel()
     title.color = tes3ui.getPalette("header_color")
-    title.text = "Materials:"
+    title.text =  self.materialsHeaderText .. ":"
 
     local skillRequirementsPane = block:createVerticalScrollPane({ id = uiids.materialRequirementsPane})
     skillRequirementsPane.borderTop = 4

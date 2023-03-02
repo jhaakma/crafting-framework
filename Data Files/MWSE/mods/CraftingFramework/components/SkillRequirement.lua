@@ -2,9 +2,6 @@ local Util = require("CraftingFramework.util.Util")
 local config = require("CraftingFramework.config")
 local skillsModule = include("OtherSkills.skillModule")
 local logger = Util.createLogger("SkillRequirement")
----@class CraftingFramework
----@field SkillRequirement CraftingFramework.SkillRequirement
-local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.SkillRequirement.data
 ---@field skill string **Required.** The name of the skill of this `skillRequirement`. If vanilla skill, it needs to be a camelCased name of the skill. Supports skills added with the Skills Module.
@@ -13,9 +10,9 @@ local CF = require("CraftingFramework")
 
 
 ---@class CraftingFramework.SkillRequirement : CraftingFramework.SkillRequirement.data
-CF.SkillRequirement = {
+SkillRequirement = {
     schema = {
-        name = "CF.SkillRequirement",
+        name = "SkillRequirement",
         fields = {
             skill = { type = "string", required = true },
             requirement = { type = "number", required = true },
@@ -28,13 +25,13 @@ local MAX_PROGRESS_DEFAULT = 30
 local MAX_SKILL_DIFF = 40
 
 --[[
-    CF.SkillRequirement Constructor
+    SkillRequirement Constructor
 ]]
 ---@param data CraftingFramework.SkillRequirement.data
 ---@return CraftingFramework.SkillRequirement skillRequirement
-function CF.SkillRequirement:new(data)
+function SkillRequirement:new(data)
     local skillRequirement = table.copy(data, {})
-    Util.validate(data, CF.SkillRequirement.schema)
+    Util.validate(data, SkillRequirement.schema)
     skillRequirement.skill = data.skill
     skillRequirement.requirement = data.requirement
     skillRequirement.maxProgress = data.maxProgress or MAX_PROGRESS_DEFAULT
@@ -47,7 +44,7 @@ end
     Get the player's current skill level
 ]]
 ---@return number|nil
-function CF.SkillRequirement:getCurrent()
+function SkillRequirement:getCurrent()
     local vanillaSkill = tes3.skill[self.skill]
     if vanillaSkill then
         return tes3.mobilePlayer.skills[vanillaSkill + 1].current
@@ -63,11 +60,11 @@ function CF.SkillRequirement:getCurrent()
 end
 
 ---@return number skillId
-function CF.SkillRequirement:getVanillaSkill()
+function SkillRequirement:getVanillaSkill()
     return tes3.skill[self.skill] and tes3.skill[self.skill] + 1
 end
 
-function CF.SkillRequirement:progressSkill()
+function SkillRequirement:progressSkill()
     logger:debug("Progressing %s skill", self:getSkillName())
     local current = self:getCurrent()
     local required = self.requirement
@@ -92,7 +89,7 @@ function CF.SkillRequirement:progressSkill()
 end
 
 ---@return string name
-function CF.SkillRequirement:getSkillName()
+function SkillRequirement:getSkillName()
     local vanillaSkill = self:getVanillaSkill()
     if vanillaSkill then
         local baseGMST = tes3.gmst.sSkillBlock - 1
@@ -110,7 +107,7 @@ function CF.SkillRequirement:getSkillName()
 end
 
 ---@return boolean passed
-function CF.SkillRequirement:check()
+function SkillRequirement:check()
     local current = self:getCurrent()
     if current then
         logger:trace("hasRequirement() - Current: %s, Requirement: %s", current, self.requirement)
@@ -121,4 +118,4 @@ function CF.SkillRequirement:check()
     end
 end
 
-return CF.SkillRequirement
+return SkillRequirement

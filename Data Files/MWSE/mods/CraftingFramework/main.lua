@@ -1,9 +1,6 @@
 require("CraftingFramework.mcm")
-require("CraftingFramework.components.MenuActivator")
-require("CraftingFramework.controllers.StaticActivator")
-require("CraftingFramework.controllers.Positioner")
-require("CraftingFramework.controllers.RecoverMaterials")
-require("CraftingFramework.controllers.CraftingEvents")
+require("CraftingFramework.components.RecoverMaterials")
+require("CraftingFramework.components.CraftingEvents")
 mwse.log("[CraftingFramework INFO] initialised.")
 require("CraftingFramework.test")
 

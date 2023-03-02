@@ -6,10 +6,6 @@ local SkillRequirement = require("CraftingFramework.components.SkillRequirement"
 local CustomRequirement = require("CraftingFramework.components.CustomRequirement")
 local ToolRequirement = require("CraftingFramework.components.ToolRequirement")
 local config = require("CraftingFramework.config")
----@class CraftingFramework
----@field Recipe CraftingFramework.Recipe
-local CF = require("CraftingFramework")
-
 
 ---@alias craftingFrameworkRotationAxis
 ---| '"x"'
@@ -71,7 +67,7 @@ local MaterialRequirementSchema = {
 ---@field customRequirements CraftingFramework.CustomRequirement[]
 ---@field skillRequirements CraftingFramework.SkillRequirement[]
 ---@field toolRequirements CraftingFramework.ToolRequirement[]
-CF.Recipe = {
+Recipe = {
     schema = {
         name = "Recipe",
         fields = {
@@ -91,19 +87,19 @@ CF.Recipe = {
     }
 }
 
-CF.Recipe.registeredRecipes = {}
+Recipe.registeredRecipes = {}
 ---@param id string
 ---@return CraftingFramework.Recipe recipe
-function CF.Recipe.getRecipe(id)
-    return CF.Recipe.registeredRecipes[id:lower()]
+function Recipe.getRecipe(id)
+    return Recipe.registeredRecipes[id:lower()]
 end
 
 ---@param data CraftingFramework.Recipe.data
 ---@return CraftingFramework.Recipe recipe
-function CF.Recipe:new(data)
+function Recipe:new(data)
     ---@type CraftingFramework.Recipe
     local recipe = table.copy(data, {})
-    Util.validate(recipe, CF.Recipe.schema)
+    Util.validate(recipe, Recipe.schema)
     --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
 
@@ -132,22 +128,22 @@ function CF.Recipe:new(data)
     setmetatable(recipe, self)
     self.__index = self
     if recipe.persist ~= false then
-        CF.Recipe.registeredRecipes[recipe.id] = recipe
+        Recipe.registeredRecipes[recipe.id] = recipe
     end
     return recipe
 end
 
 
-function CF.Recipe:learn()
+function Recipe:learn()
     config.persistent.knownRecipes[self.id] = true
 end
 
-function CF.Recipe:unlearn()
+function Recipe:unlearn()
     self.knownByDefault = false
     config.persistent.knownRecipes[self.id] = nil
 end
 
-function CF.Recipe:isKnown()
+function Recipe:isKnown()
     if self.knownByDefault then
         return true
     end
@@ -155,7 +151,7 @@ function CF.Recipe:isKnown()
     return knownRecipe
 end
 
-function CF.Recipe:craft()
+function Recipe:craft()
     log:debug("Crafting %s", self.id)
     local materialsUsed = {}
     for _, materialReq in ipairs(self.materials) do
@@ -192,7 +188,7 @@ function CF.Recipe:craft()
 end
 
 ---@return tes3object|tes3weapon|tes3armor|tes3misc|tes3light|nil object
-function CF.Recipe:getItem()
+function Recipe:getItem()
     local id = self.craftable:getPlacedObjectId() or self.craftable.id
     if id then
         return tes3.getObject(id)
@@ -200,7 +196,7 @@ function CF.Recipe:getItem()
 end
 
 ---@return number
-function CF.Recipe:getAverageSkillLevel()
+function Recipe:getAverageSkillLevel()
     local total = 0
     local count = 0
     for _, skillRequirement in ipairs(self.skillRequirements) do
@@ -213,7 +209,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function CF.Recipe:hasMaterials()
+function Recipe:hasMaterials()
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
         if not material then
@@ -234,7 +230,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function CF.Recipe:meetsToolRequirements()
+function Recipe:meetsToolRequirements()
     for _, toolRequirement in ipairs(self.toolRequirements) do
         local tool = toolRequirement.tool
         if not tool then
@@ -252,7 +248,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function CF.Recipe:meetsSkillRequirements()
+function Recipe:meetsSkillRequirements()
     for _, skillRequirement in ipairs(self.skillRequirements) do
         if not skillRequirement:check() then
             return false, "Your skill is not high enough"
@@ -263,7 +259,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function CF.Recipe:meetsCustomRequirements()
+function Recipe:meetsCustomRequirements()
     if self.customRequirements then
         for _, requirement in ipairs(self.customRequirements) do
             local meetsRequirements, reason = requirement:check()
@@ -277,7 +273,7 @@ end
 
 ---@return boolean
 ---@return string|nil reason
-function CF.Recipe:meetsAllRequirements()
+function Recipe:meetsAllRequirements()
     local meetsCustomRequirements, reason = self:meetsCustomRequirements()
     if not meetsCustomRequirements then return false, reason end
     local hasMaterials, reason = self:hasMaterials()
@@ -289,8 +285,8 @@ function CF.Recipe:meetsAllRequirements()
     return true
 end
 
-CF.Recipe.__tostring = function(self)
+Recipe.__tostring = function(self)
     return string.format("Recipe: %s", self.id)
 end
 
-return CF.Recipe
+return Recipe

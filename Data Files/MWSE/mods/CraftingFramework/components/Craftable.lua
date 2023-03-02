@@ -1,11 +1,8 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Craftable")
-local Positioner = require("CraftingFramework.controllers.Positioner")
-local StaticActivator = require("CraftingFramework.controllers.StaticActivator")
+local Positioner = require("CraftingFramework.components.Positioner")
+local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local config = require("CraftingFramework.config")
----@class CraftingFramework
----@field Craftable CraftingFramework.Craftable
-local CF = require("CraftingFramework")
 
 ---@alias CraftingFramework.Craftable.SoundType
 ---| '"fabric"'
@@ -41,7 +38,7 @@ local CF = require("CraftingFramework")
 ---@field noResult boolean
 
 ---@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
-CF.Craftable = {
+Craftable = {
     schema = {
         name = "Craftable",
         fields = {
@@ -120,24 +117,24 @@ CF.Craftable = {
 }
 
 
-CF.Craftable.registeredCraftables = {}
-CF.Craftable.craftablesIdexedByPlacedObject = {}
+Craftable.registeredCraftables = {}
+Craftable.craftablesIdexedByPlacedObject = {}
 --Static functions
 
 ---@param id string
 ---@return CraftingFramework.Craftable craftable
-function CF.Craftable.getCraftable(id)
-    return CF.Craftable.registeredCraftables[id:lower()]
+function Craftable.getCraftable(id)
+    return Craftable.registeredCraftables[id:lower()]
 end
 
 ---@param id string
 ---@return CraftingFramework.Craftable craftable
-function CF.Craftable.getPlacedCraftable(id)
+function Craftable.getPlacedCraftable(id)
     id = id:lower()
-    return CF.Craftable.craftablesIdexedByPlacedObject[id]
+    return Craftable.craftablesIdexedByPlacedObject[id]
 end
 
-function CF.Craftable:isCarryable()
+function Craftable:isCarryable()
     if self.uncarryable then return false end
     local unCarryableTypes = {
         [tes3.objectType.light] = true,
@@ -162,7 +159,7 @@ function CF.Craftable:isCarryable()
     end
 end
 
-function CF.Craftable:getPlacedObjectId()
+function Craftable:getPlacedObjectId()
     if self.placedObject then
         return self.placedObject
     else
@@ -174,7 +171,7 @@ end
 
 local function craftableActivated(reference)
     logger:trace("craftableActivated object id: %s", reference.baseObject.id)
-    local craftable = CF.Craftable.getPlacedCraftable(reference.baseObject.id:lower())
+    local craftable = Craftable.getPlacedCraftable(reference.baseObject.id:lower())
     if craftable then
         logger:trace("craftableActivated placedObject id: %s", craftable:getPlacedObjectId())
         if Util.isShiftDown() and Util.canBeActivated(reference) then
@@ -189,8 +186,8 @@ end
 
 ---@param data CraftingFramework.Craftable.data
 ---@return CraftingFramework.Craftable
-function CF.Craftable:new(data)
-    Util.validate(data, CF.Craftable.schema)
+function Craftable:new(data)
+    Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
     --for pre-1.0.5 compatibility
     if data.mesh then
@@ -205,7 +202,7 @@ function CF.Craftable:new(data)
 
     local placedObjectId = craftable:getPlacedObjectId()
     if placedObjectId then
-        local existingCraftable = CF.Craftable.registeredCraftables[craftable.id]
+        local existingCraftable = Craftable.registeredCraftables[craftable.id]
         if existingCraftable then
             logger:warn("Found existing craftable %s, merging", craftable.id)
             logger:debug("existing.placedObject: %s", existingCraftable.placedObject)
@@ -213,8 +210,8 @@ function CF.Craftable:new(data)
             --merge
             table.copymissing(craftable, existingCraftable)
         end
-        CF.Craftable.registeredCraftables[craftable.id] = craftable
-        CF.Craftable.craftablesIdexedByPlacedObject[placedObjectId:lower()] = craftable
+        Craftable.registeredCraftables[craftable.id] = craftable
+        Craftable.craftablesIdexedByPlacedObject[placedObjectId:lower()] = craftable
         StaticActivator.register{
             objectId = placedObjectId,
             name = craftable.name,
@@ -225,7 +222,7 @@ function CF.Craftable:new(data)
     return craftable
 end
 
-function CF.Craftable:activate(reference)
+function Craftable:activate(reference)
     tes3ui.showMessageMenu{
         message = self:getName(),
         buttons = self:getMenuButtons(reference),
@@ -234,7 +231,7 @@ function CF.Craftable:activate(reference)
     }
 end
 
-function CF.Craftable:swap(reference)
+function Craftable:swap(reference)
     local ref = tes3.createReference{
         object = self:getPlacedObjectId(),
         position = reference.position:copy(),
@@ -249,7 +246,7 @@ end
 
 ---@param reference tes3reference
 ---@return craftingFrameworkMenuButtonData[] menuButtons
-function CF.Craftable:getMenuButtons(reference)
+function Craftable:getMenuButtons(reference)
 	---@type craftingFrameworkMenuButtonData[]
     local menuButtons = {}
     if self.additionalMenuOptions then
@@ -344,7 +341,7 @@ function CF.Craftable:getMenuButtons(reference)
     return menuButtons
 end
 
-function CF.Craftable:position(reference)
+function Craftable:position(reference)
     timer.delayOneFrame(function()
         -- Put those hands away.
         if (tes3.mobilePlayer.weaponReady) then
@@ -356,7 +353,7 @@ function CF.Craftable:position(reference)
     end)
 end
 
-function CF.Craftable:recoverItemsFromContainer(reference)
+function Craftable:recoverItemsFromContainer(reference)
     --if container, move to player inventory
     if reference.baseObject.objectType == tes3.objectType.container then
         local itemList = {}
@@ -373,7 +370,7 @@ function CF.Craftable:recoverItemsFromContainer(reference)
     end
 end
 
-function CF.Craftable:pickUp(reference)
+function Craftable:pickUp(reference)
     self:recoverItemsFromContainer(reference)
     tes3.addItem{ reference = tes3.player, item = self.id }
     Util.deleteRef(reference)
@@ -381,7 +378,7 @@ end
 
 ---@param materialsUsed table<string, number>
 ---@return string|nil recoverMessage A message that tells the player what materials were recovered. If no materials were recovered, returns nil.
-function CF.Craftable:recoverMaterials(materialsUsed, materialRecovery)
+function Craftable:recoverMaterials(materialsUsed, materialRecovery)
     local recoverMessage = "You recover the following materials:"
     local didRecover = false
     for id, count in pairs(materialsUsed) do
@@ -407,7 +404,7 @@ function CF.Craftable:recoverMaterials(materialsUsed, materialRecovery)
     end
 end
 
-function CF.Craftable:destroy(reference)
+function Craftable:destroy(reference)
     self:recoverItemsFromContainer(reference)
     self:playDeconstructionSound()
     local destroyMessage = string.format("%s has been destroyed.", self:getName())
@@ -436,17 +433,17 @@ function CF.Craftable:destroy(reference)
     end)
 end
 
-function CF.Craftable:getName()
+function Craftable:getName()
     return self.name or tes3.getObject(self.id) and tes3.getObject(self.id).name or "[unknown]"
 end
 
-function CF.Craftable:getNameWithCount()
+function Craftable:getNameWithCount()
     return string.format("%s%s", self:getName(),
         self.resultAmount and string.format(" x%d", self.resultAmount) or ""
     )
 end
 
-function CF.Craftable:playCraftingSound()
+function Craftable:playCraftingSound()
     if self.soundType then
         local soundPick = table.choice(self.constructionSounds[self.soundType])
         if soundPick then
@@ -464,14 +461,14 @@ function CF.Craftable:playCraftingSound()
     end
 end
 
-function CF.Craftable:playDeconstructionSound()
+function Craftable:playDeconstructionSound()
     local soundPick = table.choice(self.deconstructionSounds)
     tes3.playSound{soundPath = soundPick }
 end
 
 
 ---@param materialsUsed table<string, number> A table of material ids and the number of each used.
-function CF.Craftable:craft(materialsUsed)
+function Craftable:craft(materialsUsed)
     logger:debug("Craftable:craft %s", self.id)
     local reference
     local item
@@ -516,7 +513,7 @@ function CF.Craftable:craft(materialsUsed)
     logger:debug("Craftable:craft %s done", self.id)
 end
 
-function CF.Craftable:place(materialsUsed)
+function Craftable:place(materialsUsed)
     local eyeOri = tes3.getPlayerEyeVector()
     local eyePos = tes3.getPlayerEyePosition()
     local ray = tes3.rayTest{
@@ -548,4 +545,4 @@ function CF.Craftable:place(materialsUsed)
     return reference
 end
 
-return CF.Craftable
+return Craftable

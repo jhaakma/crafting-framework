@@ -1,6 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
 local Craftable = require("CraftingFramework.components.Craftable")
-local StaticActivator = require("CraftingFramework.controllers.StaticActivator")
+local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local logger = Util.createLogger("CraftingEvents")
 
 ---@param e itemDroppedEventData

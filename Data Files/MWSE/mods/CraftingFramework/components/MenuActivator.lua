@@ -1,10 +1,8 @@
-local CraftingMenu = require("CraftingFramework.controllers.CraftingMenu")
+local CraftingMenu = require("CraftingFramework.components.CraftingMenu")
 local Recipe = require("CraftingFramework.components.Recipe")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("MenuActivator")
----@class CraftingFramework
----@field MenuActivator CraftingFramework.MenuActivator
-local CF = require("CraftingFramework")
+
 
 ---@alias CraftingFramework.MenuActivator.Type
 ---| '"activate"' # These Stations are objects in the game world, and their Crafting Menu is opened when they are activated.
@@ -39,6 +37,10 @@ local CF = require("CraftingFramework")
 ---@field collapseByDefault boolean *Default*: `false`. This controls whether the categories will be collapsed by default or not.
 ---@field craftButtonText string *Default*: `"Craft"`. This controls the text of the craft button.
 ---@field recipeHeaderText string *Default*: `"Recipes"`. This controls the text of the header of the recipe list.
+---@field skillsHeaderText string *Default*: `"Skills"`. This controls the text of the header of the skills list.
+---@field customRequirementsHeaderText string *Default*: `"Requirements"`. This controls the text of the header of the custom requirements list.
+---@field toolsHeaderText string *Default*: `"Tools"`. This controls the text of the header of the tools list.
+---@field materialsHeaderText string *Default*: `"Materials"`. This controls the text of the header of the materials list.
 ---@field menuWidth number *Default*: `720`. This controls the width of the crafting menu.
 ---@field menuHeight number *Default*: `800`. This controls the height of the crafting menu.
 ---@field previewHeight number *Default*: `270`. This controls the height of the preview area.
@@ -52,7 +54,7 @@ local CF = require("CraftingFramework")
 ---@class CraftingFramework.MenuActivator : CraftingFramework.MenuActivator.data This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 ---@field recipes CraftingFramework.Recipe[] A list of recipes that will appear (if known) when the menu is activated.
 ---@field registeredMenuActivators table<string, CraftingFramework.MenuActivator> A list of all the MenuActivators that have been registered.
-CF.MenuActivator = {
+MenuActivator = {
     schema = {
         name = "MenuActivator",
         fields = {
@@ -68,6 +70,10 @@ CF.MenuActivator = {
             collapseByDefault = { type = "boolean", default = false, required = false },
             craftButtonText = { type = "string", default = "Craft", required = false },
             recipeHeaderText = { type = "string", default = "Recipes", required = false },
+            skillsHeaderText = { type = "string", default = "Skills", required = false },
+            customRequirementsHeaderText = { type = "string", default = "Requirements", required = false },
+            toolsHeaderText = { type = "string", default = "Tools", required = false },
+            materialsHeaderText = { type = "string", default = "Materials", required = false },
             menuWidth = { type = "number", default = 720, required = false },
             menuHeight = { type = "number", default = 800, required = false },
             previewHeight = { type = "number", default = 270, required = false },
@@ -84,8 +90,8 @@ CF.MenuActivator = {
 
 ---@param data CraftingFramework.MenuActivator.data
 ---@return CraftingFramework.MenuActivator menuActivator
-function CF.MenuActivator:new(data)
-    Util.validate(data, CF.MenuActivator.schema)
+function MenuActivator:new(data)
+    Util.validate(data, MenuActivator.schema)
     data.equipStationIds = data.equipStationIds or {}
     data.activateStationIds = data.activateStationIds or {}
     data.triggers = data.triggers or {}
@@ -100,7 +106,7 @@ function CF.MenuActivator:new(data)
         end
     end
     if not data.name then
-        log:error("CF.MenuActivator:new - no name specified for menu activator %s", data.id)
+        log:error("MenuActivator:new - no name specified for menu activator %s", data.id)
     end
     --Convert to objects
     data.recipes = Util.convertListTypes(data.recipes, Recipe) or {}
@@ -109,14 +115,14 @@ function CF.MenuActivator:new(data)
 
     --Merge with existing or register new Menu Activator
     ---@type CraftingFramework.MenuActivator
-    local menuActivator = CF.MenuActivator.registeredMenuActivators[data.id]
+    local menuActivator = MenuActivator.registeredMenuActivators[data.id]
     if not menuActivator then
-        CF.MenuActivator.registeredMenuActivators[data.id] = data
+        MenuActivator.registeredMenuActivators[data.id] = data
         menuActivator = data
         menuActivator:registerEvents()
 
         local eventId = menuActivator.id .. ":Registered"
-        log:info("Registered CF.MenuActivator: " .. menuActivator.id)
+        log:info("Registered MenuActivator: " .. menuActivator.id)
         ---@type CraftingFramework.MenuActivator.RegisteredEvent
         local eventData = {
             menuActivator = menuActivator
@@ -132,7 +138,7 @@ function CF.MenuActivator:new(data)
     return menuActivator
 end
 
-function CF.MenuActivator:registerEvents()
+function MenuActivator:registerEvents()
     if self.type == "activate" then
         event.register("activate", function(e)
             if e.target.baseObject.id:lower() == self.id:lower() then
@@ -165,7 +171,7 @@ function CF.MenuActivator:registerEvents()
 end
 
 
-function CF.MenuActivator:openMenu()
+function MenuActivator:openMenu()
     log:debug("enuActivator:openMenu()")
     local knowsRecipe = false
     for _, recipe in pairs(self.recipes) do
@@ -185,17 +191,17 @@ end
 
 -- Adds a list of recipes to the menu activator from recipe schemas
 ---@param recipes CraftingFramework.Recipe.data[]
-function CF.MenuActivator:registerRecipes(recipes)
-    log:debug("CF.MenuActivator:registerRecipes")
+function MenuActivator:registerRecipes(recipes)
+    log:debug("MenuActivator:registerRecipes")
     local recipes = Util.convertListTypes(recipes, Recipe)
     if recipes == nil then
-        log:error("CF.MenuActivator:registerRecipes - recipes is nil")
+        log:error("MenuActivator:registerRecipes - recipes is nil")
         return
     end
     for _, recipe in ipairs(recipes) do
         log:debug("Recipe: %s", recipe.id)
         if self:hasRecipe(recipe.id) then
-            log:warn("CF.MenuActivator:registerRecipes - recipe %s already registered", recipe.id)
+            log:warn("MenuActivator:registerRecipes - recipe %s already registered", recipe.id)
         else
             log:debug("Registering Recipe %s", recipe)
             table.insert(self.recipes, recipe)
@@ -205,13 +211,13 @@ end
 
 --Adds a recipe to the menu activator from recipe schema
 ---@param data CraftingFramework.Recipe.data
-function CF.MenuActivator:registerRecipe(data)
+function MenuActivator:registerRecipe(data)
     self:registerRecipes({data})
 end
 
 --Adds a list of recipes to the menu activator
 ---@param recipes CraftingFramework.Recipe[]
-function CF.MenuActivator:addRecipes(recipes)
+function MenuActivator:addRecipes(recipes)
     for _, recipe in ipairs(recipes) do
         table.insert(self.recipes, recipe)
     end
@@ -219,11 +225,11 @@ end
 
 --Adds an already registered recipe to the menu activator
 ---@param recipe CraftingFramework.Recipe
-function CF.MenuActivator:addRecipe(recipe)
+function MenuActivator:addRecipe(recipe)
     table.insert(self.recipes, recipe)
 end
 
-function CF.MenuActivator:hasRecipe(id)
+function MenuActivator:hasRecipe(id)
     for _, recipe in pairs(self.recipes) do
         if recipe.id:lower() == id:lower() then
             return true
@@ -232,4 +238,4 @@ function CF.MenuActivator:hasRecipe(id)
     return false
 end
 
-return CF.MenuActivator
+return MenuActivator

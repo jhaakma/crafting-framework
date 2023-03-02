@@ -1,13 +1,10 @@
 local Util = require("CraftingFramework.util.Util")
-local Indicator = require("CraftingFramework.controllers.Indicator")
+local Indicator = require("CraftingFramework.components.Indicator")
 local logger = Util.createLogger("StaticActivator")
 local config = require("CraftingFramework.config")
----@class CraftingFramework
----@field StaticActivator CraftingFramework.StaticActivator
-local CF = require("CraftingFramework")
 
 ---@class CraftingFramework.StaticActivator
-CF.StaticActivator = {
+StaticActivator = {
     registeredObjects = {}
 }
 
@@ -15,13 +12,13 @@ CF.StaticActivator = {
 ---@field onActivate fun(reference: tes3reference) @Called when the object is activated
 
 ---@param data CraftingFramework.StaticActivator.data
-function CF.StaticActivator.register(data)
+function StaticActivator.register(data)
     logger:assert(type(data.objectId) == "string", "objectId must be a string")
     logger:assert(type(data.onActivate) == "function", "onActivate must be a function. If you want a tooltip without an activator, register an Indciator instead")
-    if CF.StaticActivator.registeredObjects[data.objectId:lower()] then
+    if StaticActivator.registeredObjects[data.objectId:lower()] then
         logger:warn("Object %s is already registered", data.objectId)
     end
-    CF.StaticActivator.registeredObjects[data.objectId:lower()] = data
+    StaticActivator.registeredObjects[data.objectId:lower()] = data
     if data.name then
         Indicator.register(data)
     end
@@ -37,7 +34,7 @@ event.register("BlockScriptedActivate", blockScriptedActivate)
 
 local function doActivate(reference)
     logger:debug("Activating %s", reference.id)
-    local data = CF.StaticActivator.registeredObjects[reference.baseObject.id:lower()]
+    local data = StaticActivator.registeredObjects[reference.baseObject.id:lower()]
     if data then
         event.trigger("BlockScriptedActivate", { doBlock = true })
         timer.delayOneFrame(function()
@@ -47,7 +44,7 @@ local function doActivate(reference)
     end
 end
 
-function CF.StaticActivator.doTriggerActivate()
+function StaticActivator.doTriggerActivate()
     local activationBlocked =
         config.persistent.positioningActive
         or isBlocked
@@ -55,7 +52,7 @@ function CF.StaticActivator.doTriggerActivate()
         or tes3.mobilePlayer.controlsDisabled
     if not activationBlocked then
         logger:debug("Triggered Activate")
-        local ref = CF.StaticActivator.callRayTest{
+        local ref = StaticActivator.callRayTest{
             eventName = "CraftingFramework:StaticActivation"
         }
         if ref then
@@ -64,7 +61,7 @@ function CF.StaticActivator.doTriggerActivate()
     end
 end
 
-function CF.StaticActivator.callRayTest(e)
+function StaticActivator.callRayTest(e)
     local eyePos = tes3.getPlayerEyePosition()
     local eyeDirection = tes3.getPlayerEyeVector()
     --If in menu, use cursor position
@@ -103,4 +100,4 @@ function CF.StaticActivator.callRayTest(e)
     Indicator.disable()
 end
 
-return CF.StaticActivator
+return StaticActivator
