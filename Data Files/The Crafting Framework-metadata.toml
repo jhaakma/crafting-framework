@@ -2,19 +2,14 @@
 name = "The Crafting Framework"
 description = "The Crafting Framework is library that allows modders to quickly and easily implement complex crafting mechanics in Morrowind."
 repository = "https://github.com/jhaakma/crafting-framework"
-authors = ["Merlord"]
-version = "1.3.0"
+authors = [ "Merlord",]
+version = "1.4.0"
+
+[dependencies]
+assets = [ "MWSE/mods/CraftingFramework", "Meshes/craftingFramework", "Textures/craftingFramework", "Sound/craftingFramework",]
 
 [tools.mwse]
 lua-mod = "CraftingFramework"
-
-[dependencies]
-assets = [
-    "MWSE/mods/CraftingFramework",
-    "Meshes/craftingFramework",
-    "Textures/craftingFramework",
-    "Sound/craftingFramework"
-]
 
 [dependencies.mwse]
 buildnumber = 3066
