@@ -12,6 +12,8 @@ The Crafting Framework is a powerful, flexible and easy to use framework for cre
 
 --MCM Config (stored as JSON)
 this.configPath = "craftingFramework"
+
+---@class CraftingFramework.config
 this.mcmDefault = {
     logLevel = "INFO",
     keybindRotate = {
@@ -30,6 +32,7 @@ this.save = function(newConfig)
     mwse.saveConfig(this.configPath, inMemConfig)
 end
 
+---@type CraftingFramework.config
 this.mcm = setmetatable({}, {
     __index = function(_, key)
         inMemConfig = inMemConfig or mwse.loadConfig(this.configPath, this.mcmDefault)
