@@ -50,6 +50,7 @@ Craftable = {
             previewScale = { type = "number", required = false},
             previewHeight = { type = "number", required = false, default = 0},
             noResult = { type = "boolean", required = false},
+            additionalUI  = { type = "function", required = false },
         }
     },
     constructionSounds = {
@@ -210,7 +211,8 @@ function Craftable:new(data)
             objectId = placedObjectId,
             name = craftable.name,
             craftedOnly = true,
-            onActivate = craftableActivated
+            onActivate = craftableActivated,
+            additionalUI = craftable.additionalUI
         }
     end
     return craftable

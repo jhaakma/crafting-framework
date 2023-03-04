@@ -1,6 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local Craftable = require("CraftingFramework.components.Craftable")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
+local Indicator = require("CraftingFramework.components.Indicator")
 local logger = Util.createLogger("CraftingEvents")
 
 ---@param e itemDroppedEventData
@@ -69,3 +70,14 @@ local function blockActivate(e)
     end
 end
 event.register("activate", blockActivate)
+
+---@param e uiObjectTooltipEventData
+local function doAdditionalUI(e)
+    if e.reference then
+        local indicator = Indicator:new(e.reference)
+        if indicator then
+            indicator:additionalUI(e.tooltip)
+        end
+    end
+end
+event.register(tes3.event.uiObjectTooltip, doAdditionalUI)

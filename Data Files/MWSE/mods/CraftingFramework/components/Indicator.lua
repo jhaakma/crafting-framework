@@ -1,14 +1,17 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Indicator")
 
----@class CraftingFramework.Indicator
-Indicator = {}
-Indicator.registeredObjects = {}
 ---@class CraftingFramework.Indicator.data
 ---@field objectId string The object id to register the indicator for
 ---@field name string The name to display in the tooltip.
 ---@field craftedOnly boolean If true, the indicator will only show if the object is crafted.
----@field additionalUI fun(parentElement: tes3uiElement, reference: tes3reference) Add more UI to the tooltip
+---@field additionalUI fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
+
+---@class CraftingFramework.Indicator : CraftingFramework.Indicator.data
+---@field reference tes3reference
+Indicator = {}
+---@type table<string, CraftingFramework.Indicator.data> List of registered indicator objects, indexed by object id
+Indicator.registeredObjects = {}
 
 ---@param data CraftingFramework.Indicator.data
 function Indicator.register(data)
@@ -18,6 +21,19 @@ function Indicator.register(data)
     end
     Indicator.registeredObjects[data.objectId:lower()] = data
     logger:debug("Registered %s as Indicator", data.objectId)
+end
+
+---@return CraftingFramework.Indicator|nil
+function Indicator:new(reference)
+    if not reference then return end
+    local data = Indicator.registeredObjects[reference.object.id:lower()]
+    if not data then return end
+    if not (data.name or data.additionalUI) then return end
+    local indicator = table.copy(data)
+    indicator.reference = reference
+    setmetatable(indicator, self)
+    self.__index = self
+    return indicator
 end
 
 local id_indicator = tes3ui.registerID("CraftingFramework:activatorTooltip")
@@ -30,7 +46,9 @@ local function getTooltip()
     return MenuMulti:findChild(id_indicator)
 end
 
-local function createOrUpdateTooltipMenu(headerText)
+function Indicator:createOrUpdateTooltipMenu()
+    local indicator = Indicator.registeredObjects[self.reference.object.id:lower()]
+    local headerText = indicator.name
     local MenuMulti = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     if not MenuMulti then return end
     local tooltipMenu = MenuMulti:findChild(id_indicator)
@@ -50,50 +68,52 @@ local function createOrUpdateTooltipMenu(headerText)
     labelBorder.childAlignX = 0.5
     labelBorder.paddingAllSides = 10
     labelBorder.flowDirection = "top_to_bottom"
-    local headerBlock = labelBorder:createBlock()
-    headerBlock.autoHeight = true
-    headerBlock.autoWidth = true
-    headerBlock.flowDirection = "left_to_right"
-    headerBlock.childAlignY = 0.5
-    local iconBlock = headerBlock:createBlock{ id = icon_block }
-    iconBlock.autoHeight = true
-    iconBlock.autoWidth = true
-    local header = headerBlock:createLabel{ id = id_label, text = headerText or "" }
-    header.autoHeight = true
-    header.autoWidth = true
-    header.color = tes3ui.getPalette("header_color")
+
+    if headerText then
+        local headerBlock = labelBorder:createBlock()
+        headerBlock.autoHeight = true
+        headerBlock.autoWidth = true
+        headerBlock.flowDirection = "left_to_right"
+        headerBlock.childAlignY = 0.5
+        local iconBlock = headerBlock:createBlock{ id = icon_block }
+        iconBlock.autoHeight = true
+        iconBlock.autoWidth = true
+        local header = headerBlock:createLabel{ id = id_label, text = headerText or "" }
+        header.autoHeight = true
+        header.autoWidth = true
+        header.color = tes3ui.getPalette("header_color")
+    end
+    if indicator.additionalUI then
+        local additionalUIBlock = labelBorder:createBlock()
+        additionalUIBlock.autoHeight = true
+        additionalUIBlock.autoWidth = true
+        indicator:additionalUI(additionalUIBlock)
+    end
+
     return labelBorder
 end
 
 --- Update the indicator with the given reference
-function Indicator.update(reference)
+function Indicator:update()
     --get registered object
-    local registeredObject = Indicator.registeredObjects[reference.object.id:lower()]
     --If craftedOnly, check the crafted flag
-    local blockNonCrafted = registeredObject
-        and registeredObject.craftedOnly
-        and reference.data
-        and not reference.data.crafted
+    local blockNonCrafted = self.craftedOnly
+        and self.reference.data
+        and not self.reference.data.crafted
 
     --get menu
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     --If its an activator with a name, it'll already have a tooltip
-    local hasObjectName = reference and reference.object.name and reference.object.name ~= ""
-    local hasRegisteredName = registeredObject and registeredObject.name and registeredObject.name ~= ""
+    local hasObjectName = self.reference and self.reference.object.name and self.reference.object.name ~= ""
+    local hasRegisteredName = self.name and self.name ~= ""
 
-    logger:trace("Indicator.update: %s, %s, %s, %s, %s",
-        reference,
-        registeredObject,
-        hasObjectName,
-        hasRegisteredName,
-        blockNonCrafted)
     local showIndicator = menu
-        and registeredObject
-        --and hasRegisteredName
+        and self
+        and ( hasRegisteredName or self.additionalUI )
         and (not hasObjectName)
         and (not blockNonCrafted)
     if showIndicator then
-        createOrUpdateTooltipMenu(registeredObject.name)
+        self:createOrUpdateTooltipMenu()
     else
         Indicator.disable()
     end

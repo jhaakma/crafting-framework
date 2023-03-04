@@ -45,7 +45,7 @@ local config = require("CraftingFramework.config")
 ---@field maxSteepness number The max angle a crafted object will be oriented to while repositioning
 ---@field resultAmount number The amount of the item to be crafted
 ---@field recoverEquipmentMaterials boolean When set to true, and the craftable is an armor or weapon item, equipping it when it has 0 condition will destroy it and salvage its materials
----@field destroyCallback fun(self : CraftingFramework.Craftable, reference: tes3reference) Called when the object is destroyed
+---@field destroyCallback fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is destroyed
 ---@field placeCallback fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is placed
 ---@field positionCallback fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is positioned
 ---@field craftCallback fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.craftCallback.params) Called when the object is crafted
@@ -54,6 +54,7 @@ local config = require("CraftingFramework.config")
 ---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale number **Default 1** Determines the scale of the preview mesh.
 ---@field previewHeight number **Default 1** Determines the height of the mesh in the preview window.
+---@field additionalUI fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
 
 local MaterialRequirementSchema = {
     name = "MaterialRequirement",
@@ -62,7 +63,6 @@ local MaterialRequirementSchema = {
         count = { type = "number", required = false, default = 1 }
     }
 }
-
 
 ---@class CraftingFramework.Recipe : CraftingFramework.Recipe.data
 ---@field craftable CraftingFramework.Craftable

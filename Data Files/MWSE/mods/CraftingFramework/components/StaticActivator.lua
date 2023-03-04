@@ -19,9 +19,7 @@ function StaticActivator.register(data)
         logger:warn("Object %s is already registered", data.objectId)
     end
     StaticActivator.registeredObjects[data.objectId:lower()] = data
-    if data.name then
-        Indicator.register(data)
-    end
+    Indicator.register(data)
     logger:debug("Registered %s as StaticActivator", data.objectId)
 end
 
@@ -91,9 +89,14 @@ function StaticActivator.callRayTest(e)
         }
         event.trigger(e.eventName, eventData)
     end
+
     if result and result.reference then
-        logger:trace("Updating indicator for: %s", result.reference.id)
-        Indicator.update(result.reference)
+        local indicator = Indicator:new(result.reference)
+        if indicator then
+            indicator:update()
+        else
+            Indicator.disable()
+        end
         return result.reference
     end
     logger:trace("No reference found, disabling tooltip")
