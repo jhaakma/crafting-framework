@@ -78,7 +78,7 @@ local function doAdditionalUI(e)
         item = e.object,
         itemData = e.itemData,
     }
-    if indicator then
+    if indicator and not indicator:doBlockNonCrafted() then
         indicator:additionalUI(e.tooltip)
     end
 end

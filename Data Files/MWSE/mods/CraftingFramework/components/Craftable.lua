@@ -54,6 +54,7 @@ Craftable = {
             previewHeight = { type = "number", required = false, default = 0},
             noResult = { type = "boolean", required = false},
             additionalUI  = { type = "function", required = false },
+            craftedOnly = { type = "boolean", required = false, default = true},
         }
     },
     constructionSounds = {
@@ -199,6 +200,7 @@ function Craftable:new(data)
     self.__index = self
 
     local placedObjectId = craftable:getPlacedObjectId()
+    logger:debug("Registering %s, craftedOnly = %s", craftable.id, craftable.craftedOnly)
     if placedObjectId then
         local existingCraftable = Craftable.registeredCraftables[craftable.id]
         if existingCraftable then
@@ -213,7 +215,7 @@ function Craftable:new(data)
         StaticActivator.register{
             objectId = placedObjectId,
             name = craftable.name,
-            craftedOnly = true,
+            craftedOnly = craftable.craftedOnly,
             onActivate = craftableActivated,
             additionalUI = craftable.additionalUI
         }
@@ -221,6 +223,7 @@ function Craftable:new(data)
         Indicator.register{
             additionalUI = data.additionalUI,
             objectId = craftable.id,
+            craftedOnly = craftable.craftedOnly,
         }
     end
     return craftable

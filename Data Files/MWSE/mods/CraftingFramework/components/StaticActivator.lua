@@ -32,6 +32,7 @@ function StaticActivator:new(reference)
     local staticActivator = table.copy(data)
     staticActivator.indicator = Indicator:new{
         reference = reference,
+        craftedOnly = data.craftedOnly,
     }
     staticActivator.reference = reference
     setmetatable(staticActivator, self)

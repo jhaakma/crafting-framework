@@ -103,15 +103,15 @@ function Indicator:createOrUpdateTooltipMenu()
     return labelBorder
 end
 
+function Indicator:doBlockNonCrafted()
+    local isCrafted = self.dataHolder
+    and self.dataHolder.data
+    and self.dataHolder.data.crafted == true
+    return self.craftedOnly and not isCrafted
+end
+
 --- Update the indicator with the given reference
 function Indicator:update()
-    --get registered object
-    --If craftedOnly, check the crafted flag
-    local blockNonCrafted = self.craftedOnly
-        and self.dataHolder
-        and self.dataHolder.data
-        and not self.dataHolder.data.crafted
-
     --get menu
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     --If its an activator with a name, it'll already have a tooltip
@@ -122,7 +122,7 @@ function Indicator:update()
         and self
         and ( hasRegisteredName or self.additionalUI )
         and (not hasObjectName)
-        and (not blockNonCrafted)
+        and (not self:doBlockNonCrafted())
     if showIndicator then
         self:createOrUpdateTooltipMenu()
     else
