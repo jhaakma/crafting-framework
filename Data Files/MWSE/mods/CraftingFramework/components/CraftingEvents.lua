@@ -73,11 +73,13 @@ event.register("activate", blockActivate)
 
 ---@param e uiObjectTooltipEventData
 local function doAdditionalUI(e)
-    if e.reference then
-        local indicator = Indicator:new(e.reference)
-        if indicator then
-            indicator:additionalUI(e.tooltip)
-        end
+    local indicator = Indicator:new{
+        reference = e.reference,
+        item = e.object,
+        itemData = e.itemData,
+    }
+    if indicator then
+        indicator:additionalUI(e.tooltip)
     end
 end
 event.register(tes3.event.uiObjectTooltip, doAdditionalUI)

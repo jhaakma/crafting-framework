@@ -1,6 +1,11 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Indicator")
 
+---@class CraftingFramework.Indicator.new.params
+---@field reference tes3reference?
+---@field item tes3object|tes3item|tes3misc?
+---@field itemData tes3itemData?
+
 ---@class CraftingFramework.Indicator.data
 ---@field objectId string The object id to register the indicator for
 ---@field name string The name to display in the tooltip.
@@ -9,6 +14,8 @@ local logger = Util.createLogger("Indicator")
 
 ---@class CraftingFramework.Indicator : CraftingFramework.Indicator.data
 ---@field reference tes3reference
+---@field item tes3object|tes3item|tes3misc
+---@field dataHolder tes3itemData|tes3reference
 Indicator = {}
 ---@type table<string, CraftingFramework.Indicator.data> List of registered indicator objects, indexed by object id
 Indicator.registeredObjects = {}
@@ -23,14 +30,17 @@ function Indicator.register(data)
     logger:debug("Registered %s as Indicator", data.objectId)
 end
 
+---@param e CraftingFramework.Indicator.new.params
 ---@return CraftingFramework.Indicator|nil
-function Indicator:new(reference)
-    if not reference then return end
-    local data = Indicator.registeredObjects[reference.object.id:lower()]
+function Indicator:new(e)
+    local object = e.item or e.reference.object
+    if not object then return end
+    local data = Indicator.registeredObjects[object.id:lower()]
     if not data then return end
     if not (data.name or data.additionalUI) then return end
     local indicator = table.copy(data)
-    indicator.reference = reference
+    indicator.item = object
+    indicator.dataHolder = e.itemData or e.reference
     setmetatable(indicator, self)
     self.__index = self
     return indicator
@@ -47,7 +57,7 @@ local function getTooltip()
 end
 
 function Indicator:createOrUpdateTooltipMenu()
-    local indicator = Indicator.registeredObjects[self.reference.object.id:lower()]
+    local indicator = Indicator.registeredObjects[self.item.id:lower()]
     local headerText = indicator.name
     local MenuMulti = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     if not MenuMulti then return end
@@ -98,13 +108,14 @@ function Indicator:update()
     --get registered object
     --If craftedOnly, check the crafted flag
     local blockNonCrafted = self.craftedOnly
-        and self.reference.data
-        and not self.reference.data.crafted
+        and self.dataHolder
+        and self.dataHolder.data
+        and not self.dataHolder.data.crafted
 
     --get menu
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     --If its an activator with a name, it'll already have a tooltip
-    local hasObjectName = self.reference and self.reference.object.name and self.reference.object.name ~= ""
+    local hasObjectName = self.item.name and self.item.name ~= ""
     local hasRegisteredName = self.name and self.name ~= ""
 
     local showIndicator = menu

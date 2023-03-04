@@ -3,7 +3,9 @@ local Indicator = require("CraftingFramework.components.Indicator")
 local logger = Util.createLogger("StaticActivator")
 local config = require("CraftingFramework.config")
 
----@class CraftingFramework.StaticActivator
+---@class CraftingFramework.StaticActivator : CraftingFramework.StaticActivator.data
+---@field indicator CraftingFramework.Indicator
+---@field reference tes3reference
 StaticActivator = {
     registeredObjects = {}
 }
@@ -23,6 +25,20 @@ function StaticActivator.register(data)
     logger:debug("Registered %s as StaticActivator", data.objectId)
 end
 
+function StaticActivator:new(reference)
+    if not reference then return end
+    local data = StaticActivator.registeredObjects[reference.object.id:lower()]
+    if not data then return end
+    local staticActivator = table.copy(data)
+    staticActivator.indicator = Indicator:new{
+        reference = reference,
+    }
+    staticActivator.reference = reference
+    setmetatable(staticActivator, self)
+    self.__index = self
+    return staticActivator
+end
+
 local isBlocked
 local function blockScriptedActivate(e)
     logger:debug("BlockScriptedActivate doBlock: %s", e.doBlock)
@@ -30,19 +46,29 @@ local function blockScriptedActivate(e)
 end
 event.register("BlockScriptedActivate", blockScriptedActivate)
 
-local function doActivate(reference)
-    logger:debug("Activating %s", reference.id)
-    local data = StaticActivator.registeredObjects[reference.baseObject.id:lower()]
+function StaticActivator:doActivate()
+    logger:debug("doActivate()")
+
+    local isCrafted = self.reference
+        and self.reference.data
+        and self.reference.data.crafted
+    if self.craftedOnly and not isCrafted then
+        logger:debug("not crafted, skipping activation")
+        return
+    end
+    logger:debug("Activating %s", self.reference.id)
+    local data = StaticActivator.registeredObjects[self.reference.baseObject.id:lower()]
     if data then
         event.trigger("BlockScriptedActivate", { doBlock = true })
         timer.delayOneFrame(function()
             event.trigger("BlockScriptedActivate", { doBlock = false })
         end)
-        data.onActivate(reference)
+        data.onActivate(self.reference)
     end
 end
 
 function StaticActivator.doTriggerActivate()
+    logger:debug("doTriggerActivate()")
     local activationBlocked =
         config.persistent.positioningActive
         or isBlocked
@@ -53,8 +79,9 @@ function StaticActivator.doTriggerActivate()
         local ref = StaticActivator.callRayTest{
             eventName = "CraftingFramework:StaticActivation"
         }
-        if ref then
-            doActivate(ref)
+        local staticActivator = StaticActivator:new(ref)
+        if staticActivator then
+            staticActivator:doActivate()
         end
     end
 end
@@ -91,7 +118,7 @@ function StaticActivator.callRayTest(e)
     end
 
     if result and result.reference then
-        local indicator = Indicator:new(result.reference)
+        local indicator = Indicator:new{ reference = result.reference }
         if indicator then
             indicator:update()
         else

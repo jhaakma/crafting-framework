@@ -1,8 +1,4 @@
 local Validator = {}
-local doDebug = true
-local function log(message, ...)
-    mwse.log("[Validator] " .. message, ...)
-end
 
 local FieldSchema = {
     name = "FieldSchema",

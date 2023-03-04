@@ -2,6 +2,7 @@ local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Craftable")
 local Positioner = require("CraftingFramework.components.Positioner")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
+local Indicator = require("CraftingFramework.components.Indicator")
 local config = require("CraftingFramework.config")
 
 ---@alias CraftingFramework.Craftable.SoundType
@@ -23,6 +24,8 @@ local config = require("CraftingFramework.config")
 ---@class CraftingFramework.Craftable.data : CraftingFramework.Recipe.data
 
 ---@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
+---@field id string The id of the crafted Item
+---@field craftableId nil
 Craftable = {
     schema = {
         name = "Craftable",
@@ -213,6 +216,11 @@ function Craftable:new(data)
             craftedOnly = true,
             onActivate = craftableActivated,
             additionalUI = craftable.additionalUI
+        }
+    elseif data.additionalUI then
+        Indicator.register{
+            additionalUI = data.additionalUI,
+            objectId = craftable.id,
         }
     end
     return craftable
