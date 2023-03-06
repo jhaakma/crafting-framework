@@ -25,15 +25,18 @@ function Indicator.register(data)
     logger:assert(type(data.objectId) == "string" , "data.objectId is required")
     if Indicator.registeredObjects[data.objectId:lower()] then
         logger:warn("Indicator.register: %s is already registered", data.objectId)
+        table.copy(data, Indicator.registeredObjects[data.objectId:lower()])
+    else
+        Indicator.registeredObjects[data.objectId:lower()] = data
     end
-    Indicator.registeredObjects[data.objectId:lower()] = data
+
     logger:debug("Registered %s as Indicator", data.objectId)
 end
 
 ---@param e CraftingFramework.Indicator.new.params
 ---@return CraftingFramework.Indicator|nil
 function Indicator:new(e)
-    local object = e.item or e.reference.object
+    local object = e.item or e.reference.baseObject
     if not object then return end
     local data = Indicator.registeredObjects[object.id:lower()]
     if not data then return end

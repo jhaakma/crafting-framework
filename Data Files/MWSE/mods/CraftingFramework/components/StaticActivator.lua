@@ -27,7 +27,7 @@ end
 
 function StaticActivator:new(reference)
     if not reference then return end
-    local data = StaticActivator.registeredObjects[reference.object.id:lower()]
+    local data = StaticActivator.registeredObjects[reference.baseObject.id:lower()]
     if not data then return end
     local staticActivator = table.copy(data)
     staticActivator.indicator = Indicator:new{
