@@ -59,6 +59,7 @@ function Material:new(data)
     local material = Material.registeredMaterials[data.id]
     --add material ids
     for _, id in ipairs(data.ids) do
+        logger:debug("registered %s as %s", id, material.id)
         material.ids[id:lower()] = true
     end
     setmetatable(material, self)
@@ -71,7 +72,12 @@ function Material:registerMaterials(materialList)
     if materialList.id then ---@diagnostic disable-line: undefined-field
         logger:error("You passed a single material to registerMaterials, use registerMaterial instead or pass a list of materials")
     end
+    logger:debug("Registering materials")
     for _, data in ipairs(materialList) do
+        logger:debug("Material: %s", data.id)
+        for _, id in ipairs(data.ids) do
+            logger:debug("  - %s", id)
+        end
         Material:new(data)
     end
 end

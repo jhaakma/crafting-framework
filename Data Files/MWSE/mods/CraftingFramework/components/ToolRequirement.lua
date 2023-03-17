@@ -151,6 +151,8 @@ function ToolRequirement:checkToolCondition(obj)
         end
         log:debug("Scanned inventory and found no %s with enough condition", obj.id)
         return false
+    else
+        return true
     end
 end
 

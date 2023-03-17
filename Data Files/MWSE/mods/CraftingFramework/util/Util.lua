@@ -161,14 +161,8 @@ end
 
 ---@param ref tes3reference
 function Util.canBeActivated(ref)
-    local isActivator = ref.baseObject.objectType == tes3.objectType.activator
     local hasScript = ref.baseObject.script ~= nil
-    local isStatic = ref.baseObject.objectType == tes3.objectType.static
-    if isActivator then
-        return hasScript
-    else
-        return not isStatic
-    end
+    return hasScript
 end
 
 ---@return any
