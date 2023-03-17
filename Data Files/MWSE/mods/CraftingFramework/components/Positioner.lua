@@ -98,13 +98,22 @@ local function doPinToWall()
         or Positioner.pinToWall == true
 end
 
+local function getWidth()
+    if not (Positioner and Positioner.boundMax) then
+        return 0
+    end
+    return math.min(Positioner.boundMax.x - Positioner.boundMin.x, Positioner.boundMax.y - Positioner.boundMin.y, Positioner.boundMax.z - Positioner.boundMin.z)
+end
+
+
+
 -- Called every simulation frame to reposition the item.
 local function simulatePlacement()
-    Positioner.maxReach = tes3.getPlayerActivationDistance()
-    Positioner.currentReach = math.min(Positioner.currentReach, Positioner.maxReach)
     if not Positioner.active then
         return
     end
+    Positioner.maxReach = tes3.getPlayerActivationDistance() + getWidth()
+    Positioner.currentReach = math.min(Positioner.currentReach, Positioner.maxReach)
     -- Stop if player takes the object.
     if (Positioner.active.deleted) then
         logger:debug("simulatePlacement: Positioner.active is deleted, ending placement")
@@ -165,7 +174,7 @@ local function simulatePlacement()
             maxDistance = Positioner.currentReach,
         }
         if ray then
-            local width = math.min(Positioner.boundMax.x - Positioner.boundMin.x, Positioner.boundMax.y - Positioner.boundMin.y, Positioner.boundMax.z - Positioner.boundMin.z)
+            local width = getWidth()
             logger:trace("width: %s", width)
             local distance = math.min(ray.distance, Positioner.currentReach) - width
             logger:trace("distance: %s", distance)
@@ -265,7 +274,7 @@ end
 
 -- On grabbing / dropping an item.
 Positioner.togglePlacement = function(e)
-    Positioner.maxReach = tes3.getPlayerActivationDistance()
+    Positioner.maxReach = tes3.getPlayerActivationDistance() + getWidth()
     e = e or { target = nil }
     --init settings
     Positioner.pinToWall = e.pinToWall or false
