@@ -45,6 +45,7 @@ function Tool:new(data)
     local tool = Tool.registeredTools[data.id]
     --add tool ids
     if data.ids then
+        log:debug("Adding tool ids: %s", table.concat(data.ids, ", "))
         for _, id in ipairs(data.ids) do
             tool.ids[id:lower()] = true
         end
@@ -68,6 +69,11 @@ function Tool:use(amount)
         if obj then
             local itemStack = tes3.player.object.inventory:findItemStack(obj)
             if itemStack then
+
+                if not itemStack.object.maxCondition then
+                    log:debug("Found invincible tool, skipping: %s", self:getName())
+                    return
+                end
                 log:debug("Found in inventory: %s", itemStack.object.id)
                 if not itemStack.variables then
                     tes3.addItemData{
@@ -91,20 +97,37 @@ function Tool:use(amount)
     log:debug("Couldn't find any item to degrade")
 end
 
+---Gets a list of tool IDs. Only guaranteed to include items that are in teh player's inventory.
 ---@return table<string, true>
 function Tool:getToolIds()
-    if self.ids and #self.ids > 0 then return self.ids end
+    log:debug("getToolIds for tool %s", self:getName())
+    local ids = {}
+    if self.ids and table.size(self.ids) > 0 then
+        table.copy(self.ids, ids)
+    end
     if self.requirement then
-        local ids = {}
+        local requirementIds = {}
         for _, stack in pairs(tes3.player.object.inventory) do
             if self.requirement(stack) then
                 ids[stack.object.id:lower()] = true
             end
         end
-        return ids
+        table.copy(requirementIds, ids)
     end
-    log:debug("getToolIds(): No tool ids found")
-    return {}
+    log:debug("getToolIds(): Returning ids: %s", table.concat(table.keys(ids), ", "))
+    return ids
+end
+
+---Check if the given item is a tool. If the tool has a `requirement` callback,
+---this will only return true if the item is in the player's inventory.
+---@param item tes3item
+function Tool:itemIsTool(item)
+    if not item then
+        return false
+    end
+    local id = item.id:lower()
+    local ids = self:getToolIds()
+    return ids[id] == true
 end
 
 return Tool
