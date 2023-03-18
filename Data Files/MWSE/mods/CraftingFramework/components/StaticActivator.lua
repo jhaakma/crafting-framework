@@ -96,8 +96,8 @@ function StaticActivator.callRayTest(e)
         local inventoryVisible = inventory and inventory.visible == true
         if inventoryVisible then
             local cursor = tes3.getCursorPosition()
-            ---@diagnostic disable-next-line: undefined-field
-            local camera = tes3.worldController.worldCamera.camera
+
+            local camera = tes3.worldController.worldCamera.cameraData.camera
             eyePos, eyeDirection = camera:windowPointToRay{cursor.x, cursor.y}
         end
     end

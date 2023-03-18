@@ -535,7 +535,6 @@ function Craftable:place(materialsUsed)
     local reference = tes3.createReference{
         object = self:getPlacedObjectId(),
         cell = tes3.player.cell,
-        ---@diagnostic disable-next-line: assign-type-mismatch
         orientation = tes3.player.orientation:copy() + tes3vector3.new(0, 0, math.pi),
         position = position
     }
