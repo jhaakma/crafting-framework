@@ -33,7 +33,6 @@ Craftable = {
             id = { type = "string", required = true },
             name = { type = "string", required = false },
             placedObject = { type = "string", required = false },
-            uncarryable = { type = "boolean", required = false },
             additionalMenuOptions = { type = "table", required = false },
             soundId = { type = "string", required = false },
             soundPath = { type = "string", required = false },
@@ -41,19 +40,23 @@ Craftable = {
             materialRecovery = { type = "number", required = false},
             maxSteepness = { type = "number", required = false},
             resultAmount = { type = "number", required = false},
-            recoverEquipmentMaterials = { type = "boolean", required = false},
+            mesh = { type = "string", required = false},
+            --Preview window
+            previewMesh = { type = "string", required = false},
+            rotationAxis = { type = "string", required = false},
+            previewScale = { type = "number", required = false},
+            previewHeight = { type = "number", required = false, default = 0},
+            --callbacks
             destroyCallback = { type = "function", required = false },
             placeCallback = { type = "function", required = false },
             positionCallback = { type = "function", required = false },
             craftCallback = { type = "function", required = false },
             quickActivateCallback = { type = "function", required = false },
-            mesh = { type = "string", required = false},
-            previewMesh = { type = "string", required = false},
-            rotationAxis = { type = "string", required = false},
-            previewScale = { type = "number", required = false},
-            previewHeight = { type = "number", required = false, default = 0},
-            noResult = { type = "boolean", required = false},
             additionalUI  = { type = "function", required = false },
+            --flags
+            uncarryable = { type = "boolean", required = false },
+            recoverEquipmentMaterials = { type = "boolean", required = false},
+            noResult = { type = "boolean", required = false},
             craftedOnly = { type = "boolean", required = false, default = true},
         }
     },
@@ -306,6 +309,9 @@ function Craftable:getMenuButtons(reference)
         },
         {
             text = "Position",
+            showRequirements = function()
+                return reference.data.crafted or self:isCarryable()
+            end,
             callback = function()
                 self:position(reference)
             end
@@ -322,7 +328,7 @@ function Craftable:getMenuButtons(reference)
         {
             text = "Destroy",
             showRequirements = function()
-                return not self:isCarryable()
+                return reference.data.crafted and not self:isCarryable()
             end,
             callback = function()
                 tes3ui.showMessageMenu{
