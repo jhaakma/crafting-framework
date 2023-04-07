@@ -6,6 +6,13 @@ local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local Indicator = require("CraftingFramework.components.Indicator")
 local config = require("CraftingFramework.config")
 
+---@class CraftingFramework.Craftable.SuccessMessageCallback.params
+---@field craftable CraftingFramework.Craftable The craftable that was crafted
+---@field reference tes3reference? The reference that was crafted
+---@field item tes3item? The item that was crafted
+---@field materialsUsed table<string, number> The materials used in the craft, with the material id as key and the amount as value
+---@field resultAmount number The amount of the crafted item
+
 ---@alias CraftingFramework.Craftable.SoundType
 ---| '"fabric"'
 ---| '"wood"'
@@ -54,6 +61,7 @@ local Craftable = {
             craftCallback = { type = "function", required = false },
             quickActivateCallback = { type = "function", required = false },
             additionalUI  = { type = "function", required = false },
+            successMessageCallback = { type = "function", required = false },
             --flags
             uncarryable = { type = "boolean", required = false },
             recoverEquipmentMaterials = { type = "boolean", required = false},
@@ -476,10 +484,24 @@ function Craftable:craft(materialsUsed)
                     itemData.data.materialsUsed = materialsUsed
                     itemData.data.materialRecovery = self.materialRecovery
                 end
-                tes3.messageBox("You successfully crafted %s%s.",
-                    item.name,
-                    self.resultAmount and string.format(" x%d", self.resultAmount) or ""
-                )
+			    local successMessage
+                if self.successMessageCallback then
+                    successMessage = self.successMessageCallback{
+                        craftable = self,
+                        reference = reference,
+                        item = item, ---@diagnostic disable-line: assign-type-mismatch
+                        materialsUsed = materialsUsed,
+                        resultAmount = self.resultAmount
+                    }
+                else
+                    successMessage = string.format("You successfully crafted %s%s.",
+                        item.name,
+                        self.resultAmount and string.format(" x%d", self.resultAmount) or ""
+                    )
+                end
+                if successMessage and successMessage ~= "" then
+                    tes3.messageBox(successMessage)
+                end
             end
         end
     end

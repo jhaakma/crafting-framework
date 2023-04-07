@@ -49,6 +49,7 @@ local config = require("CraftingFramework.config")
 ---@field positionCallback fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is positioned
 ---@field craftCallback fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.craftCallback.params) Called when the object is crafted
 ---@field quickActivateCallback fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is shift-activated
+---@field successMessageCallback fun(e: CraftingFramework.Craftable.SuccessMessageCallback.params): string #A function that returns a string to be displayed when the craftable is crafted. If not set, the default message will be used.
 ---@field previewMesh string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
 ---@field rotationAxis craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale number **Default 1** Determines the scale of the preview mesh.
