@@ -6,7 +6,7 @@ local config = require("CraftingFramework.config")
 ---@class CraftingFramework.StaticActivator : CraftingFramework.StaticActivator.data
 ---@field indicator CraftingFramework.Indicator
 ---@field reference tes3reference
-StaticActivator = {
+local StaticActivator = {
     registeredObjects = {}
 }
 

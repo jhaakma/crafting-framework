@@ -95,5 +95,11 @@ local function registerMCM()
         allowCombinations = false,
         variable = mwse.mcm.createTableVariable{ id = "quickModifierHotkey", table = mcmConfig },
     }
+
+    page:createYesNoButton{
+        label = "Enable Infinite Storage",
+        description = "Enable this to allow carryable containers to store an infinite amount of items. This will not effect previously placed containers",
+        variable = mwse.mcm.createTableVariable{ id = "enableInfiniteStorage", table = config.mcm },
+    }
 end
 event.register("modConfigReady", registerMCM)

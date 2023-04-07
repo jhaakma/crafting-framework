@@ -16,7 +16,8 @@ local logger = Util.createLogger("Indicator")
 ---@field reference tes3reference
 ---@field item tes3object|tes3item|tes3misc
 ---@field dataHolder tes3itemData|tes3reference
-Indicator = {}
+local Indicator = {}
+
 ---@type table<string, CraftingFramework.Indicator.data> List of registered indicator objects, indexed by object id
 Indicator.registeredObjects = {}
 
@@ -60,8 +61,7 @@ local function getTooltip()
 end
 
 function Indicator:createOrUpdateTooltipMenu()
-    local indicator = Indicator.registeredObjects[self.item.id:lower()]
-    local headerText = indicator.name
+    local headerText = self.name
     local MenuMulti = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     if not MenuMulti then return end
     local tooltipMenu = MenuMulti:findChild(id_indicator)
@@ -96,11 +96,11 @@ function Indicator:createOrUpdateTooltipMenu()
         header.autoWidth = true
         header.color = tes3ui.getPalette("header_color")
     end
-    if indicator.additionalUI then
+    if self.additionalUI then
         local additionalUIBlock = labelBorder:createBlock()
         additionalUIBlock.autoHeight = true
         additionalUIBlock.autoWidth = true
-        indicator:additionalUI(additionalUIBlock)
+        self:additionalUI(additionalUIBlock)
     end
 
     return labelBorder

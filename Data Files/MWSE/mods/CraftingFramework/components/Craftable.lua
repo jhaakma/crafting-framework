@@ -26,7 +26,7 @@ local config = require("CraftingFramework.config")
 ---@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
 ---@field id string The id of the crafted Item
 ---@field craftableId nil
-Craftable = {
+local Craftable = {
     schema = {
         name = "Craftable",
         fields = {

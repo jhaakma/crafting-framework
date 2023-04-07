@@ -10,7 +10,7 @@ local logger = Util.createLogger("SkillRequirement")
 
 
 ---@class CraftingFramework.SkillRequirement : CraftingFramework.SkillRequirement.data
-SkillRequirement = {
+local SkillRequirement = {
     schema = {
         name = "SkillRequirement",
         fields = {

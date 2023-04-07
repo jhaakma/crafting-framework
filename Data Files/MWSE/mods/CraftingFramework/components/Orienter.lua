@@ -78,26 +78,15 @@ function this.orientRef(ref, rayResult)
     ref.orientation = newOrientation
 end
 
-local bottle
 function this.getGroundBelowRef(e)
-
     local ref = e.ref
     local offset = ref.object.boundingBox.max.z-ref.object.boundingBox.min.z
     if not ref then
         return
     end
 
-    -- if ref.baseObject.objectType == tes3.objectType.npc
-    --     or ref.baseObject.objectType == tes3.objectType.creature
-    -- then
-    --     offset = offset + 100
-    -- end
-
     local ignoreList = getIngoreList(ref)
     table.insert(ignoreList, ref)
-    if bottle then
-        table.insert(ignoreList, bottle)
-    end
 
     local result = tes3.rayTest {
         position = {ref.position.x, ref.position.y, ref.position.z + offset},
@@ -116,18 +105,10 @@ function this.getGroundBelowRef(e)
             useBackTriangles = true,
             root = e.terrainOnly and tes3.game.worldLandscapeRoot or nil
         }
+        if not result then
+            return
+        end
     end
-
-    if not bottle then
-        -- bottle = tes3.createReference{
-        --     object = "misc_com_bottle_10",
-        --     position = result.intersection:copy(),
-        --     cell = ref.cell
-        -- }
-    else
-        bottle.position = result.intersection:copy()
-    end
-
     return result
 end
 

@@ -2,10 +2,11 @@ require("CraftingFramework.mcm")
 require("CraftingFramework.components.RecoverMaterials")
 require("CraftingFramework.components.CraftingEvents")
 require("CraftingFramework.test")
+require("CraftingFramework.carryableContainers")
 
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("CraftingFramework")
-local metadata = toml.loadMetadata("The Crafting Framework")
+local metadata = toml.loadMetadata("The Crafting Framework") --[[@as MWSE.Metadata]]
 
 --Register crafting menu with RightClickMenuExit
 event.register(tes3.event.initialized, function()

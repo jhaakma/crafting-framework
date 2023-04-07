@@ -6,7 +6,7 @@ local m1 = tes3matrix33.new()
 local logger = Util.createLogger("Positioner")
 
 ---@class CraftingFramework.Positioner
-Positioner = {
+local Positioner = {
     maxReach = 100,
     minReach = 100,
     currentReach = 500,

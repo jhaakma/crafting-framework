@@ -54,7 +54,7 @@ local log = Util.createLogger("MenuActivator")
 ---@class CraftingFramework.MenuActivator : CraftingFramework.MenuActivator.data This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 ---@field recipes CraftingFramework.Recipe[] A list of recipes that will appear (if known) when the menu is activated.
 ---@field registeredMenuActivators table<string, CraftingFramework.MenuActivator> A list of all the MenuActivators that have been registered.
-MenuActivator = {
+local MenuActivator = {
     schema = {
         name = "MenuActivator",
         fields = {

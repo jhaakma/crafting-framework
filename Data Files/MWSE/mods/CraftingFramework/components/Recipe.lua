@@ -70,7 +70,7 @@ local MaterialRequirementSchema = {
 ---@field customRequirements CraftingFramework.CustomRequirement[]
 ---@field skillRequirements CraftingFramework.SkillRequirement[]
 ---@field toolRequirements CraftingFramework.ToolRequirement[]
-Recipe = {
+local Recipe = {
     schema = {
         name = "Recipe",
         fields = {
@@ -191,11 +191,11 @@ function Recipe:craft()
     end
 end
 
----@return tes3object|tes3weapon|tes3armor|tes3misc|tes3light|nil object
+---@return tes3object|nil object
 function Recipe:getItem()
     local id = self.craftable:getPlacedObjectId() or self.craftable.id
     if id then
-        return tes3.getObject(id)
+        return tes3.getObject(id) --[[@as tes3object]]
     end
 end
 

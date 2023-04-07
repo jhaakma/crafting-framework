@@ -10,7 +10,7 @@ local log = Util.createLogger("Tool")
 
 ---@class CraftingFramework.Tool : CraftingFramework.Tool.data
 ---@field ids table<string, boolean>
-Tool = {
+local Tool = {
     schema = {
         name = "Tool",
         fields = {
@@ -65,7 +65,7 @@ function Tool:use(amount)
     amount = amount or 1
     log:debug("Using tool, degrading by %s", amount)
     for id, _ in pairs(self:getToolIds()) do
-        local obj = tes3.getObject(id)
+        local obj = tes3.getObject(id) --[[@as tes3misc]]
         if obj then
             local itemStack = tes3.player.object.inventory:findItemStack(obj)
             if itemStack then

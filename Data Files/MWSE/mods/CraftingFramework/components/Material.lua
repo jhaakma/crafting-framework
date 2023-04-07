@@ -9,7 +9,7 @@ local logger = Util.createLogger("Material")
 
 ---@class CraftingFramework.Material : CraftingFramework.Material.data
 ---@field ids table<string, boolean>
-Material = {
+local Material = {
     schema = {
         name = "Material",
         fields = {

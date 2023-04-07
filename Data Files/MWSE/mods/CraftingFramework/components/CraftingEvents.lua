@@ -17,10 +17,11 @@ local function itemDropped(e)
         if placedObject and e.reference.baseObject.id:lower() == craftable.id then
             logger:debug("itemDropped placedObject: " .. placedObject)
             craftable:swap(e.reference)
+            return true
         end
     end
 end
-event.register("itemDropped", itemDropped)
+event.register("itemDropped", itemDropped, { priority = -300 })
 
 event.register("CraftingFramework:EndPlacement", function(e)
     local reference = e.reference
@@ -78,7 +79,7 @@ local function doAdditionalUI(e)
         item = e.object,
         itemData = e.itemData,
     }
-    if indicator and not indicator:doBlockNonCrafted() then
+    if indicator and indicator.additionalUI and not indicator:doBlockNonCrafted() then
         indicator:additionalUI(e.tooltip)
     end
 end
