@@ -22,10 +22,10 @@ local config = require("CraftingFramework.config")
 ---@field materialsUsed table<string, number> The materials used in the craft, with the material id as key and the amount as value
 
 ---@class CraftingFramework.Craftable.data : CraftingFramework.Recipe.data
-
----@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
 ---@field id string The id of the crafted Item
 ---@field craftableId nil
+
+---@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
 local Craftable = {
     schema = {
         name = "Craftable",
@@ -128,41 +128,6 @@ function Craftable.getPlacedCraftable(id)
     return Craftable.craftablesIdexedByPlacedObject[id]
 end
 
-function Craftable:isCarryable()
-    if self.uncarryable then return false end
-    local unCarryableTypes = {
-        [tes3.objectType.light] = true,
-        [tes3.objectType.container] = true,
-        [tes3.objectType.static] = true,
-        [tes3.objectType.door] = true,
-        [tes3.objectType.activator] = true,
-        [tes3.objectType.npc] = true,
-        [tes3.objectType.creature] = true,
-    }
-    local placedObject = tes3.getObject(self.id)
-    if placedObject then
-        if placedObject.canCarry then
-            return true
-        end
-        local objType = placedObject.objectType
-
-        if unCarryableTypes[objType] then
-            return false
-        end
-        return true
-    end
-end
-
-function Craftable:getPlacedObjectId()
-    if self.placedObject then
-        return self.placedObject
-    else
-        if not self:isCarryable() then
-            return self.id
-        end
-    end
-end
-
 local function craftableActivated(reference)
     logger:debug("craftableActivated: %s", reference)
     local craftable = Craftable.getPlacedCraftable(reference.baseObject.id:lower())
@@ -189,6 +154,7 @@ end
 ---@param data CraftingFramework.Craftable.data
 ---@return CraftingFramework.Craftable
 function Craftable:new(data)
+    logger:debug("Registering %s, craftedOnly = %s", data.id, data.craftedOnly)
     Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
     --for pre-1.0.5 compatibility
@@ -196,14 +162,31 @@ function Craftable:new(data)
         data.previewMesh = data.mesh
         data.mesh = nil
     end
-    setmetatable(data, self)
+
+    --Generate a placed object static if defined one doesn't exist
+    if data.placedObject then
+        local placedObject = tes3.getObject(data.placedObject)
+        if placedObject == nil then
+            logger:debug("PlacedObject %s for craftable %s does not exist, creating a static",
+                data.placedObject, data.id)
+            local craftedObject = tes3.getObject(data.id)
+            local placedObject = tes3.createObject{
+                id = data.placedObject or nil,
+                objectType = tes3.objectType.static,
+                name = craftedObject.name,
+                mesh = craftedObject.mesh,
+            }
+            data.placedObject = placedObject.id
+        end
+    end
 
     ---@cast data CraftingFramework.Craftable
     local craftable = data
+    setmetatable(craftable, self)
     self.__index = self
 
     local placedObjectId = craftable:getPlacedObjectId()
-    logger:debug("Registering %s, craftedOnly = %s", craftable.id, craftable.craftedOnly)
+
     if placedObjectId then
         local existingCraftable = Craftable.registeredCraftables[craftable.id]
         if existingCraftable then
@@ -222,14 +205,49 @@ function Craftable:new(data)
             onActivate = craftableActivated,
             additionalUI = craftable.additionalUI
         }
-    elseif data.additionalUI then
+    elseif craftable.additionalUI then
         Indicator.register{
-            additionalUI = data.additionalUI,
+            additionalUI = craftable.additionalUI,
             objectId = craftable.id,
             craftedOnly = craftable.craftedOnly,
         }
     end
     return craftable
+end
+
+function Craftable:isCarryable()
+    if self.uncarryable then return false end
+    local unCarryableTypes = {
+        [tes3.objectType.light] = true,
+        [tes3.objectType.container] = true,
+        [tes3.objectType.static] = true,
+        [tes3.objectType.door] = true,
+        [tes3.objectType.activator] = true,
+        [tes3.objectType.npc] = true,
+        [tes3.objectType.creature] = true,
+    }
+    local obj = tes3.getObject(self.id)
+    if obj then
+        if obj.canCarry then
+            return true
+        end
+        local objType = obj.objectType
+
+        if unCarryableTypes[objType] then
+            return false
+        end
+        return true
+    end
+end
+
+function Craftable:getPlacedObjectId()
+    if self.placedObject then
+        return self.placedObject
+    else
+        if not self:isCarryable() then
+            return self.id
+        end
+    end
 end
 
 function Craftable:activate(reference)

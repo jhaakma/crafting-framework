@@ -19,7 +19,6 @@ local config = require("CraftingFramework.config")
 ---@field material string **Required.** The id of either a Crafting Framework Material, or an object id. Using an object id will register it as its own Material where the object itself is the only item in the list.
 ---@field count number *Default*: `1`. The required amount of the material.
 
-
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
 ---@field craftableId string **Required.** The id of the object crafted by this recipe

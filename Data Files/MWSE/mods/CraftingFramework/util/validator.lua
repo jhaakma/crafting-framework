@@ -1,5 +1,5 @@
 local Validator = {}
-
+local inspect = require("inspect")
 local FieldSchema = {
     name = "FieldSchema",
     fields = {
@@ -56,7 +56,7 @@ Validator.validate = function(object, schema)
 
         if not matchesType then
             assert(type(object) == schema,
-            string.format('Validation failed: expected type "%s", got "%s"', schema, type(object)))
+            string.format('Validation failed: expected type "%s", got "%s"', schema, inspect(object)))
         end
         return
     end
@@ -66,7 +66,7 @@ Validator.validate = function(object, schema)
     for key, field in pairs(schema.fields) do
         --check schema values
         assert(type(field) == "table", string.format('Validation failed: "%s" field data is not a table.', key))
-        assert(field.type, string.format('Validation failed: "%s" field data missing type.', key))
+        assert(field.type, string.format('Validation failed: field data missing type - %s', inspect(key)))
 
         --check required field exists
         if field.required then
@@ -106,14 +106,14 @@ Validator.validate = function(object, schema)
                                 for _, tableValue in ipairs(object[key]) do
                                     assert(field.values[tableValue],
                                         string.format('Validation failed for %s, expected one of the following values: [%s], got %s',
-                                            schemaName, valuesString, tableValue
+                                            schemaName, valuesString, inspect(tableValue)
                                         )
                                     )
                                 end
                                 for _, tableValue in pairs(object[key]) do
                                     assert(field.values[tableValue],
                                         string.format('Validation failed for %s, expected one of the following values: [%s], got %s',
-                                            schemaName, valuesString, tableValue
+                                            schemaName, valuesString, inspect(tableValue)
                                         )
                                     )
                                 end
@@ -131,14 +131,14 @@ Validator.validate = function(object, schema)
                     assert(type(object[key]) == field.type,
                         string.format(
                             'Validation failed for %s: %s must be of type "%s". Instead got "%s".',
-                            schemaName, key, field.type, type(object[key])
+                            schemaName, key, field.type, inspect(object[key])
                         )
                     )
                 end
             end
         elseif field.default ~= nil then
             --nil, initialise default
-            assert(type(object) == "table", string.format("Validation failed: %s is not a table.", object))
+            assert(type(object) == "table", string.format("Validation failed: %s is not a table.", inspect(object)))
             object[key] = field.default
         end
     end
