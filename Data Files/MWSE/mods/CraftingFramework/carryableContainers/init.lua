@@ -1,5 +1,5 @@
-local common = require("CraftingFramework.common")
-local logger = common.createLogger("Carryable Containers")
+local util = require("CraftingFramework.util.Util")
+local logger = util.createLogger("Carryable Containers")
 
 local Initializer = require("CraftingFramework.util.initializer"):new{
     modPath = "mods/CraftingFramework/carryableContainers",

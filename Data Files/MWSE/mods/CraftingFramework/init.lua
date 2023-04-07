@@ -12,4 +12,8 @@ CraftingFramework.Indicator = require("CraftingFramework.components.Indicator")
 CraftingFramework.Positioner = require("CraftingFramework.components.Positioner")
 CraftingFramework.StaticActivator = require("CraftingFramework.components.StaticActivator")
 
+--Carryabe Containers
+CraftingFramework.Carryable =require("CraftingFramework.carryableContainers.components.Carryable")
+CraftingFramework.ItemFilter = require("CraftingFramework.carryableContainers.components.ItemFilter")
+
 return CraftingFramework

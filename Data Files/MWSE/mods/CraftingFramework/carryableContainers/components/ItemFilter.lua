@@ -1,6 +1,6 @@
 local config = require("CraftingFramework.carryableContainers.config")
-local common = require("CraftingFramework.carryableContainers.common")
-local logger = common.createLogger("ItemFilter")
+local util = require("CraftingFramework.util.Util")
+local logger = util.createLogger("ItemFilter")
 
 ---@class CarryableContainers.ItemFilter.new.data
 ---@field id string The id of this filter

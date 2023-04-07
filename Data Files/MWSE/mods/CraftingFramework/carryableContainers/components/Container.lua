@@ -1,12 +1,12 @@
 local config = require("CraftingFramework.carryableContainers.config")
-local common = require("CraftingFramework.carryableContainers.common")
-local logger = common.createLogger("Container")
+local util = require("CraftingFramework.util.Util")
+local logger = util.createLogger("Container")
 
 local Container = {}
 
 function Container.getMiscIdfromReference(reference)
     if not reference then
-        logger:debug("No container ref")
+        logger:trace("No container ref")
         return nil
     end
     local miscId = config.persistent.containerToMiscCopyMapping[reference.baseObject.id:lower()]
@@ -14,7 +14,7 @@ function Container.getMiscIdfromReference(reference)
         logger:trace("No misc id")
         return nil
     end
-    logger:debug("Found misc id: %s", miscId)
+    logger:trace("Found misc id: %s", miscId)
     return miscId
 end
 
@@ -52,9 +52,10 @@ local function replaceTakeAllButton(menu, carryable)
     newTakeAllButton.paddingRight = 8
     newTakeAllButton.paddingBottom = 3
     takeAllButton.parent:reorderChildren(takeAllButton, newTakeAllButton, 1)
+    return newTakeAllButton
 end
 
-local function createFilterLabel(filterButtonParent, filter)
+local function createFilterLabel_deprecated(filterButtonParent, filter)
     logger:debug("Creating filter label")
     local label = filterButtonParent:createLabel{
         id = "merCarryableContainers_filterLabel",
@@ -86,7 +87,7 @@ local function createFilterButton(transferButtonParent, menu, carryable)
 end
 
 ---@param parent tes3uiElement
----@param carryable CarryableMisc
+---@param carryable Carryable
 local function addRenameButton(parent, carryable)
     local renameButton = parent:createButton{
         id = "merCarryableContainers_renameButton",
@@ -107,7 +108,7 @@ local function addRenameButton(parent, carryable)
 end
 
 ---@param parent tes3uiElement
----@param carryable CarryableMisc
+---@param carryable Carryable
 local function addPickupButton(parent, carryable, menu)
     if carryable.reference == nil then return end
     local pickupButton = parent:createButton{
@@ -128,33 +129,58 @@ local function addPickupButton(parent, carryable, menu)
     return pickupButton
 end
 
+function Container.updateCapacityFillbar(carryable)
+    local menu = tes3ui.findMenu("MenuContents")
+    if (menu == nil) then return end
+    local maxCapacity = menu:getPropertyFloat("MenuContents_containerweight")
+    local bar = menu:findChild("CarryableContainers:MenuContents_capacity")
+    bar.widget.max = maxCapacity
+    bar.widget.current = carryable:calculateWeight()
+    logger:debug("Updating capacity fillbar: %s / %s", bar.widget.current, bar.widget.max)
+    if (maxCapacity <= 0) then
+        bar.visible = false
+    end
+end
+
+function Container.addCapacityFillbar(menu, carryable)
+	-- Create capacity fillbar for containers.
+    local buttonBlock = menu:findChild("Buttons").children[2]
+    local capacityBar = buttonBlock:createFillBar{
+        id = "CarryableContainers:MenuContents_capacity"
+    }
+    capacityBar.width = 128
+    capacityBar.height = 21
+    capacityBar.borderAllSides = 4
+    buttonBlock:reorderChildren(0, -1, 1)
+
+    menu:registerBefore("update", function()
+        Container.updateCapacityFillbar(carryable)
+    end)
+    -- Necessary as otherwise the fillbar is hidden for some reason.
+    menu:triggerEvent("update")
+end
+
 ---@param menu tes3uiElement
----@param carryable CarryableMisc
+---@param carryable Carryable
 function Container.addButtons(menu, carryable)
-    menu = menu:getContentElement()
 
-    -- disable UI Expansions filter block
-    local uiExp = menu:findChild("UIEXP:ContentsMenu:FilterBlock")
-    if uiExp then
+    -- disable UI Expansions filter and capacity elements
+    local uiExpFilterBlock = menu:findChild("UIEXP:ContentsMenu:FilterBlock")
+    if uiExpFilterBlock then
         tes3ui.acquireTextInput(nil)
-        uiExp.visible = false
+        uiExpFilterBlock.visible = false
+    end
+    local uiExpCapacity = menu:findChild("UIEXP_MenuContents_capacity")
+    if uiExpCapacity then
+        uiExpCapacity.visible = false
     end
 
-    local doFilterLabel = false
-    local filter = carryable:getFilter()
-    if filter and doFilterLabel then
-        local headerBlock = menu:getTopLevelMenu():findChild("PartDragMenu_title_tint")
-        local title = headerBlock:findChild("PartDragMenu_title")
-        title.borderRight = 0
-        local filterLabel = createFilterLabel(headerBlock, filter)
-        headerBlock:reorderChildren(-2, filterLabel, 1)
-    end
-
+    --Replace the take all button with our one
     local takeAllButton = menu:findChild("MenuContents_takeallbutton")
     local buttonBlock = takeAllButton.parent
-    --addTopRow(menu, carryable)
-    replaceTakeAllButton(menu, carryable)
+    local newTakeAllButton = replaceTakeAllButton(menu, carryable)
 
+    --Add pickup button
     local pickupButton = addPickupButton(buttonBlock, carryable, menu)
     if pickupButton then
         local closeButton = menu:findChild("MenuContents_closebutton")
@@ -164,11 +190,15 @@ function Container.addButtons(menu, carryable)
     --Filter button on bottom row
     if carryable:getFilter() then
         local transferButton = createFilterButton(buttonBlock, menu, carryable)
-        buttonBlock:reorderChildren(takeAllButton, transferButton, 1)
+        buttonBlock:reorderChildren(newTakeAllButton, transferButton, 1)
     end
 
+    --Add Rename button
     local renameButton = addRenameButton(buttonBlock, carryable)
     buttonBlock:reorderChildren(-2, renameButton, 1)
+
+    --Add capacity fillbar
+    Container.addCapacityFillbar(menu, carryable)
 
     menu:updateLayout()
 end
