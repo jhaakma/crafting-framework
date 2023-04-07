@@ -6,7 +6,8 @@ local Positioner = require("CraftingFramework.components.Positioner")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local Indicator = require("CraftingFramework.components.Indicator")
 ---@class craftingFrameworkInterop
-interop = {}
+---Deprecated. Use `require("CraftingFramework")` instead
+local interop = {}
 
 --MenuActivator APIs
 
@@ -117,5 +118,4 @@ function interop.activatePositioner(e)
     }
 end
 
-
-return interop
+return interop ---@deprecated

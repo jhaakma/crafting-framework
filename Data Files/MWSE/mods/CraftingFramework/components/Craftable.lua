@@ -1,6 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Craftable")
 local Positioner = require("CraftingFramework.components.Positioner")
+local SoundType = require("CraftingFramework.components.SoundType")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local Indicator = require("CraftingFramework.components.Indicator")
 local config = require("CraftingFramework.config")
@@ -60,54 +61,6 @@ local Craftable = {
             craftedOnly = { type = "boolean", required = false, default = true},
         }
     },
-    constructionSounds = {
-        fabric = {
-            "craftingFramework\\craft\\Fabric1.wav",
-            "craftingFramework\\craft\\Fabric2.wav",
-            "craftingFramework\\craft\\Fabric3.wav",
-            "craftingFramework\\craft\\Fabric4.wav",
-        },
-        wood = {
-            "craftingFramework\\craft\\Wood1.wav",
-            "craftingFramework\\craft\\Wood2.wav",
-            "craftingFramework\\craft\\Wood3.wav",
-        },
-        leather = {
-            "craftingFramework\\craft\\Leather1.wav",
-            "craftingFramework\\craft\\Leather2.wav",
-            "craftingFramework\\craft\\Leather3.wav",
-        },
-        rope = {
-            "craftingFramework\\craft\\Rope1.wav",
-            "craftingFramework\\craft\\Rope2.wav",
-            "craftingFramework\\craft\\Rope3.wav",
-        },
-        straw = {
-            "craftingFramework\\craft\\Straw1.wav",
-            "craftingFramework\\craft\\Straw2.wav",
-        },
-        metal = {
-            "craftingFramework\\craft\\Metal1.wav",
-            "craftingFramework\\craft\\Metal2.wav",
-            "craftingFramework\\craft\\Metal3.wav",
-        },
-        carve = {
-            "craftingFramework\\craft\\Carve1.wav",
-            "craftingFramework\\craft\\Carve2.wav",
-        },
-        default = {
-            "craftingFramework\\craft\\Fabric1.wav",
-            "craftingFramework\\craft\\Fabric2.wav",
-            "craftingFramework\\craft\\Fabric3.wav",
-            "craftingFramework\\craft\\Fabric4.wav",
-        }
-    },
-    deconstructionSounds = {
-        "craftingFramework\\craft\\Deconstruct1.wav",
-        "craftingFramework\\craft\\Deconstruct2.wav",
-        "craftingFramework\\craft\\Deconstruct3.wav",
-    },
-
 }
 
 
@@ -184,6 +137,9 @@ function Craftable:new(data)
     local craftable = data
     setmetatable(craftable, self)
     self.__index = self
+
+    --set name to object if not provided
+    craftable.name = craftable:getName()
 
     local placedObjectId = craftable:getPlacedObjectId()
 
@@ -477,25 +433,19 @@ end
 
 function Craftable:playCraftingSound()
     if self.soundType then
-        local soundPick = table.choice(self.constructionSounds[self.soundType])
-        if soundPick then
-            tes3.playSound{ soundPath = soundPick}
-            return
-        end
+        SoundType.play(self.soundType)
     end
     if self.soundId then
         tes3.playSound{ sound = self.soundId }
     elseif self.soundPath then
         tes3.playSound{ soundPath = self.soundPath }
     else
-        local soundPick = table.choice(self.constructionSounds.default)
-        tes3.playSound{ soundPath = soundPick }
+        SoundType.play("defaultConstruction")
     end
 end
 
 function Craftable:playDeconstructionSound()
-    local soundPick = table.choice(self.deconstructionSounds)
-    tes3.playSound{soundPath = soundPick }
+    SoundType.play("deconstruction")
 end
 
 

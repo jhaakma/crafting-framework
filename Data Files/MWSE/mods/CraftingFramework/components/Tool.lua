@@ -19,11 +19,10 @@ local Tool = {
             ids = { type = "table", childType = "string", required = false },
             requirement = { type = "function", required = false},
         }
-    }
+    },
+    registeredTools = {}
 }
 
-
-Tool.registeredTools = {}
 ---@param id string
 ---@return CraftingFramework.Tool tool
 function Tool.getTool(id)
