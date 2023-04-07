@@ -37,6 +37,7 @@ function SoundType.register(e)
     logger:debug("Registered SoundType %s with %d sounds", e.id, #e.soundPaths)
 end
 
+
 ---Play a random sound of the given sound type
 function SoundType.play(id)
     local soundType = SoundType.registeredSoundTypes[id]

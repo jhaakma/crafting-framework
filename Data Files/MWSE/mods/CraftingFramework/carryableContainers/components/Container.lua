@@ -20,13 +20,13 @@ end
 
 ---@return string? # Flase if not open, otherwise returns the associated misc item id
 function Container.getOpenContainerMiscId(contentsMenu)
-    logger:debug("Checking if we are in a carryable container inventory")
+    logger:trace("Checking if we are in a carryable container inventory")
     local contentsMenu = contentsMenu or tes3ui.findMenu(tes3ui.registerID("MenuContents"))
     local menuInvalid = contentsMenu == nil
         or contentsMenu.name ~= "MenuContents"
         or contentsMenu.visible == false
     if menuInvalid then
-        logger:debug("Menu is invalid")
+        logger:trace("Menu is invalid")
         return nil
     end
     local containerRef = contentsMenu:getPropertyObject("MenuContents_ObjectRefr")

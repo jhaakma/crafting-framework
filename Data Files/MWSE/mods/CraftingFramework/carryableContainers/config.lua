@@ -1,9 +1,5 @@
 ---@class CarryableContainers.config
 local config = {}
---static configs
-config.metadata = toml.loadMetadata("Carryable Containers") --[[@as MWSE.Metadata]]
-assert(config.metadata, "Carryable Containers metadata not found.")
-config.modName = config.metadata.package.name
 config.configPath = "carryableContainers"
 config.registeredItemFilters = {}
 config.registeredContainers = {}

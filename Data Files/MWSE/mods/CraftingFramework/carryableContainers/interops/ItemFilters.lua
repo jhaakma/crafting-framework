@@ -13,6 +13,7 @@ local ItemFilter = require("CraftingFramework.carryableContainers.components.Ite
 ---| '"repairItems"'
 ---| '"weapons"'
 ---| '"attire"'
+---| '"equipment"'
 ---| '"jewelry"'
 
 ---@type CarryableContainers.ItemFilter.new.data[]
@@ -110,7 +111,6 @@ local itemFilters = {
         name = "Equipment",
         objectTypes = {
             [tes3.objectType.armor] = true,
-            [tes3.objectType.clothing] = true,
             [tes3.objectType.weapon] = true
         }
     },
