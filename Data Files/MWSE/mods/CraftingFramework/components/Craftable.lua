@@ -7,7 +7,6 @@ local Indicator = require("CraftingFramework.components.Indicator")
 local config = require("CraftingFramework.config")
 
 ---@class CraftingFramework.Craftable.SuccessMessageCallback.params
----@field craftable CraftingFramework.Craftable The craftable that was crafted
 ---@field reference tes3reference? The reference that was crafted
 ---@field item tes3item? The item that was crafted
 ---@field materialsUsed table<string, number> The materials used in the craft, with the material id as key and the amount as value
@@ -486,7 +485,7 @@ function Craftable:craft(materialsUsed)
                 end
 			    local successMessage
                 if self.successMessageCallback then
-                    successMessage = self.successMessageCallback{
+                    successMessage = self:successMessageCallback{
                         craftable = self,
                         reference = reference,
                         item = item, ---@diagnostic disable-line: assign-type-mismatch
