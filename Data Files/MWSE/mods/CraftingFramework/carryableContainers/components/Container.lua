@@ -87,7 +87,7 @@ local function createFilterButton(transferButtonParent, menu, carryable)
 end
 
 ---@param parent tes3uiElement
----@param carryable Carryable
+---@param carryable CarryableContainer
 local function addRenameButton(parent, carryable)
     local renameButton = parent:createButton{
         id = "merCarryableContainers_renameButton",
@@ -108,7 +108,7 @@ local function addRenameButton(parent, carryable)
 end
 
 ---@param parent tes3uiElement
----@param carryable Carryable
+---@param carryable CarryableContainer
 local function addPickupButton(parent, carryable, menu)
     if carryable.reference == nil then return end
     local pickupButton = parent:createButton{
@@ -161,7 +161,7 @@ function Container.addCapacityFillbar(menu, carryable)
 end
 
 ---@param menu tes3uiElement
----@param carryable Carryable
+---@param carryable CarryableContainer
 function Container.addButtons(menu, carryable)
 
     -- disable UI Expansions filter and capacity elements

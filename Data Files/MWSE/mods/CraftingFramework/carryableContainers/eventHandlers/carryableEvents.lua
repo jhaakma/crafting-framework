@@ -1,7 +1,7 @@
 local config = require("CraftingFramework.carryableContainers.config")
 local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("CarryableEvents")
-local Carryable = require("CraftingFramework.carryableContainers.components.Carryable")
+local CarryableContainer = require("CraftingFramework.carryableContainers.components.CarryableContainer")
 local Container = require("CraftingFramework.carryableContainers.components.Container")
 
 --[[
@@ -10,7 +10,7 @@ local Container = require("CraftingFramework.carryableContainers.components.Cont
 ---@param e equipEventData
 local function onEquipContainer(e)
     logger:debug("equip")
-    local carryableMisc = Carryable:new{
+    local carryableMisc = CarryableContainer:new{
         item = e.item,
         itemData = e.itemData,
     }
@@ -34,7 +34,7 @@ local function onActivateContainer(e)
     if tes3ui.menuMode() then
         return
     end
-    local carryableMisc = Carryable:new{
+    local carryableMisc = CarryableContainer:new{
         reference = e.target,
     }
     if not carryableMisc then return end
@@ -61,7 +61,7 @@ local function updateOnTransfer()
         logger:debug("miscObject: %s", miscObject)
         if miscObject then
             logger:debug("Found the misc item object")
-            local carryableMisc = Carryable:new{
+            local carryableMisc = CarryableContainer:new{
                 item = miscObject,
             }
             if carryableMisc then
@@ -92,7 +92,7 @@ event.register("itemTileUpdated", onItemTileUpdated)
 ---@param e itemDroppedEventData
 local function onDrop(e)
     if not e.reference then return end
-    local carryableMisc = Carryable:new{
+    local carryableMisc = CarryableContainer:new{
         reference = e.reference
     }
     if carryableMisc then

@@ -14,6 +14,7 @@ local SoundType = {
     registeredSoundTypes = {}
 }
 
+---@param e CraftingFramework.SoundType.params
 function SoundType.register(e)
     logger:assert(type(e.id) == "string", "id must be a string")
     logger:assert(type(e.soundPaths) == "table", "soundPaths must be a table")

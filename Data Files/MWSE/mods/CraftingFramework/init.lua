@@ -14,7 +14,7 @@ CraftingFramework.StaticActivator = require("CraftingFramework.components.Static
 CraftingFramework.SoundType = require("CraftingFramework.components.SoundType")
 
 --Carryabe Containers
-CraftingFramework.Carryable =require("CraftingFramework.carryableContainers.components.Carryable")
+CraftingFramework.CarryableContainer =require("CraftingFramework.carryableContainers.components.CarryableContainer")
 CraftingFramework.ItemFilter = require("CraftingFramework.carryableContainers.components.ItemFilter")
 
 return CraftingFramework

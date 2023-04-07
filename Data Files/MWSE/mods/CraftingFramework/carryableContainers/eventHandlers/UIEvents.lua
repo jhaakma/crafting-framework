@@ -1,6 +1,6 @@
 local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("UIEvents")
-local Carryable = require("CraftingFramework.carryableContainers.components.Carryable")
+local CarryableContainer = require("CraftingFramework.carryableContainers.components.CarryableContainer")
 local Container = require("CraftingFramework.carryableContainers.components.Container")
 
 ---@param e uiActivatedEventData
@@ -11,7 +11,7 @@ local function onUiActivated(e)
     local miscObject = tes3.getObject(miscId) --[[@as tes3misc]]
     if not miscObject then return end
     local menu = e.element
-    local carryable = Carryable:new{
+    local carryable = CarryableContainer:new{
         item = miscObject
     }
     if not carryable then return end
@@ -29,12 +29,12 @@ local function onTooltip(e)
 
     local carryable
     if e.reference then
-        carryable= Carryable:new{
+        carryable= CarryableContainer:new{
             containerRef = e.reference,
         }
     end
     if not carryable then
-        carryable = Carryable:new{
+        carryable = CarryableContainer:new{
             item = e.object,
             itemData = e.itemData,
             reference = e.reference,
