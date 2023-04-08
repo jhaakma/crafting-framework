@@ -47,7 +47,7 @@ local Craftable = {
             materialRecovery = { type = "number", required = false},
             maxSteepness = { type = "number", required = false},
             resultAmount = { type = "number", required = false},
-            mesh = { type = "string", required = false},
+            scale = { type = "number", required = false, default = 1.0 },
             --Preview window
             previewMesh = { type = "string", required = false},
             rotationAxis = { type = "string", required = false},
@@ -66,6 +66,9 @@ local Craftable = {
             recoverEquipmentMaterials = { type = "boolean", required = false},
             noResult = { type = "boolean", required = false},
             craftedOnly = { type = "boolean", required = false, default = true},
+
+            --Deprecated
+            mesh = { type = "string", required = false},
         }
     },
 }
@@ -224,14 +227,15 @@ function Craftable:activate(reference)
 end
 
 function Craftable:swap(reference)
-    local ref = tes3.createReference{
+    local newRef = tes3.createReference{
         object = self:getPlacedObjectId(),
         position = reference.position:copy(),
         orientation = reference.orientation:copy(),
-        cell = reference.cell
+        cell = reference.cell,
+        scale = self.scale,
     }
-    ref.data.crafted = true
-    ref.data.positionerMaxSteepness = self.maxSteepness
+    newRef.data.crafted = true
+    newRef.data.positionerMaxSteepness = self.maxSteepness
     Util.deleteRef(reference)
 end
 
@@ -530,12 +534,14 @@ function Craftable:place(materialsUsed)
     local rayDist = ray and ray.intersection and math.min(ray.distance -5, 200) or 0
     local position = eyePos + eyeOri * rayDist
 
+    logger:debug("Placing %s with scale %s", self.id, self.scale)
     local reference = tes3.createReference{
         object = self:getPlacedObjectId(),
         cell = tes3.player.cell,
         ---@diagnostic disable-next-line: assign-type-mismatch
         orientation = tes3.player.orientation:copy() + tes3vector3.new(0, 0, math.pi),
-        position = position
+        position = position,
+        scale = self.scale,
     }
     reference.data.crafted = true
     reference.data.positionerMaxSteepness = self.maxSteepness

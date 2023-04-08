@@ -19,6 +19,12 @@ local function itemDropped(e)
             craftable:swap(e.reference)
             return true
         end
+    else
+        --set scale
+        if craftable.scale then
+            logger:debug("Setting %s scale to %s", e.reference, craftable.scale)
+            e.reference.scale = craftable.scale
+        end
     end
 end
 event.register("itemDropped", itemDropped, { priority = -300 })

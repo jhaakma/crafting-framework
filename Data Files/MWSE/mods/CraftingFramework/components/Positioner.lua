@@ -105,6 +105,14 @@ local function getWidth()
     return math.min(Positioner.boundMax.x - Positioner.boundMin.x, Positioner.boundMax.y - Positioner.boundMin.y, Positioner.boundMax.z - Positioner.boundMin.z)
 end
 
+---@param ref tes3reference
+local function getMinWidth(ref)
+    ref = ref or Positioner.active
+    return math.min(ref.object.boundingBox.max.x - ref.object.boundingBox.min.x,
+                    ref.object.boundingBox.max.y - ref.object.boundingBox.min.y,
+                    ref.object.boundingBox.max.z - ref.object.boundingBox.min.z)
+            * ref.scale
+end
 
 
 -- Called every simulation frame to reposition the item.
@@ -173,9 +181,9 @@ local function simulatePlacement()
             position = eyePos,
             direction = rayVec,
             ignore = { Positioner.active, tes3.player },
-            --maxDistance = Positioner.currentReach,
+            maxDistance = Positioner.currentReach,
         }
-        if ray then
+        if ray and ray.intersection then
             local width = getWidth()
             logger:trace("width: %s", width)
             local vertDistance = math.min(ray.distance, Positioner.currentReach) + Positioner.boundMin.z
@@ -212,8 +220,6 @@ local function simulatePlacement()
     if doOrient then
         if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)/2} then
             return
-        else
-            logger:debug("orientRefToGround failed")
         end
     end
     Positioner.active.orientation = tes3vector3.new(0, 0, Positioner.active.orientation.z)
@@ -382,6 +388,11 @@ end
 --pre-declared above
 endPlacement = function()
     logger:debug("endPlacement()")
+    --if ground mode, drop to ground
+    if config.persistent.placementSetting == "ground" then
+        orienter.orientRefToGround{ref = Positioner.active}
+    end
+
     recreateRef(Positioner.active)
     decals.applyDecals(Positioner.active)
     event.unregister("simulate", simulatePlacement)

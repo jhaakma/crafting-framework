@@ -12,6 +12,7 @@ local MAX_CAPACITY = 65535
 ---@field capacity number The capacity of the container
 ---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
 ---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.
+---@field scale number? The scale of the placed container
 
 ---@class CarryableContainer.new.params : ItemInstance.new.params
 ---@field containerRef tes3reference? If provided, the item will be created from the container reference
@@ -270,6 +271,7 @@ function CarryableContainer:replaceInWorld()
             position = self.reference.position,
             orientation = self.reference.orientation,
             cell = self.reference.cell,
+            scale = self.containerConfig.scale or 1.0
         }
         logger:debug("Created new misc %s", newMisc.object.id)
         --copy data
@@ -312,8 +314,9 @@ function CarryableContainer:replaceInWorld()
                 cell = self.reference.cell,
                 forceCellChange = true
             }
-
-            tes3.dataHandler:updateCollisionGroupsForActiveCells{}
+            containerRef.scale = self.containerConfig.scale or 1.0
+            containerRef.hasNoCollision = false
+            containerRef:updateLighting()
             if containerRef.sceneNode then
                 containerRef.sceneNode.appCulled = false
                 containerRef.sceneNode:updateProperties()
@@ -321,7 +324,8 @@ function CarryableContainer:replaceInWorld()
             else
                 logger:error("No scene node for %s", containerRef.object.id)
             end
-            containerRef.scale = 1
+            tes3.dataHandler:updateCollisionGroupsForActiveCells{}
+
 
             --move miscRef elsewhere -1000 z
             local position = self.reference.position:copy()
@@ -332,6 +336,8 @@ function CarryableContainer:replaceInWorld()
                 orientation = self.reference.orientation,
                 cell = self.reference.cell,
             }
+
+
         end)
     end
 
@@ -404,6 +410,7 @@ function CarryableContainer:getCreateContainerRef()
             },
             orientation = tes3.player.orientation,
             cell = tes3.player.cell,
+            scale = self.containerConfig.scale or 1.0
         }
         --Map the container to the misc item
         logger:debug("Mapping container %s to misc %s", containerObject.id, self.item.id)
