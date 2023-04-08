@@ -93,7 +93,7 @@ function CarryableContainer:new(e)
     self.__index = function(t, k)
         --use tes3.getReference(self.item.id) to get the container ref
         if k == "reference" then
-            return tes3.getReference(carryableMisc.item.id)
+            return tes3.getReference(t.item.id)
         end
         return CarryableContainer[k]
     end
@@ -429,6 +429,8 @@ function CarryableContainer:pickup(e)
         logger:error("Trying to pickup item %s, but no reference exists", self.item.id)
         return
     end
+
+    logger:debug("self.reference: %s", self.reference)
 
     local function stealActivateEvent(e)
         event.unregister("activate", stealActivateEvent)
