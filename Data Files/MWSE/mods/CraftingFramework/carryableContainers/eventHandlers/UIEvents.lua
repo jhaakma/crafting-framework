@@ -29,7 +29,7 @@ local function onTooltip(e)
 
     local carryable
     if e.reference then
-        carryable= CarryableContainer:new{
+        carryable = CarryableContainer:new{
             containerRef = e.reference,
         }
     end

@@ -337,6 +337,7 @@ function Craftable:getMenuButtons(reference)
 end
 
 function Craftable:position(reference)
+    local safeRef = tes3.makeSafeObjectHandle(reference)
     timer.delayOneFrame(function()
         -- Put those hands away.
         if (tes3.mobilePlayer.weaponReady) then
@@ -344,7 +345,9 @@ function Craftable:position(reference)
         elseif (tes3.mobilePlayer.castReady) then
             tes3.mobilePlayer.castReady = false
         end
-        Positioner.startPositioning{ target = reference }
+        if safeRef and safeRef:valid() then
+            Positioner.startPositioning{ target = reference }
+        end
     end)
 end
 

@@ -1,3 +1,6 @@
+local Util = require("CraftingFramework.util.Util")
+local logger = Util.createLogger("Orienter")
+
 local this = {}
 local ID33 = tes3matrix33.new(1, 0, 0, 0, 1, 0, 0, 0, 1)
 function this.rotationDifference(vec1, vec2)
@@ -112,18 +115,34 @@ function this.getGroundBelowRef(e)
     return result
 end
 
+---@class Orienter.orientRefToGround.params
+---@field ref tes3reference
+---@field maxVerticalDistance number?
+
+---@param params Orienter.orientRefToGround.params
 function this.orientRefToGround(params)
     local ref = params.ref
-    local terrainOnly = params.mode == "ground"
     local result = this.getGroundBelowRef{
         ref = ref,
-        --terrainOnly = terrainOnly
     }
+
     if result then
-        this.positionRef(ref, result)
-        this.orientRef(ref, result)
-        event.trigger("Ashfall:VerticaliseNodes", {reference = ref})
+        local tooFar = false
+        if params.maxVerticalDistance then
+            tooFar = math.abs(result.intersection.z - ref.position.z) > params.maxVerticalDistance
+        end
+        if not tooFar then
+            logger:trace("Orienting %s to ground", ref.id)
+            this.positionRef(ref, result)
+            this.orientRef(ref, result)
+            event.trigger("Ashfall:VerticaliseNodes", {reference = ref})
+            return true
+        else
+            logger:trace("Ref %s is too far from the ground", ref.id)
+            return false
+        end
     end
+    return false
 end
 
 return this

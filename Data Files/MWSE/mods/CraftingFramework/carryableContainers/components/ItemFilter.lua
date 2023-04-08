@@ -79,6 +79,7 @@ function ItemFilter:isValid(item, itemData)
     return true
 end
 
+
 ---@param item tes3item
 ---@param itemData? tes3itemData
 ---@return string

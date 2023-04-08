@@ -1,6 +1,7 @@
 local config = require("CraftingFramework.carryableContainers.config")
 local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("Container")
+local Positioner = require("CraftingFramework.components.Positioner")
 
 local Container = {}
 
@@ -110,7 +111,6 @@ end
 ---@param parent tes3uiElement
 ---@param carryable CarryableContainer
 local function addPickupButton(parent, carryable, menu)
-    if carryable.reference == nil then return end
     local pickupButton = parent:createButton{
         id = "merCarryableContainers_pickupButton",
         text = "Pick Up"
@@ -119,10 +119,9 @@ local function addPickupButton(parent, carryable, menu)
         logger:debug("Clicked pickup button")
         menu:destroy()
         tes3ui.leaveMenuMode()
-        carryable:setSafeInstance()
+        --carryable:setSafeInstance()
         timer.delayOneFrame(function()
-            logger:debug("Picking up after frame")
-            carryable:getSafeInstance()
+           -- carryable:getSafeInstance()
             carryable:pickup{ doPlaySound = true}
         end)
     end)
@@ -160,6 +159,44 @@ function Container.addCapacityFillbar(menu, carryable)
     menu:triggerEvent("update")
 end
 
+---@param parent tes3uiElement
+---@param carryable CarryableContainer
+local function addPositionButton(parent, carryable, menu)
+    --Determine which ref to position. hasCollision means the container is the ref
+    local reference = carryable.reference
+    if carryable.containerConfig.hasCollision then
+        reference = menu:getPropertyObject("MenuContents_ObjectRefr")
+    end
+
+    local positionButton = parent:createButton{
+        id = "merCarryableContainers_positionButton",
+        text = "Position"
+    }
+    positionButton:register("mouseClick", function()
+        logger:debug("Clicked position button")
+        --end menu, open Positioner.startPositioning
+        tes3ui.leaveMenuMode()
+        local safeRef = tes3.makeSafeObjectHandle(reference)
+        timer.delayOneFrame(function()
+            logger:debug("Positioning after frame")
+            -- Put those hands away.
+            if (tes3.mobilePlayer.weaponReady) then
+                tes3.mobilePlayer.weaponReady = false
+            elseif (tes3.mobilePlayer.castReady) then
+                tes3.mobilePlayer.castReady = false
+            end
+            if safeRef and safeRef:valid() then
+                logger:debug("Ref is safe, start positioning %s", reference)
+                Positioner.startPositioning{
+                    target = reference,
+                    nonCrafted = true,
+                }
+            end
+        end)
+    end)
+    return positionButton
+end
+
 ---@param menu tes3uiElement
 ---@param carryable CarryableContainer
 function Container.addButtons(menu, carryable)
@@ -180,20 +217,23 @@ function Container.addButtons(menu, carryable)
     local buttonBlock = takeAllButton.parent
     local newTakeAllButton = replaceTakeAllButton(menu, carryable)
 
-    --Add pickup button
-    local pickupButton = addPickupButton(buttonBlock, carryable, menu)
-    if pickupButton then
+    --Add pickup/position button for in-world containers
+    if carryable.reference then
+        local pickupButton = addPickupButton(buttonBlock, carryable, menu)
         local closeButton = menu:findChild("MenuContents_closebutton")
         pickupButton.parent:reorderChildren(closeButton, pickupButton, 1)
+
+        local positionButton = addPositionButton(buttonBlock, carryable, menu)
+        buttonBlock:reorderChildren(-2, positionButton, 1)
     end
 
-    --Filter button on bottom row
+    --Add filter button
     if carryable:getFilter() then
         local transferButton = createFilterButton(buttonBlock, menu, carryable)
         buttonBlock:reorderChildren(newTakeAllButton, transferButton, 1)
     end
 
-    --Add Rename button
+    --Add rename button
     local renameButton = addRenameButton(buttonBlock, carryable)
     buttonBlock:reorderChildren(-2, renameButton, 1)
 
