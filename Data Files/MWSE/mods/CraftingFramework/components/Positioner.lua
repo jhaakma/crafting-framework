@@ -114,6 +114,7 @@ local function simulatePlacement()
     end
     Positioner.maxReach = tes3.getPlayerActivationDistance() + getWidth()
     Positioner.currentReach = math.min(Positioner.currentReach, Positioner.maxReach)
+
     -- Stop if player takes the object.
     if (Positioner.active.deleted) then
         logger:debug("simulatePlacement: Positioner.active is deleted, ending placement")
@@ -146,6 +147,7 @@ local function simulatePlacement()
 
     local eyePos = tes3.getPlayerEyePosition()
     local eyeVec = tes3.getPlayerEyeVector()
+
     ---The position from the player's view to the max distance
     local lookPos = eyePos + eyeVec * Positioner.currentReach
     logger:trace("eyePos: %s, eyeVec: %s, lookPos: %s", eyePos, eyeVec, lookPos)
@@ -171,38 +173,28 @@ local function simulatePlacement()
             position = eyePos,
             direction = rayVec,
             ignore = { Positioner.active, tes3.player },
-            maxDistance = Positioner.currentReach,
+            --maxDistance = Positioner.currentReach,
         }
         if ray then
             local width = getWidth()
             logger:trace("width: %s", width)
-            local distance = math.min(ray.distance, Positioner.currentReach) - width
-            logger:trace("distance: %s", distance)
-            local diff = targetPos:distance(eyePos) - distance
-            logger:trace("diff: %s", diff)
-            targetPos = targetPos - rayVec * diff
+            local vertDistance = math.min(ray.distance, Positioner.currentReach) + Positioner.boundMin.z
+            local horiDistance = math.min(ray.distance, Positioner.currentReach) - width
+
+            local vertDiff = targetPos:distance(eyePos) - vertDistance
+            local horiDiff = targetPos:distance(eyePos) - horiDistance
+
+            local newPos = targetPos - rayVec * horiDiff
+            newPos.z = (targetPos - rayVec * vertDiff).z
+            targetPos = newPos
+
             ---@cast targetPos tes3vector3
             logger:trace("new targetPos: %s", targetPos)
         end
 
-        local dropPos = targetPos:copy()
-        local rayhit = tes3.rayTest{
-            position = Positioner.active.position - tes3vector3.new(0, 0, Positioner.offset.z),
-            direction = tes3vector3.new(0, 0, -1),
-            ignore = { Positioner.active, tes3.player }
-        }
-        if (rayhit ) then
-            dropPos = rayhit.intersection:copy()
-            targetPos.z = math.max(targetPos.z, dropPos.z + (Positioner.height or 0) )
-        end
-
     end
 
-    --targetPos.z = targetPos.z + const_epsilon
-
-
     -- Incrementally rotate the same amount as the player, to keep relative alignment with player.
-
     Positioner.playerLastOri = tes3.player.orientation:copy()
     if (Positioner.rotateMode) then
         -- Use inputController, as the player orientation is locked.
@@ -212,20 +204,19 @@ local function simulatePlacement()
         d_theta = 0.001 * 15 * mouseX
     end
 
-    --logger:debug("simulatePlacement: position: %s", pos)
-    -- Update item and shadow spot.
     Positioner.active.sceneNode.appCulled = false
     Positioner.active.position = targetPos
     Positioner.active.orientation.z = wrapRadians(Positioner.active.orientation.z + d_theta)
 
     local doOrient = config.persistent.placementSetting == settings.ground
-
     if doOrient then
-        orienter.orientRefToGround{ ref = Positioner.active, mode = config.persistent.placementSetting }
-        --logger:debug("simulatePlacement: orienting %s", Positioner.active.orientation)
-    else
-        Positioner.active.orientation = tes3vector3.new(0, 0, Positioner.active.orientation.z)
+        if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)/2} then
+            return
+        else
+            logger:debug("orientRefToGround failed")
+        end
     end
+    Positioner.active.orientation = tes3vector3.new(0, 0, Positioner.active.orientation.z)
 end
 
 -- cellChanged event handler.
@@ -238,7 +229,6 @@ local function cellChanged(e)
         endPlacement()
     end
 end
-
 
 -- Match vertical mode from an orientation.
 local function matchVerticalMode(orient)
@@ -299,7 +289,7 @@ Positioner.togglePlacement = function(e)
         local ray = tes3.rayTest({
             position = tes3.getPlayerEyePosition(),
             direction = tes3.getPlayerEyeVector(),
-            ignore = { tes3.player },
+            ignore = { tes3.player, Positioner.active },
             maxDistance = Positioner.maxReach,
             root = config.persistent.placementSetting == "ground"
                 and tes3.game.worldLandscapeRoot or nil
@@ -510,6 +500,14 @@ end
 event.register("keyDown", onActiveKey, { priority = 100 })
 
 
+---@class Positioner.startPositioning.params
+---@field target tes3reference
+---@field nonCrafted boolean
+---@field pinToWall boolean
+---@field placementSetting string
+---@field blockToggle boolean
+
+---@param e Positioner.startPositioning.params
 Positioner.startPositioning = function(e)
     -- Put those hands away.
     if (tes3.mobilePlayer.weaponReady) then
