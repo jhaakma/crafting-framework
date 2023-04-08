@@ -430,8 +430,6 @@ function CarryableContainer:pickup(e)
         return
     end
 
-    logger:debug("self.reference: %s", self.reference)
-
     local function stealActivateEvent(e)
         event.unregister("activate", stealActivateEvent)
         e.claim = true
