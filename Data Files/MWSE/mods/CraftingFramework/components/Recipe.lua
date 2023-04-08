@@ -5,6 +5,7 @@ local Craftable = require("CraftingFramework.components.Craftable")
 local SkillRequirement = require("CraftingFramework.components.SkillRequirement")
 local CustomRequirement = require("CraftingFramework.components.CustomRequirement")
 local ToolRequirement = require("CraftingFramework.components.ToolRequirement")
+local CarryableContainer = require("CraftingFramework.carryableContainers.components.CarryableContainer")
 local config = require("CraftingFramework.config")
 
 ---@alias craftingFrameworkRotationAxis
@@ -18,6 +19,14 @@ local config = require("CraftingFramework.config")
 ---@class CraftingFramework.MaterialRequirement
 ---@field material string **Required.** The id of either a Crafting Framework Material, or an object id. Using an object id will register it as its own Material where the object itself is the only item in the list.
 ---@field count number *Default*: `1`. The required amount of the material.
+
+
+---@class CraftingFramework.Recipe.containerConfig
+--- Same as CarryableContainer.containerConfig except the id is taken from the craftable id
+---@field filter CarryableContainers.DefaultItemFilter? The id of the filter to use for the container
+---@field capacity number The capacity of the container
+---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
+---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.
 
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
@@ -35,6 +44,7 @@ local config = require("CraftingFramework.config")
 ---@field category string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field name string The name of the craftable displayed in the menu. If not set, it will use the name of the craftable object
 ---@field placedObject string If the object being placed is different from the object that is picked up by the player, use `id` for the held object id and `placedObject` for the id of the object that is placed in the world
+---@field containerConfig CarryableContainer.containerConfig If provided, crafted item will be registered as a carryable container.
 ---@field uncarryable boolean Treats the crafted item as uncarryable even if the object type otherwise would be carryable. This will make the object be crafted immediately into the world and remove the Pick Up button from the menu. Not required if the crafted object is already uncarryable, such as a static or activator
 ---@field additionalMenuOptions craftingFrameworkMenuButtonData[] A list of additional menu options that will be displayed in the craftable menu
 ---@field soundId string Provide a sound ID (for a sound registered in the CS) that will be played when the craftable is crafted
@@ -122,6 +132,19 @@ function Recipe:new(data)
     --Set ID and make sure it's lower case
     recipe.id = data.id or recipe.craftable.id
     recipe.id = recipe.id:lower()
+
+    --Register as carryable container
+    if recipe.containerConfig then
+        ---@type CarryableContainer.containerConfig
+        local carryableContainerConfig = {
+            itemId = recipe.craftable.id,
+            filter = recipe.containerConfig.filter,
+            capacity = recipe.containerConfig.capacity,
+            hasCollision = recipe.containerConfig.hasCollision,
+            weightModifier = recipe.containerConfig.weightModifier,
+        }
+        CarryableContainer.register(carryableContainerConfig)
+    end
 
     recipe.category = recipe.category or "Other"
     recipe.toolRequirements = Util.convertListTypes(data.toolRequirements, ToolRequirement) or {}
