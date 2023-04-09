@@ -172,7 +172,7 @@ end
 
 
 function MenuActivator:openMenu()
-    log:debug("enuActivator:openMenu()")
+    log:debug("MenuActivator:openMenu()")
     local knowsRecipe = false
     for _, recipe in pairs(self.recipes) do
         if recipe:isKnown() then
