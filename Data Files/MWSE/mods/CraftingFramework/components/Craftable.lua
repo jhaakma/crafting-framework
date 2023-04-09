@@ -4,6 +4,7 @@ local Positioner = require("CraftingFramework.components.Positioner")
 local SoundType = require("CraftingFramework.components.SoundType")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local Indicator = require("CraftingFramework.components.Indicator")
+local RefStack = require("CraftingFramework.util.RefStack")
 local config = require("CraftingFramework.config")
 
 ---@class CraftingFramework.Craftable.SuccessMessageCallback.params
@@ -236,6 +237,14 @@ function Craftable:swap(reference)
     }
     newRef.data.crafted = true
     newRef.data.positionerMaxSteepness = self.maxSteepness
+
+    local refStack = RefStack:new{
+        reference = reference,
+    }
+    if refStack then
+        logger:debug("Returning excess items")
+        refStack:returnExcess()
+    end
     Util.deleteRef(reference)
 end
 
