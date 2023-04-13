@@ -1,6 +1,7 @@
 ---@class CraftingFramework
 local CraftingFramework = {}
 
+--Crafting
 CraftingFramework.interop = require("CraftingFramework.interop")
 CraftingFramework.Tool = require("CraftingFramework.components.Tool")
 CraftingFramework.SkillRequirement = require("CraftingFramework.components.SkillRequirement")
@@ -12,6 +13,8 @@ CraftingFramework.Indicator = require("CraftingFramework.components.Indicator")
 CraftingFramework.Positioner = require("CraftingFramework.components.Positioner")
 CraftingFramework.StaticActivator = require("CraftingFramework.components.StaticActivator")
 CraftingFramework.SoundType = require("CraftingFramework.components.SoundType")
+
+CraftingFramework.MerchantManager = require("CraftingFramework.components.MerchantManager")
 
 --Carryabe Containers
 CraftingFramework.CarryableContainer =require("CraftingFramework.carryableContainers.components.CarryableContainer")
