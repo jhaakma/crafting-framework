@@ -162,7 +162,7 @@ end
 ---@param ref tes3reference
 function Util.canBeActivated(ref)
     local hasScript = ref.baseObject.script ~= nil
-    return hasScript
+    return hasScript or ref.baseObject.objectType == tes3.objectType.container
 end
 
 ---@return any

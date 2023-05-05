@@ -825,7 +825,7 @@ function CraftingMenu:updatePreviewPane()
     previewBlock:destroyChildren()
 
     if self.selectedRecipe.previewImage then
-        self:updatePreviewPaneImage(craftingMenu, previewBlock)
+        self:updatePreviewPaneImage()
     else
         self:updatePreviewPaneMesh(craftingMenu, previewBlock)
     end

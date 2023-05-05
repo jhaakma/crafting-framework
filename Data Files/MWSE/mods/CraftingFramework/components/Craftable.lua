@@ -97,15 +97,16 @@ local function craftableActivated(reference)
     local craftable = Craftable.getPlacedCraftable(reference.baseObject.id:lower())
     if craftable then
         logger:trace("craftableActivated placedObject id: %s", craftable:getPlacedObjectId())
-        if Util.isQuickModifierDown() and craftable.quickActivateCallback then
+        local modifierPressed = Util.isQuickModifierDown()
+        if modifierPressed and craftable.quickActivateCallback then
             logger:debug("quickActivateCallback: %s", require("inspect")(craftable.quickActivateCallback))
             craftable:quickActivateCallback{reference = reference}
-        elseif Util.isQuickModifierDown() and Util.canBeActivated(reference) then
+        elseif modifierPressed and Util.canBeActivated(reference) then
             logger:debug("vanilla activate")
             reference.data.allowActivate = true
             tes3.player:activate(reference)
             reference.data.allowActivate = nil
-        elseif Util.isQuickModifierDown() and craftable:isCarryable() then
+        elseif modifierPressed and craftable:isCarryable() then
             logger:debug("pickUp")
             craftable:pickUp(reference)
         else
