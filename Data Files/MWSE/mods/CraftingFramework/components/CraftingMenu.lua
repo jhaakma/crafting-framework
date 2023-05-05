@@ -15,12 +15,12 @@ local log = Util.createLogger("CraftingMenu")
 ---@field currentSorter string The current sorter
 local CraftingMenu = {}
 
+---@class CraftingMenu.uiids
 local uiids = {
     titleBlock = tes3ui.registerID("Crafting_Menu_TitleBlock"),
     craftingMenu = tes3ui.registerID("CF_Menu"),
     midBlock = tes3ui.registerID("Crafting_Menu_MidBlock"),
     previewBorder = tes3ui.registerID("Crafting_Menu_PreviewBorder"),
-    previewBlock = tes3ui.registerID("Crafting_Menu_PreviewBlock"),
     nifPreviewBlock = tes3ui.registerID("Crafting_Menu_NifPreviewBlock"),
     imagePreviewBlock = tes3ui.registerID("Crafting_Menu_ImagePreviewBlock"),
     selectedItem = tes3ui.registerID("Crafting_Menu_SelectedResource"),
@@ -30,6 +30,7 @@ local uiids = {
     recipeListBlock = tes3ui.registerID("Crafting_Menu_recipeListBlock"),
     previewPane = tes3ui.registerID("Crafting_Menu_PreviewPane"),
     previewName = tes3ui.registerID("Crafting_Menu_PreviewName"),
+    previewImage = tes3ui.registerID("Crafting_Menu_PreviewImage"),
     previewDescription = tes3ui.registerID("Crafting_Menu_PreviewDescription"),
     materialRequirementsPane = tes3ui.registerID("Crafting_Menu_MaterialRequirementsPane"),
     materialRequirementsBlock = tes3ui.registerID("Crafting_Menu_MaterialRequirementsBlock"),
@@ -642,39 +643,35 @@ local function getRotationAxis(recipe, isSheathMesh)
     end
 end
 
+
+function CraftingMenu:updatePreviewPaneImage()
+    timer.frame.delayOneFrame(function()
+        local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
+        if not craftingMenu then return end
+        local previewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
+
+        log:assert(type(self.selectedRecipe.previewImage) == "string", "No preview image found")
+        local previewImage = previewBlock:createImage{
+            id = uiids.previewImage,
+            path = self.selectedRecipe.previewImage
+        }
+        previewImage.width = self.previewWidth
+        previewImage.height = self.previewHeight
+        previewImage.absolutePosAlignX = 0
+        previewImage.absolutePosAlignY = 0
+        previewImage.scaleMode = true
+        previewBlock:updateLayout()
+        craftingMenu:updateLayout()
+    end)
+end
+
 local rotationAxis = 'z'
-function CraftingMenu:updatePreviewPane()
-    log:debug("Updating preview pane")
-    local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
-    if not craftingMenu then
-        log:debug("No crafting menu found")
-        return
-    end
-    if not self.selectedRecipe then
-        log:debug("No selected recipe")
-        return
-    end
-    if self.selectedRecipe.noResult and not self.selectedRecipe.previewMesh then
-        log:debug("No result or preview mesh, hiding preview pane")
-        local nifPreviewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
-        if nifPreviewBlock then
-            nifPreviewBlock.visible = false
-        end
-        return
-    end
+function CraftingMenu:updatePreviewPaneMesh(craftingMenu, previewBlock)
     local item = self.selectedRecipe:getItem() --[[@as tes3misc]]
     if item == nil and not self.selectedRecipe.previewMesh then
         log:debug("No item or preview mesh, nothing to render")
         return
     end
-    --nifPreviewBLock
-    local nifPreviewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
-    if not nifPreviewBlock then
-        log:debug("No nif preview block found")
-        return
-    end
-    nifPreviewBlock:destroyChildren()
-
     --[[
         Morrowind UI has a weird bug where if a mesh does not have t1wo parent
             niNodes above the trishape, it will be rendered incorrectly.
@@ -682,7 +679,7 @@ function CraftingMenu:updatePreviewPane()
         To get around this, we create the UI Nif with an empty niNode, then
             attach the object's mesh as a child of that.
     ]]
-    local nif = nifPreviewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
+    local nif = previewBlock:createNif{ id = uiids.nif, path = "craftingFramework\\empty.nif"}
     if not nif then
         log:error("No nif found")
         return
@@ -709,12 +706,9 @@ function CraftingMenu:updatePreviewPane()
         log:error("Mesh does not exist: %s", mesh)
         return
     end
-
     log:debug("Loading mesh: %s", mesh)
     local childNif = tes3.loadMesh(mesh, false)
     log:debug("Mesh loaded: %s", childNif)
-
-
     if not childNif then
         log:error("No child nif found")
         return
@@ -800,7 +794,42 @@ function CraftingMenu:updatePreviewPane()
     node.appCulled = false
     node:updateProperties()
     node:update()
-    nifPreviewBlock:updateLayout()
+end
+
+
+function CraftingMenu:updatePreviewPane()
+    log:debug("Updating preview pane")
+    local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
+    if not craftingMenu then
+        log:debug("No crafting menu found")
+        return
+    end
+    if not self.selectedRecipe then
+        log:debug("No selected recipe")
+        return
+    end
+    local previewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
+    if not self.selectedRecipe:hasPreview() then
+        log:debug("No result or preview mesh, hiding preview pane")
+
+        if previewBlock then
+            previewBlock.visible = false
+        end
+        return
+    end
+    --nifPreviewBLock
+    if not previewBlock then
+        log:debug("No nif preview block found")
+        return
+    end
+    previewBlock:destroyChildren()
+
+    if self.selectedRecipe.previewImage then
+        self:updatePreviewPaneImage(craftingMenu, previewBlock)
+    else
+        self:updatePreviewPaneMesh(craftingMenu, previewBlock)
+    end
+    previewBlock:updateLayout()
 end
 
 function CraftingMenu:updateButtons()
@@ -1092,14 +1121,14 @@ function CraftingMenu:createPreviewPane(parent)
     previewBorder.childAlignX = 0.5
     --previewBorder.absolutePosAlignX = 0
 
-    local nifPreviewBlock = previewBorder:createBlock{ id = uiids.nifPreviewBlock }
-    --nifPreviewBlock.width = self.previewWidth
-    nifPreviewBlock.width = self.previewWidth
-    nifPreviewBlock.height = self.previewHeight
+    local previewBlock = previewBorder:createBlock{ id = uiids.nifPreviewBlock }
+    --previewBlock.width = self.previewWidth
+    previewBlock.width = self.previewWidth
+    previewBlock.height = self.previewHeight
 
-    nifPreviewBlock.childOffsetX = self.previewWidth/2
-    nifPreviewBlock.childOffsetY = self.previewYOffset
-    nifPreviewBlock.paddingAllSides = 2
+    previewBlock.childOffsetX = self.previewWidth/2
+    previewBlock.childOffsetY = self.previewYOffset
+    previewBlock.paddingAllSides = 2
 end
 
 function CraftingMenu:createLeftToRightBlock(parent)

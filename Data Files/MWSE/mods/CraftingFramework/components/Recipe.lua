@@ -62,6 +62,7 @@ local config = require("CraftingFramework.config")
 ---@field quickActivateCallback? fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is shift-activated
 ---@field successMessageCallback? fun(self: CraftingFramework.Craftable, e: CraftingFramework.Craftable.SuccessMessageCallback.params): string #A function that returns a string to be displayed when the craftable is crafted. If not set, the default message will be used.
 ---@field previewMesh? string This is the mesh override for the preview pane in the crafting menu. If no mesh is present, the 3D model of the associated item will be used.
+---@field previewImage? string The path to the image that will be displayed in the preview pane in the crafting menu. If no image is present, the 3D model of the associated item will be used.
 ---@field rotationAxis? craftingFrameworkRotationAxis **Default "z"** Determines about which axis the preview mesh will rotate around. Defaults to the z axis.
 ---@field previewScale? number **Default 1** Determines the scale of the preview mesh.
 ---@field previewHeight? number **Default 1** Determines the height of the mesh in the preview window.
@@ -178,6 +179,16 @@ function Recipe:isKnown()
     end
     local knownRecipe = config.persistent.knownRecipes[self.id]
     return knownRecipe
+end
+
+--[[
+    Check if has a previewMesh, a previewImage,
+    or a result
+]]
+function Recipe:hasPreview()
+    return self.previewMesh ~= nil
+    or self.previewImage ~= nil
+    or self.noResult ~= true
 end
 
 function Recipe:craft()
