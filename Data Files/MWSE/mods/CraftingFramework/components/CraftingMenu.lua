@@ -662,7 +662,7 @@ function CraftingMenu:updatePreviewPane()
         end
         return
     end
-    local item = self.selectedRecipe:getItem()
+    local item = self.selectedRecipe:getItem() --[[@as tes3misc]]
     if item == nil and not self.selectedRecipe.previewMesh then
         log:debug("No item or preview mesh, nothing to render")
         return
@@ -776,7 +776,7 @@ function CraftingMenu:updatePreviewPane()
             m1:toRotationX(math.rad(-15))
             local lowestPoint = bb.min.z * node.scale
             offset = offset - lowestPoint
-            --m2:toRotationZ(math.rad(180))
+            m2:toIdentity()
         --Vertically flipped
         elseif rotationAxis == '-x' then
             m1:toRotationZ(math.rad(15))
@@ -792,7 +792,7 @@ function CraftingMenu:updatePreviewPane()
             m1:toRotationX(math.rad(15))
             local lowestPoint = bb.max.z * node.scale
             offset = offset + lowestPoint
-            --m2:toRotationY(math.rad(180))
+            m2:toIdentity()
         end
         node.translation.z = node.translation.z + offset + self.selectedRecipe.craftable.previewHeight
         node.rotation = node.rotation * m1:copy() * m2:copy()
@@ -939,6 +939,10 @@ function CraftingMenu:updateCategoriesList()
     ---@param recipe CraftingFramework.Recipe
     for _, recipe in pairs(self.recipes) do
         local categoryName = recipe.category
+        if not categoryName then
+            log:error("Category Name is nil. Did you use `addRecipe` instead of `registerRecipe`?")
+            return self.categories
+        end
         if not self.categories[categoryName] then
             log:debug("Category %s doesn't exist yet", categoryName)
             ---@type CraftingFramework.CraftingMenu.category
