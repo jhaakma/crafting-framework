@@ -1,9 +1,10 @@
 local inMemConfig
 
-local this = {}
-
+---@class CraftingFramework.config
+local config = {}
+config.initialized = false
 --Static Config (stored right here)
-this.static = {
+config.static = {
     modName = "Crafting Framework",
     modDescription = [[
 The Crafting Framework is a powerful, flexible and easy to use framework for creating crafting mods.
@@ -59,10 +60,10 @@ The Crafting Framework is a powerful, flexible and easy to use framework for cre
 }
 
 --MCM Config (stored as JSON)
-this.configPath = "craftingFramework"
+config.configPath = "craftingFramework"
 
 ---@class CraftingFramework.config
-this.mcmDefault = {
+config.mcmDefault = {
     logLevel = "INFO",
     keybindRotate = {
         keyCode = tes3.scanCode.lShift
@@ -75,21 +76,21 @@ this.mcmDefault = {
     },
     defaultMaterialRecovery = 75
 }
-this.save = function(newConfig)
+config.save = function(newConfig)
     inMemConfig = newConfig
-    mwse.saveConfig(this.configPath, inMemConfig)
+    mwse.saveConfig(config.configPath, inMemConfig)
 end
 
 ---@type CraftingFramework.config
-this.mcm = setmetatable({}, {
+config.mcm = setmetatable({}, {
     __index = function(_, key)
-        inMemConfig = inMemConfig or mwse.loadConfig(this.configPath, this.mcmDefault)
+        inMemConfig = inMemConfig or mwse.loadConfig(config.configPath, config.mcmDefault)
         return inMemConfig[key]
     end,
     __newindex = function(_, key, value)
-        inMemConfig = inMemConfig or mwse.loadConfig(this.configPath, this.mcmDefault)
+        inMemConfig = inMemConfig or mwse.loadConfig(config.configPath, config.mcmDefault)
         inMemConfig[key] = value
-        mwse.saveConfig(this.configPath, inMemConfig)
+        mwse.saveConfig(config.configPath, inMemConfig)
     end
 })
 
@@ -99,17 +100,17 @@ local persistentDefault = {
     placementSetting = 'ground',
 }
 
-this.persistent = setmetatable({}, {
+config.persistent = setmetatable({}, {
     __index = function(_, key)
         if not tes3.player then return end
-        tes3.player.data[this.configPath] = tes3.player.data[this.configPath] or persistentDefault
-        return tes3.player.data[this.configPath][key]
+        tes3.player.data[config.configPath] = tes3.player.data[config.configPath] or persistentDefault
+        return tes3.player.data[config.configPath][key]
     end,
     __newindex = function(_, key, value)
         if not tes3.player then return end
-        tes3.player.data[this.configPath] = tes3.player.data[this.configPath] or persistentDefault
-        tes3.player.data[this.configPath][key] = value
+        tes3.player.data[config.configPath] = tes3.player.data[config.configPath] or persistentDefault
+        tes3.player.data[config.configPath][key] = value
     end
 })
 
-return this
+return config

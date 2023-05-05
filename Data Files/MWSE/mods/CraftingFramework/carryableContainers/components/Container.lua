@@ -3,6 +3,7 @@ local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("Container")
 local Positioner = require("CraftingFramework.components.Positioner")
 
+---@class CarryableContainers.Container
 local Container = {}
 
 function Container.getMiscIdfromReference(reference)

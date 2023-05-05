@@ -30,6 +30,8 @@ event.register(tes3.event.initialized, function()
     end
 
     logger:info("Initialized v%s", metadata.package.version)
+
+    config.initialized = true
 end)
 
 event.register("UIEXP:sandboxConsole", function(e)

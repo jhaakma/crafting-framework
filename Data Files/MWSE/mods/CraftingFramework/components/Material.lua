@@ -1,6 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Material")
 
+
 ---@class CraftingFramework.Material.data
 ---@field id string **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `material`.
 ---@field name string The name of the material. Used in various UIs.

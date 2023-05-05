@@ -149,9 +149,6 @@ function Craftable:new(data)
     setmetatable(craftable, self)
     self.__index = self
 
-    --set name to object if not provided
-    craftable.name = craftable:getName()
-
     local placedObjectId = craftable:getPlacedObjectId()
 
     if placedObjectId then
@@ -165,13 +162,20 @@ function Craftable:new(data)
         end
         Craftable.registeredCraftables[craftable.id] = craftable
         Craftable.craftablesIdexedByPlacedObject[placedObjectId:lower()] = craftable
-        StaticActivator.register{
-            objectId = placedObjectId,
-            name = craftable.name,
-            craftedOnly = craftable.craftedOnly,
-            onActivate = craftableActivated,
-            additionalUI = craftable.additionalUI
-        }
+        local function registerStaticActivator()
+            StaticActivator.register{
+                objectId = placedObjectId,
+                name = craftable:getName(),
+                craftedOnly = craftable.craftedOnly,
+                onActivate = craftableActivated,
+                additionalUI = craftable.additionalUI
+            }
+        end
+        if config.initialized then
+            registerStaticActivator()
+        else
+            event.register("initialized", registerStaticActivator)
+        end
     elseif craftable.additionalUI then
         Indicator.register{
             additionalUI = craftable.additionalUI,

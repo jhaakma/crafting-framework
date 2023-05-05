@@ -212,6 +212,7 @@ function CarryableContainer:createCopy()
     local copy = self.item:createCopy{}
     logger:debug("Created copy %s", copy.id)
     config.persistent.miscCopyToBaseMapping[copy.id:lower()] = self.item.id:lower()
+    event.trigger("CraftingFramework:CarryableContainer_CopyCreated", {copy = copy, original = self.item})
     return copy
 end
 
