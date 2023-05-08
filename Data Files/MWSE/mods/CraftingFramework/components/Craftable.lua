@@ -175,7 +175,9 @@ function Craftable:new(data)
         if config.initialized then
             registerStaticActivator()
         else
-            event.register("initialized", registerStaticActivator)
+            event.register("initialized", function()
+                registerStaticActivator()
+            end)
         end
     elseif craftable.additionalUI then
         Indicator.register{

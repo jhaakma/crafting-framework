@@ -31,9 +31,12 @@ event.register(tes3.event.initialized, function()
 
     logger:info("Initialized v%s", metadata.package.version)
 
-    config.initialized = true
 end)
 
 event.register("UIEXP:sandboxConsole", function(e)
     e.sandbox.CraftingFramework = CraftingFramework
 end)
+
+event.register("initialized", function()
+    config.initialized = true
+end, { priority = 0x7FFFFFFF})
