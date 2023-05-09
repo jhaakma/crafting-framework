@@ -9,14 +9,14 @@ local log = Util.createLogger("MenuActivator")
 ---| '"equip"' # These Stations are used by equipping them. Suitable for carriable Crafting Stations.
 ---| '"event"' # These Stations are used when a certain event is triggered. Typically used with custom events triggered by your mod.
 
----@alias CraftingFramework.MenuActivator.DefaultFilter
+---@alias CraftingFramework.MenuActivator.Filter
 ---| '"all"' # This filter will make all the recipes that can possibly be crafted on this Crafting Station appear in the Crafting Menu.
 ---| '"canCraft"' # This filter will make only the recipes that the player can currently craft appear in the Crafting Menu.
 ---| '"materials"' # This filter will make only the recipes that the player has enough materials for, and has the required tools, appear in the Crafting Menu.
 ---| '"skill"' # This filter will make only the recipes that the player's skills allow crafting appear in the Crafting Menu.
 
 
----@alias CraftingFramework.MenuActivator.DefaultSort
+---@alias CraftingFramework.MenuActivator.Sorter
 ---| '"name"' # This will sort the recipe list in the Crafting Menu by name of the craftable item alphabetically.
 ---| '"skill"' # This will sort the recipe list in the Crafting Menu by the average skill level required to craft the recipe (ascending).
 ---| '"canCraft"' # This will sort the recipe list in the Crafting Menu by putting the recipes the player can craft at the top.
@@ -29,8 +29,8 @@ local log = Util.createLogger("MenuActivator")
 ---@field name string The name appears on the Crafting Menu when this Crafting Station is used. If no name is given for activator Crafting Stations, the in-game name of the associated object will be used.
 ---@field type CraftingFramework.MenuActivator.Type **Required** The type controls how the Crafting Station can be interacted with.
 ---@field recipes CraftingFramework.Recipe.data[] A list of recipes that will appear (if known) when the menu is activated.
----@field defaultFilter CraftingFramework.MenuActivator.DefaultFilter *Default*: `"all"`. The filter controls which recipes will appear in the Crafting Menu.
----@field defaultSort CraftingFramework.MenuActivator.DefaultSort *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
+---@field defaultFilter CraftingFramework.MenuActivator.Filter *Default*: `"all"`. The filter controls which recipes will appear in the Crafting Menu.
+---@field defaultSort CraftingFramework.MenuActivator.Sorter *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
 ---@field defaultShowCategories boolean *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
 ---@field blockEvent boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
 ---@field closeCallback fun(self: CraftingFramework.CraftingMenu) *Default*: `nil`. This callback is called when the menu is closed.
@@ -87,6 +87,10 @@ local MenuActivator = {
     },
     registeredMenuActivators = {}
 }
+
+function MenuActivator.get(id)
+    return MenuActivator.registeredMenuActivators[id]
+end
 
 ---@param data CraftingFramework.MenuActivator.data
 ---@return CraftingFramework.MenuActivator menuActivator
