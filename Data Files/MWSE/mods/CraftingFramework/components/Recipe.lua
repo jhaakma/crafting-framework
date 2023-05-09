@@ -68,6 +68,7 @@ local config = require("CraftingFramework.config")
 ---@field previewHeight? number **Default 1** Determines the height of the mesh in the preview window.
 ---@field additionalUI? fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
 ---@field craftedOnly? boolean **Default true** If true, the object must be crafted in order have the functionality and tooltips registered by the recipe. If false, any object of this type will have the position menu and tooltips etc applied. You should only set this to false for objects that are unique to your mod.
+---@field keepMenuOpen boolean **Default false** If true, the menu will not close after the object is crafted. This is useful for objects that have additional options in the menu.
 
 local MaterialRequirementSchema = {
     name = "MaterialRequirement",
