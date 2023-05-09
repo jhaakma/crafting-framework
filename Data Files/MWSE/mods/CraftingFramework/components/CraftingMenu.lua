@@ -7,12 +7,22 @@ local log = Util.createLogger("CraftingMenu")
 ---@field recipes CraftingFramework.Recipe[] The recipes in the category
 ---@field visible boolean Whether the category is visible
 
+---@class CraftingFramework.CraftingMenu.Sorter.config
+---@field name string The name of the sorter
+---@field sorter function The sort function
+---@field nextSorter CraftingFramework.MenuActivator.Sorter The next sorter in the chain
+
+---@class CraftingFramework.CraftingMenu.Filter.config
+---@field name string The name of the filter
+---@field filter function The filter function
+---@field nextFilter CraftingFramework.MenuActivator.Filter The next filter in the chain
+
 ---@class CraftingFramework.CraftingMenu : CraftingFramework.MenuActivator
 ---@field collapseCategories boolean Whether to collapse categories when there is only one
 ---@field showCategories boolean Whether to show categories
 ---@field categories CraftingFramework.CraftingMenu.category[] The categories in the menu
----@field currentFilter string The current filter
----@field currentSorter string The current sorter
+---@field currentFilter CraftingFramework.MenuActivator.Filter The current filter
+---@field currentSorter CraftingFramework.MenuActivator.Sorter The current sorter
 local CraftingMenu = {}
 
 ---@class CraftingMenu.uiids
@@ -80,7 +90,7 @@ function CraftingMenu:craftItem(button)
     self.selectedRecipe:craft()
     log:debug("crafting done, setting widget")
 
-    if self.selectedRecipe.craftable:isCarryable() then
+    if self.selectedRecipe.keepMenuOpen or self.selectedRecipe.craftable:isCarryable() then
         button.widget.state = 2
         button.disabled = true
         self:updateMenu()
@@ -90,6 +100,7 @@ function CraftingMenu:craftItem(button)
 end
 
 
+---@type table<CraftingFramework.MenuActivator.Sorter, CraftingFramework.CraftingMenu.Sorter.config>
 local sorters = {}
 sorters.name = {
     name = "Name",
@@ -125,6 +136,7 @@ sorters.canCraft = {
     nextSorter = "name",
 }
 
+---@type table<CraftingFramework.MenuActivator.Filter, CraftingFramework.CraftingMenu.Filter.config>
 local filters = {}
 filters.all = {
     name = "All",
@@ -138,9 +150,9 @@ filters.canCraft = {
     filter = function(recipe)
         return recipe:meetsAllRequirements()
     end,
-    nextFilter = "hasMaterials"
+    nextFilter = "materials"
 }
-filters.hasMaterials = {
+filters.materials = {
     name = "Materials",
     filter = function(recipe)
         return recipe:hasMaterials() and recipe:meetsToolRequirements()
