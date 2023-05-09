@@ -59,6 +59,25 @@ function Tool:getName()
     return self.name
 end
 
+function Tool:hasInInventory(checkEquipped)
+    for id, _ in pairs(self:getToolIds()) do
+        local obj = tes3.getObject(id) --[[@as tes3misc]]
+        if obj then
+            local itemStack = tes3.player.object.inventory:findItemStack(obj)
+            if itemStack then
+                if checkEquipped then
+                    local equippedObject = tes3.mobilePlayer.readiedWeapon and tes3.mobilePlayer.readiedWeapon.object
+                    return itemStack.object == equippedObject
+                else
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+
 ---@param amount number
 function Tool:use(amount)
     amount = amount or 1
@@ -68,7 +87,6 @@ function Tool:use(amount)
         if obj then
             local itemStack = tes3.player.object.inventory:findItemStack(obj)
             if itemStack then
-
                 if not itemStack.object.maxCondition then
                     log:debug("Found invincible tool, skipping: %s", self:getName())
                     return
