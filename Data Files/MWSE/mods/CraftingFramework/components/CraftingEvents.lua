@@ -53,8 +53,14 @@ local function startIndicatorTimer()
 end
 event.register("loaded", startIndicatorTimer)
 
+local controlsAreDisabled = function()
+    return tes3.player
+        and tes3.player.mobile
+        and tes3.player.mobile.controlsDisabled
+end
+
 local function triggerActivateKey(e)
-    if tes3.player.mobile.controlsDisabled then return end
+    if controlsAreDisabled() then return end
     if (e.keyCode == tes3.getInputBinding(tes3.keybind.activate).code) and (tes3.getInputBinding(tes3.keybind.activate).device == 0) then
         StaticActivator.doTriggerActivate()
     end
@@ -62,7 +68,7 @@ end
 event.register("keyDown", triggerActivateKey, { priority = 50})
 
 local function triggerActivateMouse(e)
-    if tes3.player.mobile.controlsDisabled then return end
+    if controlsAreDisabled() then return end
     if (e.button == tes3.getInputBinding(tes3.keybind.activate).code) and (tes3.getInputBinding(tes3.keybind.activate).device == 1) then
         StaticActivator.doTriggerActivate()
     end
