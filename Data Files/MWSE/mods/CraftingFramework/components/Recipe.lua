@@ -69,6 +69,9 @@ local config = require("CraftingFramework.config")
 ---@field additionalUI? fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
 ---@field craftedOnly? boolean **Default true** If true, the object must be crafted in order have the functionality and tooltips registered by the recipe. If false, any object of this type will have the position menu and tooltips etc applied. You should only set this to false for objects that are unique to your mod.
 ---@field keepMenuOpen boolean **Default false** If true, the menu will not close after the object is crafted. This is useful for objects that have additional options in the menu.
+---@field placementSetting? CraftingFramework.Positioner.PlacementSetting **Default "default"** Determines the placement setting used by the positioner. This can be used to override the default placement setting for a specific recipe.
+---@field blockPlacementSettingToggle? boolean **Default false** If true, the placement setting toggle will be disabled for this recipe. This is useful for recipes that have a specific placement setting.
+---@field pinToWall? boolean **Default false** If true, the object will be pinned to the wall when placed. This is useful for objects that are intended to be placed on walls.
 
 local MaterialRequirementSchema = {
     name = "MaterialRequirement",

@@ -297,6 +297,7 @@ end
 
 function MerchantManager:processMerchantsInActiveCells()
     for _, cell in pairs(tes3.getActiveCells()) do
+        self.logger:debug("Cell: %s", cell.id)
         self:processMerchantsInCell(cell)
     end
 end

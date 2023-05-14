@@ -68,6 +68,11 @@ local Craftable = {
             noResult = { type = "boolean", required = false},
             craftedOnly = { type = "boolean", required = false, default = true},
 
+            --Positioner
+            placementSetting = { type = "string", required = false},
+            blockPlacementSettingToggle = { type = "boolean", required = false},
+            pinToWall = { type = "boolean", required = false},
+
             --Deprecated
             mesh = { type = "string", required = false},
         }
@@ -366,7 +371,12 @@ function Craftable:position(reference)
             tes3.mobilePlayer.castReady = false
         end
         if safeRef and safeRef:valid() then
-            Positioner.startPositioning{ target = reference }
+            Positioner.startPositioning{
+                target = reference,
+                placementSetting = self.placementSetting,
+                blockToggle = self.blockPlacementSettingToggle,
+                pinToWall = self.pinToWall,
+            }
         end
     end)
 end

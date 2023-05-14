@@ -19,6 +19,10 @@ local function wrapRadians(x)
     return x % (2 * math.pi)
 end
 
+---@alias CraftingFramework.Positioner.PlacementSetting
+---| '"free"' #Free placement
+---| '"ground"' #Ground placement
+
 local settings = {
     free = 'free',
     ground = 'ground'
@@ -102,7 +106,7 @@ local function getWidth()
     if not (Positioner and Positioner.boundMax) then
         return 0
     end
-    return math.min(Positioner.boundMax.x - Positioner.boundMin.x, Positioner.boundMax.y - Positioner.boundMin.y, Positioner.boundMax.z - Positioner.boundMin.z)
+    return math.min(Positioner.boundMax.x - Positioner.boundMin.x, Positioner.boundMax.y - Positioner.boundMin.y)
 end
 
 ---@param ref tes3reference
@@ -515,7 +519,7 @@ event.register("keyDown", onActiveKey, { priority = 100 })
 ---@field target tes3reference
 ---@field nonCrafted boolean
 ---@field pinToWall boolean
----@field placementSetting string
+---@field placementSetting CraftingFramework.Positioner.PlacementSetting
 ---@field blockToggle boolean
 
 ---@param e Positioner.startPositioning.params
