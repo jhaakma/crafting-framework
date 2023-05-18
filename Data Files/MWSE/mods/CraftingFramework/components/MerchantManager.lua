@@ -239,11 +239,15 @@ function MerchantManager:populateContainer(merchantRef, containerRef)
     self:clearContainer(containerRef)
     --Add all items from the contents list
     for id, count in pairs(newContents) do
-        local item = tes3.getObject(id)
+        local item = tes3.getObject(id) --[[@as tes3misc]]
         if item then
             self.logger:debug("Adding item %s to container %s", item.id, containerRef.id)
             ---@diagnostic disable-next-line: assign-type-mismatch
             tes3.addItem { reference = containerRef, item = item, count = count }
+            if count < 0 then
+                --Find the item stack and explicitly set the count to negative
+                containerRef.object.inventory:findItemStack(item).count = count
+            end
         else
             self.logger:warn("Item %s not found", id)
         end
