@@ -906,7 +906,6 @@ function CraftingMenu:populateCategoryList(recipes, parent)
     table.sort(recipes, sorters[self.currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
         if recipe:isKnown() then
-
             local showRecipe = self:recipeMatchesSearch(recipe)
                 and filters[self.currentFilter].filter(recipe)
 
@@ -929,7 +928,6 @@ function CraftingMenu:populateCategoryList(recipes, parent)
             end
         end
     end
-    if not self.selectedRecipe then self.selectedRecipe = recipes[1] end
     if parent.widget and parent.widget.contentsChanged then
         parent:updateLayout()
         parent.widget:contentsChanged()
@@ -979,22 +977,24 @@ function CraftingMenu:updateCategoriesList()
     end
     ---@param recipe CraftingFramework.Recipe
     for _, recipe in pairs(self.recipes) do
-        local categoryName = recipe.category
-        if not categoryName then
-            log:error("Category Name is nil. Did you use `addRecipe` instead of `registerRecipe`?")
-            return self.categories
+        if recipe:isKnown() then
+            local categoryName = recipe.category
+            if not categoryName then
+                log:error("Category Name is nil. Did you use `addRecipe` instead of `registerRecipe`?")
+                return self.categories
+            end
+            if not self.categories[categoryName] then
+                log:debug("Category %s doesn't exist yet", categoryName)
+                ---@type CraftingFramework.CraftingMenu.category
+                local menuCategory = {
+                    name = categoryName,
+                    recipes = {},
+                    visible = not self.collapseCategories,
+                }
+                self.categories[categoryName] = menuCategory
+            end
+            table.insert(self.categories[recipe.category].recipes, recipe)
         end
-        if not self.categories[categoryName] then
-            log:debug("Category %s doesn't exist yet", categoryName)
-            ---@type CraftingFramework.CraftingMenu.category
-            local menuCategory = {
-                name = categoryName,
-                recipes = {},
-                visible = not self.collapseCategories,
-            }
-            self.categories[categoryName] = menuCategory
-        end
-        table.insert(self.categories[recipe.category].recipes, recipe)
     end
     return self.categories
 end
@@ -1027,6 +1027,19 @@ function CraftingMenu:populateRecipeList()
         end
     else
         self:populateCategoryList(self.recipes, scrollBar)
+    end
+    if not self.selectedRecipe then
+        --All recipes are filtered out, first find at least one known recipe
+        for _, recipe in ipairs(self.recipes) do
+            if recipe:isKnown() then
+                self.selectedRecipe = recipe
+                break
+            end
+        end
+        if not self.selectedRecipe then
+            --No known recipes, just select the first one
+            self.selectedRecipe = self.recipes[1]
+        end
     end
 end
 
