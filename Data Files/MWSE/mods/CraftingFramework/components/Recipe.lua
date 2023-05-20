@@ -38,7 +38,7 @@ local config = require("CraftingFramework.config")
 ---@field materials? CraftingFramework.MaterialRequirement[] **Required.** A table with the materials required by this recipe.
 ---@field timeTaken? number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---@field knownByDefault? boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
----@field customRequirements? CraftingFramework.CustomRequirement.data[] A table with the custom requirements that need to be met in order to craft the associated item.
+---@field knowledgeRequirement? fun(self: CraftingFramework.Recipe): boolean A callback which determines whether the player should know how to craft this recipe at the time the menu is opened. This is an alternative approach to using the knownByDefault/learn/unlearn params, and will override their functionality.
 ---@field skillRequirements? CraftingFramework.SkillRequirement.data[] A table with the skill requirements needed to craft the associated item.
 ---@field toolRequirements? CraftingFramework.ToolRequirement.data[] A table with the tool requirements needed to craft the associated item.
 ---@field category? string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
@@ -178,6 +178,9 @@ function Recipe:unlearn()
 end
 
 function Recipe:isKnown()
+    if self.knowledgeRequirement then
+        return self:knowledgeRequirement()
+    end
     if self.knownByDefault then
         return true
     end
