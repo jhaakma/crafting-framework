@@ -384,6 +384,7 @@ end
 function Craftable:recoverItemsFromContainer(reference)
     --if container, move to player inventory
     if reference.baseObject.objectType == tes3.objectType.container then
+        Util.forceInstance(reference)
         local itemList = {}
         for stack in tes3.iterate(reference.object.inventory.iterator) do
             table.insert(itemList, stack)
@@ -473,13 +474,17 @@ end
 
 function Craftable:playCraftingSound()
     if self.soundType then
+        logger:trace("playing sound type %s", self.soundType)
         SoundType.play(self.soundType)
     end
     if self.soundId then
+        logger:trace("playing sound %s", self.soundId)
         tes3.playSound{ sound = self.soundId }
     elseif self.soundPath then
-        tes3.playSound{ soundPath = self.soundPath }
+        logger:trace("playing sound %s", self.soundPath)
+        tes3.playSound{ reference = tes3.player, soundPath = self.soundPath }
     else
+
         SoundType.play("defaultConstruction")
     end
 end

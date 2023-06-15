@@ -178,5 +178,19 @@ function Util.convertListTypes(list, classType)
     return newList
 end
 
+--[[
+    Forces a container to be instanced,
+    which will resolve any leveled items
+    in its inventory
+]]
+---@param reference tes3reference
+function Util.forceInstance(reference)
+    local object = reference.object
+    if (object.isInstance == false) then
+        object:clone(reference)
+        reference.modified = true
+    end
+    return reference --.object
+end
 
 return Util

@@ -243,8 +243,10 @@ function MerchantManager:populateContainer(merchantRef, containerRef)
         if item then
             self.logger:debug("Adding item %s to container %s", item.id, containerRef.id)
             ---@diagnostic disable-next-line: assign-type-mismatch
-            tes3.addItem { reference = containerRef, item = item, count = count }
+            tes3.addItem { reference = containerRef, item = item, count = math.abs(count) }
+            -- TODO - Fix negative counts
             if count < 0 then
+                self.logger:debug("Setting item %s count to %s", item.id, count)
                 --Find the item stack and explicitly set the count to negative
                 containerRef.object.inventory:findItemStack(item).count = count
             end
@@ -271,6 +273,7 @@ function MerchantManager:processMerchant(merchantRef)
     if not merchantRef then return end
     local containerData = self:getContainerData(merchantRef)
     if not containerData then return end
+    self.logger:debug("Processing merchant %s", merchantRef.id)
     local containerRef = self:getExistingContainer(merchantRef)
     if containerRef then
         if not self:enabledForMerchant(merchantRef) then

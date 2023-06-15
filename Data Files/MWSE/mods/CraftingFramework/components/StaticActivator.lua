@@ -16,11 +16,14 @@ local StaticActivator = {
 ---@param data CraftingFramework.StaticActivator.data
 function StaticActivator.register(data)
     logger:assert(type(data.objectId) == "string", "objectId must be a string")
-    logger:assert(type(data.onActivate) == "function", "onActivate must be a function. If you want a tooltip without an activator, register an Indciator instead")
+    logger:assert(type(data.onActivate) == "function", "onActivate must be a function. If you want a tooltip without an activator, register an Indicator instead")
     if StaticActivator.registeredObjects[data.objectId:lower()] then
         logger:warn("Object %s is already registered", data.objectId)
+        --merge
+        table.copy(data, StaticActivator.registeredObjects[data.objectId:lower()])
+    else
+        StaticActivator.registeredObjects[data.objectId:lower()] = data
     end
-    StaticActivator.registeredObjects[data.objectId:lower()] = data
     Indicator.register(data)
     logger:debug("Registered %s as StaticActivator", data.objectId)
 end
