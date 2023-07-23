@@ -191,7 +191,7 @@ local function simulatePlacement()
             local width = getWidth()
             logger:trace("width: %s", width)
             local vertDistance = math.min(ray.distance, Positioner.currentReach) + Positioner.boundMin.z
-            local horiDistance = math.min(ray.distance, Positioner.currentReach) - width
+            local horiDistance = math.min(ray.distance, Positioner.currentReach)
 
             local vertDiff = targetPos:distance(eyePos) - vertDistance
             local horiDiff = targetPos:distance(eyePos) - horiDistance
@@ -203,7 +203,6 @@ local function simulatePlacement()
             ---@cast targetPos tes3vector3
             logger:trace("new targetPos: %s", targetPos)
         end
-
     end
 
     -- Incrementally rotate the same amount as the player, to keep relative alignment with player.
@@ -222,7 +221,7 @@ local function simulatePlacement()
 
     local doOrient = config.persistent.placementSetting == settings.ground
     if doOrient then
-        if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)/2} then
+        if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)/4} then
             return
         end
     end
