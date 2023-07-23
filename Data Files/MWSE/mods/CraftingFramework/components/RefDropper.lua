@@ -46,6 +46,10 @@ function RefDropper:new(data)
     return data
 end
 
+--[[
+    Called when an object is dropped into the world.
+    @param reference tes3reference
+]]
 function RefDropper:drop(reference)
     if self.replacerId then
         logger:debug("Swapping %s with %s", reference, self.replacerId)
