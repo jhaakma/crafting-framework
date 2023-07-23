@@ -3,31 +3,18 @@ local Craftable = require("CraftingFramework.components.Craftable")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local Indicator = require("CraftingFramework.components.Indicator")
 local logger = Util.createLogger("CraftingEvents")
+local RefDropper = require("CraftingFramework.components.RefDropper")
 
 ---@param e itemDroppedEventData
-local function itemDropped(e)
-    local craftable = Craftable.getCraftable(e.reference.baseObject.id)
-    if not craftable then return end
-    logger:debug("Craftable: %s", craftable and craftable.id)
-    local placedObject = craftable and craftable:getPlacedObjectId()
-    logger:trace("craftable.placedObject: %s", craftable.placedObject)
-    logger:trace("placedObject: %s", placedObject)
-    if placedObject then
-        logger:trace("placedObject: " .. placedObject)
-        if placedObject and e.reference.baseObject.id:lower() == craftable.id then
-            logger:debug("itemDropped placedObject: " .. placedObject)
-            craftable:swap(e.reference)
-            return true
-        end
-    else
-        --set scale
-        if craftable.scale then
-            logger:debug("Setting %s scale to %s", e.reference, craftable.scale)
-            e.reference.scale = craftable.scale
-        end
-    end
-end
-event.register("itemDropped", itemDropped, { priority = -300 })
+event.register("itemDropped", function(e)
+    local refSwapper = RefDropper.registeredRefDroppers[e.reference.baseObject.id:lower()]
+    if not refSwapper then return end
+    logger:debug("RefDropper: %s", refSwapper.droppedObjectId)
+    logger:debug("replacerId: %s", refSwapper.replacerId)
+    refSwapper:drop(e.reference)
+    return true
+end, { priority = -300 })
+
 
 event.register("CraftingFramework:EndPlacement", function(e)
     local reference = e.reference

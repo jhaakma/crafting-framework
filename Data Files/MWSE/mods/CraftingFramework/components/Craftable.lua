@@ -4,7 +4,7 @@ local Positioner = require("CraftingFramework.components.Positioner")
 local SoundType = require("CraftingFramework.components.SoundType")
 local StaticActivator = require("CraftingFramework.components.StaticActivator")
 local Indicator = require("CraftingFramework.components.Indicator")
-local RefStack = require("CraftingFramework.util.RefStack")
+local RefDropper = require("CraftingFramework.components.RefDropper")
 local config = require("CraftingFramework.config")
 
 ---@class CraftingFramework.Craftable.SuccessMessageCallback.params
@@ -62,6 +62,7 @@ local Craftable = {
             quickActivateCallback = { type = "function", required = false },
             additionalUI  = { type = "function", required = false },
             successMessageCallback = { type = "function", required = false },
+            pickUp = { type = "function", required = false },
             --flags
             uncarryable = { type = "boolean", required = false },
             recoverEquipmentMaterials = { type = "boolean", required = false},
@@ -191,6 +192,20 @@ function Craftable:new(data)
             craftedOnly = craftable.craftedOnly,
         }
     end
+
+    logger:debug("Registering ref dropper with id %s and replacerId %s", craftable.id, craftable.placedObject or "nil")
+
+    RefDropper.register{
+        droppedObjectId = craftable.id,
+        replacerId = craftable.placedObject,
+        scale = craftable.scale,
+        onDrop = function(refDropper, newRef)
+            if refDropper.replacerId then
+                newRef.data.crafted = true
+                newRef.data.positionerMaxSteepness = self.maxSteepness
+            end
+        end
+    }
     return craftable
 end
 
@@ -238,28 +253,6 @@ function Craftable:activate(reference)
         callbackParams = { reference = reference }
     }
 end
-
-function Craftable:swap(reference)
-    local newRef = tes3.createReference{
-        object = self:getPlacedObjectId(),
-        position = reference.position:copy(),
-        orientation = reference.orientation:copy(),
-        cell = reference.cell,
-        scale = self.scale,
-    }
-    newRef.data.crafted = true
-    newRef.data.positionerMaxSteepness = self.maxSteepness
-
-    local refStack = RefStack:new{
-        reference = reference,
-    }
-    if refStack then
-        logger:debug("Returning excess items")
-        refStack:returnExcess()
-    end
-    Util.deleteRef(reference)
-end
-
 
 ---@param reference tes3reference
 ---@return craftingFrameworkMenuButtonData[] menuButtons
@@ -560,9 +553,10 @@ function Craftable:place(materialsUsed)
     local ray = tes3.rayTest{
         position = tes3.getPlayerEyePosition(),
         direction = tes3.getPlayerEyeVector(),
-        ignore = { tes3.player}
+        ignore = { tes3.player},
+        maxDistance = 200
     }
-    local rayDist = ray and ray.intersection and math.min(ray.distance -5, 200) or 0
+    local rayDist = ray and ray.intersection and math.min(ray.distance -5, 200) or 200
     local position = eyePos + eyeOri * rayDist
 
     logger:debug("Placing %s with scale %s", self.id, self.scale)

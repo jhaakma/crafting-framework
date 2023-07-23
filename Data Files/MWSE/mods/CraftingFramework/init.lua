@@ -13,7 +13,7 @@ CraftingFramework.Indicator = require("CraftingFramework.components.Indicator")
 CraftingFramework.Positioner = require("CraftingFramework.components.Positioner")
 CraftingFramework.StaticActivator = require("CraftingFramework.components.StaticActivator")
 CraftingFramework.SoundType = require("CraftingFramework.components.SoundType")
-
+CraftingFramework.RefDropper = require("CraftingFramework.components.RefDropper")
 CraftingFramework.MerchantManager = require("CraftingFramework.components.MerchantManager")
 
 --Carryabe Containers
