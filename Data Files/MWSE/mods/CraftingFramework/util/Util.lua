@@ -1,3 +1,4 @@
+---@class CraftingFramework.Util
 local Util = {}
 local config = require("CraftingFramework.config")
 
@@ -5,15 +6,19 @@ Util.loggers = {}
 do --logger
     local logLevel = config.mcm.logLevel
     local logger = require("logging.logger")
+    --[[
+        Creates a logger with the given service name.
+        The service name will be prefixed with the mod name.
+    ]]
     Util.createLogger = function(serviceName)
         local logger = logger.new{
             name = string.format("%s: %s", config.static.modName, serviceName),
-            logLevel = logLevel
+            logLevel = logLevel,
+            includeTimestamp = true
         }
         Util.loggers[serviceName] = logger
         return logger
     end
-
 end
 local logger = Util.createLogger("Util")
 

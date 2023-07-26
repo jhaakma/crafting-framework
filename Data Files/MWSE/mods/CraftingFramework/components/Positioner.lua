@@ -221,7 +221,7 @@ local function simulatePlacement()
 
     local doOrient = config.persistent.placementSetting == settings.ground
     if doOrient then
-        if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)/4} then
+        if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)/2} then
             return
         end
     end

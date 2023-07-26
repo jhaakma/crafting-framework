@@ -135,7 +135,6 @@ function this.orientRefToGround(params)
             logger:trace("Orienting %s to ground", ref.id)
             this.positionRef(ref, result)
             this.orientRef(ref, result)
-            event.trigger("Ashfall:VerticaliseNodes", {reference = ref})
             return true
         else
             logger:trace("Ref %s is too far from the ground", ref.id)
