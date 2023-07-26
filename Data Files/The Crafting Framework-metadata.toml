@@ -4,7 +4,7 @@ description = "The Crafting Framework is library that allows modders to quickly 
 homepage = "https://www.nexusmods.com/morrowind/mods/51009?tab=files"
 repository = "https://github.com/jhaakma/crafting-framework"
 authors = [ "Merlord",]
-version = "1.13.0"
+version = "1.14.0"
 
 [dependencies]
 assets = [ "MWSE/mods/CraftingFramework", "Meshes/craftingFramework", "Textures/craftingFramework", "Sound/craftingFramework",]
