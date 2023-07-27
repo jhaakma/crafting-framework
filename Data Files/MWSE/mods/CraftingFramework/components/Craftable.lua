@@ -202,7 +202,7 @@ function Craftable:new(data)
         onDrop = function(refDropper, newRef)
             if refDropper.replacerId then
                 newRef.data.crafted = true
-                newRef.data.positionerMaxSteepness = self.maxSteepness
+                newRef.data.positionerMaxSteepness = craftable.maxSteepness
             end
         end
     }
