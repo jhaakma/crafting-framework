@@ -45,7 +45,7 @@ local function isTall(ref)
     local width = bb.max.x - bb.min.x
     local depth = bb.max.y - bb.min.y
     local height = bb.max.z - bb.min.z
-    return height > depth or height > width
+    return (height > depth) or (height > width)
 end
 
 local function getMaxSteepness(ref)

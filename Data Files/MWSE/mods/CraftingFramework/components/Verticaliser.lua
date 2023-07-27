@@ -83,31 +83,14 @@ function Verticaliser.verticaliseNodes(verticalNodes)
     end
 end
 
---Returns a list of all nodes in a sceneNode with a given name
----@author Greatness7
-local function getObjectsWithNames(root, name)
-    local function iter(node)
-        for _, child in pairs(node.children or {}) do
-            if child then
-                local node = child:getObjectByName(name)
-                if node then
-                    coroutine.yield(node)
-                    iter(node)
-                end
-            end
-        end
-    end
-    return coroutine.wrap(function() iter(root) end)
-end
-
 function Verticaliser.getVerticalNodes(sceneNode)
     ---@type Verticalise.nodeData[]
     local verticalNodes = {}
-    for name, _ in pairs(Verticaliser.VERTICAL_NODE_NAMES) do
-        for node in getObjectsWithNames(sceneNode, name) do
+    for child in table.traverse{ sceneNode } do
+        if Verticaliser.VERTICAL_NODE_NAMES[child.name] then
             table.insert(verticalNodes, {
-                node = node,
-                position = node.worldTransform.translation:copy()
+                node = child,
+                position = child.worldTransform.translation:copy()
             })
         end
     end
