@@ -55,6 +55,7 @@ local config = require("CraftingFramework.config")
 ---@field resultAmount? number The amount of the item to be crafted
 ---@field scale? number *Default*: `1.0`. The scale the item will be set to when placed.
 ---@field recoverEquipmentMaterials? boolean When set to true, and the craftable is an armor or weapon item, equipping it when it has 0 condition will destroy it and salvage its materials
+---@field activateCallback? fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params): boolean Optional function that is called when the object is activated. To revert to default behaviour, return false from this function.
 ---@field destroyCallback? fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is destroyed
 ---@field placeCallback? fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is placed
 ---@field positionCallback? fun(self : CraftingFramework.Craftable, e: CraftingFramework.Craftable.callback.params) Called when the object is positioned

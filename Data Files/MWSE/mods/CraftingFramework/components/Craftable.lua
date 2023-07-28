@@ -55,6 +55,7 @@ local Craftable = {
             previewScale = { type = "number", required = false},
             previewHeight = { type = "number", required = false, default = 0},
             --callbacks
+            activateCallback = { type = "function", required = false },
             destroyCallback = { type = "function", required = false },
             placeCallback = { type = "function", required = false },
             positionCallback = { type = "function", required = false },
@@ -96,30 +97,6 @@ end
 function Craftable.getPlacedCraftable(id)
     id = id:lower()
     return Craftable.craftablesIdexedByPlacedObject[id]
-end
-
-local function craftableActivated(reference)
-    logger:debug("craftableActivated: %s", reference)
-    local craftable = Craftable.getPlacedCraftable(reference.baseObject.id:lower())
-    if craftable then
-        logger:trace("craftableActivated placedObject id: %s", craftable:getPlacedObjectId())
-        local modifierPressed = Util.isQuickModifierDown()
-        if modifierPressed and craftable.quickActivateCallback then
-            logger:debug("quickActivateCallback: %s", require("inspect")(craftable.quickActivateCallback))
-            craftable:quickActivateCallback{reference = reference}
-        elseif modifierPressed and Util.canBeActivated(reference) then
-            logger:debug("vanilla activate")
-            reference.data.allowActivate = true
-            tes3.player:activate(reference)
-            reference.data.allowActivate = nil
-        elseif modifierPressed and craftable:isCarryable() then
-            logger:debug("pickUp")
-            craftable:pickUp(reference)
-        else
-            logger:debug("activate")
-            craftable:activate(reference)
-        end
-    end
 end
 
 ---@param data CraftingFramework.Craftable.data
@@ -174,7 +151,9 @@ function Craftable:new(data)
                 objectId = placedObjectId,
                 name = craftable:getName(),
                 craftedOnly = craftable.craftedOnly,
-                onActivate = craftableActivated,
+                onActivate = function(reference)
+                    craftable:craftableActivated(reference)
+                end,
                 additionalUI = craftable.additionalUI
             }
         end
@@ -253,6 +232,28 @@ function Craftable:activate(reference)
         callbackParams = { reference = reference }
     }
 end
+
+function Craftable:craftableActivated(reference)
+    logger:debug("craftableActivated: %s", reference)
+    logger:trace("craftableActivated placedObject id: %s", self:getPlacedObjectId())
+    local modifierPressed = Util.isQuickModifierDown()
+    if modifierPressed and self.quickActivateCallback then
+        logger:debug("quickActivateCallback: %s", require("inspect")(self.quickActivateCallback))
+        self:quickActivateCallback{reference = reference}
+    elseif modifierPressed and Util.canBeActivated(reference) then
+        logger:debug("vanilla activate")
+        reference.data.allowActivate = true
+        tes3.player:activate(reference)
+        reference.data.allowActivate = nil
+    elseif modifierPressed and self:isCarryable() then
+        logger:debug("pickUp")
+        self:pickUp(reference)
+    elseif self:activateCallback{reference = reference} == false then
+        logger:debug("activate")
+        self:activate(reference)
+    end
+end
+
 
 ---@param reference tes3reference
 ---@return craftingFrameworkMenuButtonData[] menuButtons
