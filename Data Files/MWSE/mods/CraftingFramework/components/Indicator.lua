@@ -13,9 +13,10 @@ local logger = Util.createLogger("Indicator")
 ---@field additionalUI fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
 
 ---@class CraftingFramework.Indicator : CraftingFramework.Indicator.data
----@field reference tes3reference
+---@field reference? tes3reference
 ---@field item tes3object|tes3item|tes3misc
 ---@field dataHolder tes3itemData|tes3reference
+---@field nodeLookingAt? niNode The node that the player is looking at
 local Indicator = {}
 
 ---@type table<string, CraftingFramework.Indicator.data> List of registered indicator objects, indexed by object id
@@ -45,6 +46,7 @@ function Indicator:new(e)
     local indicator = table.copy(data)
     indicator.item = object
     indicator.dataHolder = e.itemData or e.reference
+    indicator.reference = e.reference
     setmetatable(indicator, self)
     self.__index = self
     return indicator
@@ -114,7 +116,9 @@ function Indicator:doBlockNonCrafted()
 end
 
 --- Update the indicator with the given reference
-function Indicator:update()
+---@param nodeLookingAt niNode|nil
+function Indicator:update(nodeLookingAt)
+    self.nodeLookingAt = nodeLookingAt
     --get menu
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     --If its an activator with a name, it'll already have a tooltip
@@ -131,6 +135,10 @@ function Indicator:update()
     else
         Indicator.disable()
     end
+end
+
+function Indicator:setNodeLookingAt(node)
+    self.nodeLookingAt = node
 end
 
 ---Hide the indicator if it's visible

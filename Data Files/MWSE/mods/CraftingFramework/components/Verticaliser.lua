@@ -100,7 +100,6 @@ function Verticaliser.getVerticalNodes(sceneNode)
     return verticalNodes
 end
 
-
 --[[
     Searches sceneNode for vertical nodes and
     registers a function that periodically checks if the node has moved,

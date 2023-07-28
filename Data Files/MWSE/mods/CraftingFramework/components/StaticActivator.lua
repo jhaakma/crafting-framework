@@ -80,7 +80,7 @@ function StaticActivator.doTriggerActivate()
         or tes3.mobilePlayer.controlsDisabled
     if not activationBlocked then
         logger:debug("Triggered Activate")
-        local ref = StaticActivator.callRayTest{
+        local ref = StaticActivator.updateIndicator{
             eventName = "CraftingFramework:StaticActivation"
         }
         local staticActivator = StaticActivator:new(ref)
@@ -90,7 +90,34 @@ function StaticActivator.doTriggerActivate()
     end
 end
 
-function StaticActivator.callRayTest(e)
+---@class CraftingFramework.StaticActivator.updateIndicator.params
+---@field eventName string? The name of the event to trigger when a reference is found
+
+---@param e CraftingFramework.StaticActivator.updateIndicator.params
+function StaticActivator.updateIndicator(e)
+    local result = StaticActivator.getLookingAt()
+    if e.eventName then
+        ---@class CraftingFramework.StaticActivator.eventData
+        local eventData = {
+            rayResult = result,
+            reference = result and result.reference
+        }
+        event.trigger(e.eventName, eventData)
+    end
+    if result and result.reference then
+        local indicator = Indicator:new{ reference = result.reference }
+        if indicator then
+            indicator:update(result.object)
+        else
+            Indicator.disable()
+        end
+        return result.reference
+    end
+    logger:trace("No reference found, disabling tooltip")
+    Indicator.disable()
+end
+
+function StaticActivator.getLookingAt()
     local eyePos = tes3.getPlayerEyePosition()
     local eyeDirection = tes3.getPlayerEyeVector()
     --If in menu, use cursor position
@@ -104,7 +131,6 @@ function StaticActivator.callRayTest(e)
             eyePos, eyeDirection = camera:windowPointToRay{cursor.x, cursor.y}
         end
     end
-
     if not (eyeDirection or eyeDirection) then return end
     local activationDistance = tes3.getPlayerActivationDistance()
     local result = tes3.rayTest{
@@ -113,25 +139,7 @@ function StaticActivator.callRayTest(e)
         ignore = { tes3.player },
         maxDistance = activationDistance,
     }
-    if e.eventName then
-        local eventData = {
-            rayResult = result,
-            reference = result and result.reference
-        }
-        event.trigger(e.eventName, eventData)
-    end
-
-    if result and result.reference then
-        local indicator = Indicator:new{ reference = result.reference }
-        if indicator then
-            indicator:update()
-        else
-            Indicator.disable()
-        end
-        return result.reference
-    end
-    logger:trace("No reference found, disabling tooltip")
-    Indicator.disable()
+    return result
 end
 
 return StaticActivator

@@ -32,7 +32,7 @@ local function startIndicatorTimer()
         type = timer.real,
         iterations = -1,
         callback = function()
-            StaticActivator.callRayTest{
+            StaticActivator.updateIndicator{
                 eventName = "CraftingFramework:StaticActivatorIndicator"
             }
         end
