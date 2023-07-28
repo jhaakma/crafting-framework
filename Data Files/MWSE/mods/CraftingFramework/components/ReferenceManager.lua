@@ -131,6 +131,7 @@ event.register("referenceActivated", function(e)
         logger:error("Reference is nil")
         return
     end
+    e.reference.tempData.cfRefRegistered = true
     ReferenceManager.registerReference(e.reference)
 end)
 
@@ -141,6 +142,18 @@ event.register("referenceDeactivated", function(e)
         return
     end
     ReferenceManager.unregisterReference(e.reference)
+end)
+
+event.register("loaded", function()
+    --re-trigger referenceActivated for each reference
+    for _, cell in pairs(tes3.getActiveCells()) do
+        for ref in cell:iterateReferences() do
+            if not ref.tempData.cfRefRegistered then
+                ref.tempData.cfRefRegistered = nil
+                ReferenceManager.registerReference(ref)
+            end
+        end
+    end
 end)
 
 return ReferenceManager
