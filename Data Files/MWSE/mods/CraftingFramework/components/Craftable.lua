@@ -248,7 +248,7 @@ function Craftable:craftableActivated(reference)
     elseif modifierPressed and self:isCarryable() then
         logger:debug("pickUp")
         self:pickUp(reference)
-    elseif self:activateCallback{reference = reference} == false then
+    elseif (not self.activateCallback) or self:activateCallback{reference = reference} == false then
         logger:debug("activate")
         self:activate(reference)
     end
