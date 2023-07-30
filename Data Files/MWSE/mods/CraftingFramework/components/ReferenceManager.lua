@@ -127,14 +127,14 @@ end
 
 ---@param e referenceActivatedEventData
 event.register("referenceActivated", function(e)
-    if not e.reference then
-        logger:error("Reference is nil")
-        return
+    --Only use this event after loaded event to avoid double
+    if (tes3.player and tes3.player.tempData.cfHasLoadedRefs) then
+        if not e.reference then
+            logger:error("Reference is nil")
+            return
+        end
+        ReferenceManager.registerReference(e.reference)
     end
-    if e.reference.supportsLuaData then
-        e.reference.tempData.cfRefRegistered = true
-    end
-    ReferenceManager.registerReference(e.reference)
 end)
 
 ---@param e referenceDeactivatedEventData
@@ -150,11 +150,10 @@ event.register("loaded", function()
     --re-trigger referenceActivated for each reference
     for _, cell in pairs(tes3.getActiveCells()) do
         for ref in cell:iterateReferences() do
-            if not (ref.supportsLuaData and ref.tempData.cfRefRegistered) then
-                ReferenceManager.registerReference(ref)
-            end
+            ReferenceManager.registerReference(ref)
         end
     end
+    tes3.player.tempData.cfHasLoadedRefs = true
 end)
 
 return ReferenceManager
