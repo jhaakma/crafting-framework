@@ -107,13 +107,15 @@ end
 ---Execute a callback against each reference in the manager
 ---Before executing the callback, the reference is checked against the
 ---requirements function to ensure it is still valid.
----@param callback fun(ref:tes3reference, refData:any)
+---@param callback fun(ref:tes3reference, refData:any): boolean|nil Return false to break the iteration
 function ReferenceManager:iterateReferences(callback)
     self.logger:trace("Iterating references")
     for ref, refData in pairs(self.references) do
         if self:requirements(ref) then
             if ref.sceneNode then
-                callback(ref, refData)
+                if callback(ref, refData) == false then
+                    break
+                end
             end
         else
             self:removeReference(ref)

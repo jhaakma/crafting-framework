@@ -50,6 +50,7 @@ end
 ---@return CraftingFramework.Material material
 function Material:new(data)
     Util.validate(data, Material.schema)
+    data = table.copy(data)
     if not Material.registeredMaterials[data.id] then
         Material.registeredMaterials[data.id] = {
             id = data.id,

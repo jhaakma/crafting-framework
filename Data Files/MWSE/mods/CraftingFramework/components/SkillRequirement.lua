@@ -6,7 +6,7 @@ local logger = Util.createLogger("SkillRequirement")
 ---@class CraftingFramework.SkillRequirement.data
 ---@field skill string **Required.** The name of the skill of this `skillRequirement`. If vanilla skill, it needs to be a camelCased name of the skill. Supports skills added with the Skills Module.
 ---@field requirement number **Required.** The needed skill value to pass this `skillRequirement`'s skill check.
----@field maxProgress number *Default*: `30`. The maximal amount of experience the player can get, when crafting an item that has this `skillRequirement`.
+---@field maxProgress? number *Default*: `30`. The maximal amount of experience the player can get, when crafting an item that has this `skillRequirement`.
 
 
 ---@class CraftingFramework.SkillRequirement : CraftingFramework.SkillRequirement.data
@@ -30,7 +30,7 @@ local MAX_SKILL_DIFF = 40
 ---@param data CraftingFramework.SkillRequirement.data
 ---@return CraftingFramework.SkillRequirement skillRequirement
 function SkillRequirement:new(data)
-    local skillRequirement = table.copy(data, {})
+    local skillRequirement = table.copy(data)
     Util.validate(data, SkillRequirement.schema)
     skillRequirement.skill = data.skill
     skillRequirement.requirement = data.requirement

@@ -29,27 +29,27 @@ local log = Util.createLogger("MenuActivator")
 ---@field name string The name appears on the Crafting Menu when this Crafting Station is used. If no name is given for activator Crafting Stations, the in-game name of the associated object will be used.
 ---@field type CraftingFramework.MenuActivator.Type **Required** The type controls how the Crafting Station can be interacted with.
 ---@field recipes CraftingFramework.Recipe.data[] A list of recipes that will appear (if known) when the menu is activated.
----@field defaultFilter CraftingFramework.MenuActivator.Filter *Default*: `"all"`. The filter controls which recipes will appear in the Crafting Menu.
----@field defaultSort CraftingFramework.MenuActivator.Sorter *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
----@field defaultShowCategories boolean *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
----@field blockEvent boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
----@field closeCallback fun(self: CraftingFramework.CraftingMenu) *Default*: `nil`. This callback is called when the menu is closed.
----@field collapseByDefault boolean *Default*: `false`. This controls whether the categories will be collapsed by default or not.
----@field craftButtonText string *Default*: `"Craft"`. This controls the text of the craft button.
----@field recipeHeaderText string *Default*: `"Recipes"`. This controls the text of the header of the recipe list.
----@field skillsHeaderText string *Default*: `"Skills"`. This controls the text of the header of the skills list.
----@field customRequirementsHeaderText string *Default*: `"Requirements"`. This controls the text of the header of the custom requirements list.
----@field toolsHeaderText string *Default*: `"Tools"`. This controls the text of the header of the tools list.
----@field materialsHeaderText string *Default*: `"Materials"`. This controls the text of the header of the materials list.
----@field menuWidth number *Default*: `720`. This controls the width of the crafting menu.
----@field menuHeight number *Default*: `800`. This controls the height of the crafting menu.
----@field previewHeight number *Default*: `270`. This controls the height of the preview area.
----@field previewWidth number *Default*: `270`. This controls the width of the preview area.
----@field previewYOffset number *Default*: `-200`. This controls the y-offset of the preview area.
----@field showCollapseCategoriesButton boolean *Default*: `true`. This controls whether the collapse categories button will be shown or not.
----@field showCategoriesButton boolean *Default*: `true`. This controls whether the categories button will be shown or not.
----@field showFilterButton boolean *Default*: `true`. This controls whether the filter button will be shown or not.
----@field showSortButton boolean *Default*: `true`. This controls whether the sort button will be shown or not.
+---@field defaultFilter? CraftingFramework.MenuActivator.Filter *Default*: `"all"`. The filter controls which recipes will appear in the Crafting Menu.
+---@field defaultSort? CraftingFramework.MenuActivator.Sorter *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
+---@field defaultShowCategories? boolean *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
+---@field blockEvent? boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
+---@field closeCallback? fun(self: CraftingFramework.CraftingMenu) *Default*: `nil`. This callback is called when the menu is closed.
+---@field collapseByDefault? boolean *Default*: `false`. This controls whether the categories will be collapsed by default or not.
+---@field craftButtonText? string *Default*: `"Craft"`. This controls the text of the craft button.
+---@field recipeHeaderText? string *Default*: `"Recipes"`. This controls the text of the header of the recipe list.
+---@field skillsHeaderText? string *Default*: `"Skills"`. This controls the text of the header of the skills list.
+---@field customRequirementsHeaderText? string *Default*: `"Requirements"`. This controls the text of the header of the custom requirements list.
+---@field toolsHeaderText? string *Default*: `"Tools"`. This controls the text of the header of the tools list.
+---@field materialsHeaderText? string *Default*: `"Materials"`. This controls the text of the header of the materials list.
+---@field menuWidth? number *Default*: `720`. This controls the width of the crafting menu.
+---@field menuHeight? number *Default*: `800`. This controls the height of the crafting menu.
+---@field previewHeight? number *Default*: `270`. This controls the height of the preview area.
+---@field previewWidth? number *Default*: `270`. This controls the width of the preview area.
+---@field previewYOffset? number *Default*: `-200`. This controls the y-offset of the preview area.
+---@field showCollapseCategoriesButton? boolean *Default*: `true`. This controls whether the collapse categories button will be shown or not.
+---@field showCategoriesButton? boolean *Default*: `true`. This controls whether the categories button will be shown or not.
+---@field showFilterButton? boolean *Default*: `true`. This controls whether the filter button will be shown or not.
+---@field showSortButton? boolean *Default*: `true`. This controls whether the sort button will be shown or not.
 
 ---@class CraftingFramework.MenuActivator : CraftingFramework.MenuActivator.data This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 ---@field recipes CraftingFramework.Recipe[] A list of recipes that will appear (if known) when the menu is activated.
@@ -96,6 +96,7 @@ end
 ---@return CraftingFramework.MenuActivator menuActivator
 function MenuActivator:new(data)
     Util.validate(data, MenuActivator.schema)
+    data = table.copy(data)
     data.equipStationIds = data.equipStationIds or {}
     data.activateStationIds = data.activateStationIds or {}
     data.triggers = data.triggers or {}

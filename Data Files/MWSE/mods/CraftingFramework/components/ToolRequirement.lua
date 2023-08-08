@@ -4,9 +4,9 @@ local Tool = require("CraftingFramework.components.Tool")
 
 ---@class CraftingFramework.ToolRequirement.data
 ---@field tool string **Required.** The id of the required tool. This is the id used as the tool's unique identifer within Crafting Framework. It shouldn't be confused with item ids defined in the Construction Set.
----@field equipped boolean When `true`, the player needs to have the tool equipped to be considered valid.
----@field count number How many instances of the tool need to be in the player's inventory.
----@field conditionPerUse number Tool's condition will be reduced by this value per use.
+---@field equipped? boolean When `true`, the player needs to have the tool equipped to be considered valid.
+---@field count number? How many instances of the tool need to be in the player's inventory.
+---@field conditionPerUse? number Tool's condition will be reduced by this value per use.
 
 ---@class CraftingFramework.ToolRequirement : CraftingFramework.ToolRequirement.data
 ---@field tool CraftingFramework.Tool
@@ -26,11 +26,11 @@ local ToolRequirement = {
 ---@param data CraftingFramework.ToolRequirement.data
 ---@return CraftingFramework.ToolRequirement toolRequirement
 function ToolRequirement:new(data)
-    local toolRequirement = data
+    local toolRequirement = table.copy(data)
     ---@cast toolRequirement CraftingFramework.ToolRequirement
     Util.validate(data, ToolRequirement.schema)
     toolRequirement.tool = Tool.getTool(data.tool)
-    setmetatable(data, self)
+    setmetatable(toolRequirement, self)
     self.__index = self
     return toolRequirement
 end

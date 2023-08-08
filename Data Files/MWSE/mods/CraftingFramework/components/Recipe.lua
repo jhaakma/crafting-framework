@@ -28,9 +28,10 @@ local config = require("CraftingFramework.config")
 ---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
 ---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.
 
+
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
----@field craftableId string **Required.** The id of the object crafted by this recipe
+---@field craftableId? string **Required.** The id of the object crafted by this recipe
 ---@field description? string The description of the recipe, displayed in the crafting menu.
 ---@field persist? boolean *Default*: `true`. If `false`, the recipe will not be saved to the global recipe list and can't be accessed with Recipe.getRecipe.
 ---@field noResult? boolean *Defualt*: `false`. If `true`, no object or item will actually be crafted. Instead, use craftCallback to implement a custom result.
@@ -44,7 +45,7 @@ local config = require("CraftingFramework.config")
 ---@field category? string *Default*: `"Other"`. This is the category in which the recipe will appear in the crafting menu.
 ---@field name? string The name of the craftable displayed in the menu. If not set, it will use the name of the craftable object
 ---@field placedObject? string If the object being placed is different from the object that is picked up by the player, use `id` for the held object id and `placedObject` for the id of the object that is placed in the world
----@field containerConfig? CarryableContainer.containerConfig If provided, crafted item will be registered as a carryable container.
+---@field containerConfig? CraftingFramework.Recipe.containerConfig If provided, crafted item will be registered as a carryable container.
 ---@field uncarryable? boolean Treats the crafted item as uncarryable even if the object type otherwise would be carryable. This will make the object be crafted immediately into the world and remove the Pick Up button from the menu. Not required if the crafted object is already uncarryable, such as a static or activator
 ---@field additionalMenuOptions? craftingFrameworkMenuButtonData[] A list of additional menu options that will be displayed in the craftable menu
 ---@field soundId? string Provide a sound ID (for a sound registered in the CS) that will be played when the craftable is crafted
@@ -69,7 +70,7 @@ local config = require("CraftingFramework.config")
 ---@field previewHeight? number **Default 1** Determines the height of the mesh in the preview window.
 ---@field additionalUI? fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
 ---@field craftedOnly? boolean **Default true** If true, the object must be crafted in order have the functionality and tooltips registered by the recipe. If false, any object of this type will have the position menu and tooltips etc applied. You should only set this to false for objects that are unique to your mod.
----@field keepMenuOpen boolean **Default false** If true, the menu will not close after the object is crafted. This is useful for objects that have additional options in the menu.
+---@field keepMenuOpen? boolean **Default false** If true, the menu will not close after the object is crafted. This is useful for objects that have additional options in the menu.
 ---@field placementSetting? CraftingFramework.Positioner.PlacementSetting **Default "default"** Determines the placement setting used by the positioner. This can be used to override the default placement setting for a specific recipe.
 ---@field blockPlacementSettingToggle? boolean **Default false** If true, the placement setting toggle will be disabled for this recipe. This is useful for recipes that have a specific placement setting.
 ---@field pinToWall? boolean **Default false** If true, the object will be pinned to the wall when placed. This is useful for objects that are intended to be placed on walls.
@@ -118,8 +119,8 @@ end
 ---@return CraftingFramework.Recipe recipe
 function Recipe:new(data)
     ---@type CraftingFramework.Recipe
-    local recipe = table.copy(data, {})
-    Util.validate(recipe, Recipe.schema)
+    Util.validate(data, Recipe.schema)
+    local recipe = table.copy(data)
     --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
 
@@ -138,6 +139,7 @@ function Recipe:new(data)
 
     --Set ID and make sure it's lower case
     recipe.id = data.id or recipe.craftable.id
+    log:assert(recipe.id ~= nil, "Validation Error: No id or craftable provided for Recipe")
     recipe.id = recipe.id:lower()
 
     --Register as carryable container
@@ -158,7 +160,7 @@ function Recipe:new(data)
     recipe.toolRequirements = Util.convertListTypes(data.toolRequirements, ToolRequirement) or {}
     recipe.skillRequirements = Util.convertListTypes(data.skillRequirements, SkillRequirement) or {}
     recipe.customRequirements = Util.convertListTypes(data.customRequirements, CustomRequirement) or {}
-    assert(recipe.id, "Validation Error: No id or craftable provided for Recipe")
+
     recipe.craftable = Craftable:new(recipe.craftable)
     setmetatable(recipe, self)
     self.__index = self
