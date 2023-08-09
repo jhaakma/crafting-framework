@@ -83,7 +83,7 @@ end
 
 function this.getGroundBelowRef(e)
     local ref = e.ref
-    local offset = (ref.object.boundingBox.max.z-ref.object.boundingBox.min.z) * ref.scale
+    local offset = (ref.object.boundingBox.max.z) * ref.scale
     if not ref then
         return
     end
@@ -91,8 +91,10 @@ function this.getGroundBelowRef(e)
     local ignoreList = getIngoreList(ref)
     table.insert(ignoreList, ref)
 
+    local startPos = {ref.position.x, ref.position.y, ref.position.z + offset}
+
     local result = tes3.rayTest {
-        position = {ref.position.x, ref.position.y, ref.position.z + offset},
+        position = startPos,
         direction = {0, 0, -1},
         ignore = ignoreList,
         returnNormal = true,
@@ -101,7 +103,7 @@ function this.getGroundBelowRef(e)
     }
     if not result then --look up instead
         result = tes3.rayTest {
-            position = {ref.position.x, ref.position.y, ref.position.z + offset},
+            position = startPos,
             direction = {0, 0, 1},
             ignore = ignoreList,
             returnNormal = true,
