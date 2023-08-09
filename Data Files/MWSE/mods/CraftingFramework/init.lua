@@ -16,6 +16,7 @@ CraftingFramework.SoundType = require("CraftingFramework.components.SoundType")
 CraftingFramework.RefDropper = require("CraftingFramework.components.RefDropper")
 CraftingFramework.ReferenceManager = require("CraftingFramework.components.ReferenceManager")
 CraftingFramework.MerchantManager = require("CraftingFramework.components.MerchantManager")
+CraftingFramework.MaterialStorage = require("CraftingFramework.components.MaterialStorage")
 
 --Carryabe Containers
 CraftingFramework.CarryableContainer =require("CraftingFramework.carryableContainers.components.CarryableContainer")

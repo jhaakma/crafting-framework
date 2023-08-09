@@ -518,11 +518,12 @@ function CraftingMenu:createMaterialTooltip(material)
     outerBlock.childAlignX = 0.5
     local header =  outerBlock:createLabel{ text = name}
     header.color = tes3ui.getPalette("header_color")
+
     for id, _ in pairs(material.ids) do
         local item = tes3.getObject(id)
         if item then
             ---@diagnostic disable-next-line: assign-type-mismatch
-            local itemCount = tes3.getItemCount{ reference = tes3.player, item = item }
+            local itemCount = material:getItemCount(id)
             local block = outerBlock:createBlock{}
             block.flowDirection = "left_to_right"
             block.autoHeight = true

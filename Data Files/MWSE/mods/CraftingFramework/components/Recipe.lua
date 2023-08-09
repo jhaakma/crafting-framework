@@ -201,25 +201,18 @@ function Recipe:hasPreview()
     or self.noResult ~= true
 end
 
+
+
 function Recipe:craft()
     log:debug("Crafting %s", self.id)
+    ---@type table<string, number>
     local materialsUsed = {}
     for _, materialReq in ipairs(self.materials) do
         local material = Material.getMaterial(materialReq.material)
-        local remaining = materialReq.count
-        for id, _ in pairs(material.ids) do
-
-            local item = tes3.getObject(id)
-            if item then
-                local inInventory = tes3.getItemCount{ reference = tes3.player, item = id}
-                local numToRemove = math.min(inInventory, remaining)
-                if numToRemove > 0 then
-                    materialsUsed[id] = materialsUsed[id] or 0
-                    materialsUsed[id] = materialsUsed[id] + numToRemove
-                    tes3.removeItem{ reference = tes3.player, item = id, playSound = false, count = numToRemove}
-                    remaining = remaining - numToRemove
-                    if remaining == 0 then break end
-                end
+        local itemsUsed = material:use(materialReq.count)
+        for id, count in pairs(itemsUsed) do
+            if count > 0 then
+                materialsUsed[id] = (materialsUsed[id] or 0) + count
             end
         end
     end
