@@ -23,6 +23,7 @@ local MAX_CAPACITY = 65535
 ---@field item tes3misc
 ---@field containerConfig CarryableContainer.containerConfig
 ---@field data table
+---@field filter CarryableContainers.ItemFilter|nil
 local CarryableContainer = ItemInstance:new()
 
 ---Get a container by its base itemId
@@ -151,7 +152,7 @@ function CarryableContainer:open()
     end
 end
 
-function CarryableContainer:recalculateEncumbrance()
+function CarryableContainer.recalculateEncumbrance()
 	local burden = tes3.getEffectMagnitude{reference = tes3.mobilePlayer, effect = tes3.effect.burden}
 	local feather = tes3.getEffectMagnitude{reference = tes3.mobilePlayer, effect = tes3.effect.feather}
 	local weight = tes3.player.object.inventory:calculateWeight() + burden - feather
@@ -199,7 +200,7 @@ function CarryableContainer:updateStats()
     self.item.weight = totalWeight
     self.item.value = math.floor(totalValue)
 
-    self:recalculateEncumbrance()
+    CarryableContainer.recalculateEncumbrance()
 end
 
 function CarryableContainer:isCopy()
@@ -438,9 +439,9 @@ function CarryableContainer:pickup(e)
         return
     end
 
-    local function stealActivateEvent(e)
+    local function stealActivateEvent(e2)
         event.unregister("activate", stealActivateEvent)
-        e.claim = true
+        e2.claim = true
     end
 
     local function blockSound()
@@ -563,7 +564,7 @@ function CarryableContainer:checkAndBlockTransfer()
 end
 
 ---@class CarryableContainer.openRenameMenu.params
----@field menuModeStaysOpen boolean If true, the menu will stay open after the button is pressed
+---@field menuModeStaysOpen boolean? If true, the menu will stay open after the button is pressed
 ---@field callback fun() Callback function to run after the renaming is complete
 
 ---@param e? CarryableContainer.openRenameMenu.params
