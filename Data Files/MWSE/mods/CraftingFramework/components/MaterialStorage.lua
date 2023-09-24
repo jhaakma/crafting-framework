@@ -102,7 +102,7 @@ end
 ---@param e CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@return CraftingFramework.MaterialStorage.storedMaterial[]
 function MaterialStorage.getNearbyMaterials(e)
-    logger:debug("Getting nearby Materials")
+    logger:trace("Getting nearby Materials")
     local storageRefs = MaterialStorage.getNearbyStorageRefs(e.maxDistance)
     ---@type CraftingFramework.MaterialStorage.storedMaterial[]
     local nearbyMaterials = {}
@@ -130,7 +130,7 @@ function MaterialStorage.getNearbyMaterials(e)
             end
         end
     end
-    logger:debug("Found %s nearby materials", #nearbyMaterials)
+    logger:trace("Found %s nearby materials", #nearbyMaterials)
     return nearbyMaterials
 end
 

@@ -4,7 +4,7 @@ local MaterialStorage = require("CraftingFramework.components.MaterialStorage")
 
 ---@class CraftingFramework.Material.data
 ---@field id string **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `material`.
----@field name string The name of the material. Used in various UIs.
+---@field name? string The name of the material. Used in various UIs.
 ---@field ids table<number, string> **Required.**  This is the list of item ids that are considered as identical material.
 
 
@@ -101,6 +101,9 @@ end
 ---@param itemId string
 ---@return boolean isMaterial
 function Material:itemIsMaterial(itemId)
+    if not itemId then
+        return false
+    end
     return self.ids[itemId:lower()]
 end
 

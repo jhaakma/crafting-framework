@@ -542,8 +542,23 @@ function CraftingMenu:createMaterialTooltip(material)
     end
 end
 
+---@param material CraftingFramework.Material
+function CraftingMenu:getRecipeForMaterial(material)
+    log:trace("Getting recipe for material %s", material:getName())
+    --check if the recipelist has a recipe that produces any of the items for this material
+    for _, recipe in ipairs(self.recipes) do
+        log:trace("Checking recipe %s. Craftable ID: %s", recipe.craftable:getName(), recipe.craftable.id)
+        if material:itemIsMaterial(recipe.craftable.id) then
+            log:trace("Recipe %s is craftable", recipe.craftable:getName())
+            return recipe
+        end
+    end
+    log:trace("No recipe found for material %s", material:getName())
+end
+
 ---@param materialReq CraftingFramework.MaterialRequirement
 function CraftingMenu:createMaterialButton(materialReq, list)
+    log:trace("Creating material button for %s", materialReq.material)
     local material = Material.getMaterial(materialReq.material)
     local materialText = string.format("%s x %G", material:getName(), materialReq.count )
     local requirement = list:createLabel()
@@ -552,10 +567,19 @@ function CraftingMenu:createMaterialButton(materialReq, list)
     requirement:register("help", function()
         self:createMaterialTooltip(material)
     end)
-    if material:checkHasIngredient(materialReq.count) then
-        requirement.color = tes3ui.getPalette("normal_color")
-    else
-        requirement.color = tes3ui.getPalette("disabled_color")
+    requirement.color = (material:checkHasIngredient(materialReq.count) == true)
+        and tes3ui.getPalette("normal_color")
+        or tes3ui.getPalette("disabled_color")
+
+    --if you click on a material and that material is craftable, go to that recipe in the recipe list
+    local materialRecipe = self:getRecipeForMaterial(material)
+    if materialRecipe then
+        log:trace("Material %s is craftable, adding on-click", material:getName())
+        requirement:register("mouseClick", function()
+            log:debug("Material %s clicked, going to recipe", material:getName())
+            tes3.playSound{sound="Menu Click", reference=tes3.player}
+            self:selectRecipe(materialRecipe)
+        end)
     end
 end
 
@@ -896,6 +920,12 @@ function CraftingMenu:updateMenu()
     self:updateButtons()
 end
 
+function CraftingMenu:selectRecipe(recipe)
+    self.selectedRecipe = recipe
+    self:updateSidebar()
+    self:updateButtons()
+end
+
 ---@param recipe CraftingFramework.Recipe
 function CraftingMenu:recipeMatchesSearch(recipe)
     if (not self.searchText) or self.searchText == "" then return true end
@@ -913,12 +943,7 @@ function CraftingMenu:populateCategoryList(recipes, parent)
             if showRecipe then
                 if not self.selectedRecipe then self.selectedRecipe = recipe end
                 local button = parent:createTextSelect({ id = string.format("Button_%s", recipe.id)})
-                local buttonCallback = function()
-                    self.selectedRecipe = recipe
-                    self:updateSidebar()
-                    self:updateButtons()
-                end
-                button:register("mouseClick", buttonCallback)
+                button:register("mouseClick", function() self:selectRecipe(recipe) end)
                 button.borderAllSides = 2
                 button.text = "- " .. recipe.craftable:getName()
                 local canCraft = recipe:meetsAllRequirements()

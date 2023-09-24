@@ -15,10 +15,10 @@ function RefStack.isStack(reference)
 end
 
 --Create a new RefStack from a reference. Returns nil if reference isn't a stack
+---@return CraftingFramework.RefStack?
 function RefStack:new(e)
     assert(e.reference, "Reference is required")
     if not RefStack.isStack(e.reference) then return end
-    ---@type CraftingFramework.RefStack
     local o = {}
     setmetatable(o, self)
     if e.logger then

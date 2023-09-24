@@ -516,10 +516,10 @@ event.register("keyDown", onActiveKey, { priority = 100 })
 
 ---@class Positioner.startPositioning.params
 ---@field target tes3reference
----@field nonCrafted boolean
----@field pinToWall boolean
----@field placementSetting CraftingFramework.Positioner.PlacementSetting
----@field blockToggle boolean
+---@field nonCrafted? boolean
+---@field pinToWall? boolean
+---@field placementSetting? CraftingFramework.Positioner.PlacementSetting
+---@field blockToggle? boolean
 
 ---@param e Positioner.startPositioning.params
 Positioner.startPositioning = function(e)
