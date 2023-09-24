@@ -2,25 +2,54 @@ local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("UIEvents")
 local CarryableContainer = require("CraftingFramework.carryableContainers.components.CarryableContainer")
 local Container = require("CraftingFramework.carryableContainers.components.Container")
+local Craftable = require("CraftingFramework.components.Craftable")
 
----@param e uiActivatedEventData
-local function onUiActivated(e)
-    logger:debug("uiActivated")
-    local miscId = Container.getOpenContainerMiscId(e.element)
-    if not miscId then return end
+local function getCarryableFromMenu(menu)
+    local miscId = Container.getOpenContainerMiscId(menu)
+    if not miscId then return nil end
     local miscObject = tes3.getObject(miscId) --[[@as tes3misc]]
-    if not miscObject then return end
-    local menu = e.element
+    if not miscObject then return nil end
     local carryable = CarryableContainer:new{
         item = miscObject
     }
-    if not carryable then return end
-    logger:debug("We are in a carryable container inventory, miscRef ID: %s", miscId)
-    if e.newlyCreated then
-        Container.addButtons(menu, carryable)
+    return carryable
+end
+
+
+
+
+--Add buttons to the container menu.
+-- This can happen for carryable containers or
+-- for containers that are crafted
+---@param e uiActivatedEventData
+local function onContentsMenuActivated(e)
+    local reference = Container.getMenuReference(e.element)
+    if not reference then return end
+    if not e.newlyCreated then return end
+    if not e.element.name == "MenuContents" then return end
+
+    --Carryable Containers
+    local carryable = getCarryableFromMenu(e.element)
+    if carryable then
+        logger:debug("We are in a carryable container inventory")
+        Container.addCarryableButtonsToMenu{ menu = e.element, carryable = carryable}
+        return
+    end
+
+    --Crafted Containers
+    local isContainer = reference.object.objectType == tes3.objectType.container
+    local craftable = Craftable.getCraftable(reference.baseObject.id)
+    if craftable and isContainer then
+        logger:debug("We are in a crafted container inventory")
+        Container.addCraftableButtonsToMenu{
+            menu = e.element,
+            craftable = craftable,
+            reference = reference
+        }
+        return
     end
 end
-event.register(tes3.event.uiActivated, onUiActivated)
+event.register(tes3.event.uiActivated, onContentsMenuActivated)
 
 
 ---@param e uiObjectTooltipEventData

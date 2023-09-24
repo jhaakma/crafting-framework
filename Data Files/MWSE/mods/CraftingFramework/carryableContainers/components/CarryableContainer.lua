@@ -414,6 +414,7 @@ function CarryableContainer:getCreateContainerRef()
             cell = tes3.player.cell,
             scale = self.containerConfig.scale or 1.0
         }
+
         --Map the container to the misc item
         logger:debug("Mapping container %s to misc %s", containerObject.id, self.item.id)
         config.persistent.miscCopyToContainerMapping[self.item.id:lower()] = containerObject.id:lower()

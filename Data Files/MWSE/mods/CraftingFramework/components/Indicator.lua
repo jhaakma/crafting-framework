@@ -8,9 +8,9 @@ local logger = Util.createLogger("Indicator")
 
 ---@class CraftingFramework.Indicator.data
 ---@field objectId string The object id to register the indicator for
----@field name string The name to display in the tooltip.
----@field craftedOnly boolean If true, the indicator will only show if the object is crafted.
----@field additionalUI fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
+---@field name? string The name to display in the tooltip.
+---@field craftedOnly? boolean If true, the indicator will only show if the object is crafted.
+---@field additionalUI? fun(self: CraftingFramework.Indicator, parent: tes3uiElement) A function that adds additional UI elements to the tooltip.
 
 ---@class CraftingFramework.Indicator : CraftingFramework.Indicator.data
 ---@field reference? tes3reference

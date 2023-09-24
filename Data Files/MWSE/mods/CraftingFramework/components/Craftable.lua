@@ -31,6 +31,7 @@ local config = require("CraftingFramework.config")
 
 ---@class CraftingFramework.Craftable.data : CraftingFramework.Recipe.data
 ---@field id string The id of the crafted Item
+---@field private mesh string deprecated
 ---@field craftableId nil
 
 ---@class CraftingFramework.Craftable : CraftingFramework.Craftable.data
@@ -105,11 +106,14 @@ function Craftable:new(data)
     logger:debug("Registering %s, craftedOnly = %s", data.id, data.craftedOnly)
     Util.validate(data, Craftable.schema)
     data.id = data.id:lower()
+
     --for pre-1.0.5 compatibility
+    ---@diagnostic disable
     if data.mesh then
         data.previewMesh = data.mesh
         data.mesh = nil
     end
+    ---@diagnostic enable
 
     --Generate a placed object static if defined one doesn't exist
     if data.placedObject then
@@ -223,14 +227,23 @@ function Craftable:getPlacedObjectId()
     end
 end
 
+
 function Craftable:activate(reference)
     logger:debug("Craftable:activate: %s", reference)
-    tes3ui.showMessageMenu{
-        message = self:getName(),
-        buttons = self:getMenuButtons(reference),
-        cancels = true,
-        callbackParams = { reference = reference }
-    }
+    --if container and no additional menu options, open container
+    local isContainer = reference.baseObject.objectType == tes3.objectType.container
+    if isContainer then
+        reference.data.allowActivate = true
+        tes3.player:activate(reference)
+        reference.data.allowActivate = false
+    else
+        tes3ui.showMessageMenu{
+            message = self:getName(),
+            buttons = self:getMenuButtons(reference),
+            cancels = true,
+            callbackParams = { reference = reference }
+        }
+    end
 end
 
 function Craftable:craftableActivated(reference)
@@ -297,7 +310,11 @@ function Craftable:getMenuButtons(reference)
         {
             text = "Open",
             showRequirements = function()
+                local contentsMenu = tes3ui.findMenu(tes3ui.registerID("MenuContents"))
+                local alreadyOpen = contentsMenu and contentsMenu.visible
+
                 return reference.object.objectType == tes3.objectType.container
+                    and not alreadyOpen
             end,
             callback = function()
                 timer.delayOneFrame(function()

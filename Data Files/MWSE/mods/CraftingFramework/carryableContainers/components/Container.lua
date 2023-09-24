@@ -2,6 +2,7 @@ local config = require("CraftingFramework.carryableContainers.config")
 local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("Container")
 local Positioner = require("CraftingFramework.components.Positioner")
+local mwseCommon = require("mwse.common")
 
 ---@class CarryableContainers.Container
 local Container = {}
@@ -20,9 +21,7 @@ function Container.getMiscIdfromReference(reference)
     return miscId
 end
 
----@return string? # Flase if not open, otherwise returns the associated misc item id
-function Container.getOpenContainerMiscId(contentsMenu)
-    logger:trace("Checking if we are in a carryable container inventory")
+function Container.getMenuReference(contentsMenu)
     local contentsMenu = contentsMenu or tes3ui.findMenu(tes3ui.registerID("MenuContents"))
     local menuInvalid = contentsMenu == nil
         or contentsMenu.name ~= "MenuContents"
@@ -32,6 +31,13 @@ function Container.getOpenContainerMiscId(contentsMenu)
         return nil
     end
     local containerRef = contentsMenu:getPropertyObject("MenuContents_ObjectRefr")
+    return containerRef
+end
+
+---@return string? # Flase if not open, otherwise returns the associated misc item id
+function Container.getOpenContainerMiscId(contentsMenu)
+    logger:trace("Checking if we are in a carryable container inventory")
+    local containerRef = Container.getMenuReference(contentsMenu)
     return Container.getMiscIdfromReference(containerRef)
 end
 
@@ -57,24 +63,12 @@ local function replaceTakeAllButton(menu, carryable)
     return newTakeAllButton
 end
 
-local function createFilterLabel_deprecated(filterButtonParent, filter)
-    logger:debug("Creating filter label")
-    local label = filterButtonParent:createLabel{
-        id = "merCarryableContainers_filterLabel",
-        text = string.format(" [ Filter: %s ] ", filter.name)
-    }
-    label.borderRight = 10
-    label.borderBottom = 3
-    label.color = tes3ui.getPalette("header_color")
-    return label
-end
-
 local function createFilterButton(transferButtonParent, menu, carryable)
     local filter = carryable:getFilter()
-    local tranferText = string.format("Transfer %s", filter.name)
+    local transferText = string.format("Transfer %s", filter.name)
     local transferButton = transferButtonParent:createButton{
         id = "merCarryableContainers_transferButton",
-        text = tranferText
+        text = transferText
     }
     transferButton:register("mouseClick", function()
         logger:debug("Clicked transfer button")
@@ -198,9 +192,14 @@ local function addPositionButton(parent, carryable, menu)
     return positionButton
 end
 
----@param menu tes3uiElement
----@param carryable CarryableContainer
-function Container.addButtons(menu, carryable)
+---@class CraftingFramework.Container.addButtons.params
+---@field menu tes3uiElement
+---@field carryable CarryableContainer?
+
+---@param e CraftingFramework.Container.addButtons.params
+function Container.addCarryableButtonsToMenu(e)
+    local menu = e.menu
+    local carryable = e.carryable
 
     -- disable UI Expansions filter and capacity elements
     local uiExpFilterBlock = menu:findChild("UIEXP:ContentsMenu:FilterBlock")
@@ -218,29 +217,85 @@ function Container.addButtons(menu, carryable)
     local buttonBlock = takeAllButton.parent
     local newTakeAllButton = replaceTakeAllButton(menu, carryable)
 
-    --Add pickup/position button for in-world containers
-    if carryable.reference then
-        local pickupButton = addPickupButton(buttonBlock, carryable, menu)
-        local closeButton = menu:findChild("MenuContents_closebutton")
-        pickupButton.parent:reorderChildren(closeButton, pickupButton, 1)
-
-        local positionButton = addPositionButton(buttonBlock, carryable, menu)
-        buttonBlock:reorderChildren(-2, positionButton, 1)
-    end
-
     --Add filter button
-    if carryable:getFilter() then
+    if carryable and carryable:getFilter() then
         local transferButton = createFilterButton(buttonBlock, menu, carryable)
         buttonBlock:reorderChildren(newTakeAllButton, transferButton, 1)
     end
 
     --Add rename button
     local renameButton = addRenameButton(buttonBlock, carryable)
-    buttonBlock:reorderChildren(-2, renameButton, 1)
+    buttonBlock:reorderChildren(newTakeAllButton, renameButton, 1)
+
+
+    --Add pickup/position button for in-world containers
+    if carryable and carryable.reference then
+        local positionButton = addPositionButton(buttonBlock, carryable, menu)
+        buttonBlock:reorderChildren(newTakeAllButton, positionButton, 1)
+
+        local pickupButton = addPickupButton(buttonBlock, carryable, menu)
+        pickupButton.parent:reorderChildren(newTakeAllButton, pickupButton, 1)
+    end
 
     --Add capacity fillbar
     Container.addCapacityFillbar(menu, carryable)
 
+    menu:updateLayout()
+end
+
+---@class CraftingFramework.Container.addButton.params
+---@field reference tes3reference
+---@field buttonData craftingFrameworkMenuButtonData
+---@field parent tes3uiElement
+---@field menu tes3uiElement
+
+---@param e CraftingFramework.Container.addButton.params
+---@return tes3uiElement|nil button
+local function addButton(e)
+    local doShow = e.buttonData.showRequirements == nil
+        or e.buttonData.showRequirements{ reference = e.reference}
+    if not doShow then return end
+    local button = e.parent:createButton{
+        id = "CraftingFramework_CraftedContainerButton",
+        text = mwseCommon.resolveDynamicText(e.buttonData.text),
+    }
+    local doEnable = e.buttonData.enableRequirements == nil
+        or e.buttonData.enableRequirements{ reference = e.reference}
+    if not doEnable then
+        mwseCommon.ui.disable(button)
+    end
+    button:register("mouseClick", function()
+        e.menu:destroy()
+        tes3ui.leaveMenuMode()
+        e.buttonData.callback{ reference = e.reference}
+    end)
+    return button
+end
+
+---@class CraftingFramework.Container.addCraftableButtonsToMenu.params
+---@field craftable CraftingFramework.Craftable
+---@field reference tes3reference
+---@field menu tes3uiElement
+
+---@param e CraftingFramework.Container.addCraftableButtonsToMenu.params
+function Container.addCraftableButtonsToMenu(e)
+    local menuButtons = e.craftable:getMenuButtons(e.reference)
+    local menu = e.menu
+    local takeAllButton = menu:findChild("MenuContents_takeallbutton")
+    local buttonBlock = takeAllButton and takeAllButton.parent
+    if not buttonBlock then return end
+    local filterBlock = menu:findChild("UIEXP:ContentsMenu:FilterBlock")
+    for _, buttonData in ipairs(menuButtons) do
+        local button = addButton{
+            menu = menu,
+            reference = e.reference,
+            buttonData = buttonData,
+            parent = buttonBlock,
+        }
+        if button then
+            buttonBlock:reorderChildren(takeAllButton, button, 1)
+        end
+    end
     menu:updateLayout()
 end
 
