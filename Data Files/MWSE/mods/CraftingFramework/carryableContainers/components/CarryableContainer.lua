@@ -153,15 +153,15 @@ function CarryableContainer:open()
 end
 
 function CarryableContainer.recalculateEncumbrance()
-	local burden = tes3.getEffectMagnitude{reference = tes3.mobilePlayer, effect = tes3.effect.burden}
-	local feather = tes3.getEffectMagnitude{reference = tes3.mobilePlayer, effect = tes3.effect.feather}
-	local weight = tes3.player.object.inventory:calculateWeight() + burden - feather
-	local oldWeight = tes3.mobilePlayer.encumbrance.currentRaw
+    local burden = tes3.getEffectMagnitude{reference = tes3.mobilePlayer, effect = tes3.effect.burden}
+    local feather = tes3.getEffectMagnitude{reference = tes3.mobilePlayer, effect = tes3.effect.feather}
+    local weight = tes3.player.object.inventory:calculateWeight() + burden - feather
+    local oldWeight = tes3.mobilePlayer.encumbrance.currentRaw
 
-	if (math.abs(oldWeight - weight) > 0.01) then
-		logger:debug(string.format("Recalculating current encumbrance %.2f => %.2f", oldWeight, weight))
-		tes3.setStatistic{reference = tes3.mobilePlayer, name = "encumbrance", current = weight}
-	end
+    if (math.abs(oldWeight - weight) > 0.01) then
+        logger:debug(string.format("Recalculating current encumbrance %.2f => %.2f", oldWeight, weight))
+        tes3.setStatistic{reference = tes3.mobilePlayer, name = "encumbrance", current = weight}
+    end
 end
 
 function CarryableContainer:calculateWeight()

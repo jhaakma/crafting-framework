@@ -357,16 +357,22 @@ end
 function CraftingMenu:createToolLabel(toolReq, parentList)
     local tool = toolReq.tool
     if tool then
-        local requirementText = string.format("%s x %G", tool.name, (toolReq.count or 1) )
+        local requirementText = tool.name
+        if toolReq.count and toolReq.count > 1 then
+            requirementText = string.format("%s x %G", requirementText, (toolReq.count or 1) )
+        end
+        if toolReq.conditionPerUse then
+            requirementText = string.format("%s (uses %G condition)", requirementText, toolReq.conditionPerUse)
+        end
         if toolReq.equipped then
             if toolReq:hasToolEquipped() then
-                requirementText = string.format("%s (Equipped)", tool.name)
+                requirementText = string.format("%s (Equipped)", requirementText)
             else
-                requirementText = string.format("%s (Not Equipped)", tool.name)
+                requirementText = string.format("%s (Not Equipped)", requirementText)
             end
         end
         if toolReq:hasToolCondition() == false then
-            requirementText = string.format("%s (Broken)", tool.name)
+            requirementText = string.format("%s (Broken)", requirementText)
         end
 
         local requirement = parentList:createLabel()
@@ -495,9 +501,11 @@ function CraftingMenu:updateSkillsRequirementsPane()
     if #self.selectedRecipe.skillRequirements < 1 then
         skillsBlock.visible = false
     else
-        skillsBlock.visible = true
         for _, skillReq in ipairs(self.selectedRecipe.skillRequirements) do
-            self:createSkillLabel(skillReq, skillRequirementsPane)
+            if skillReq:getCurrent() then
+                skillsBlock.visible = true
+                self:createSkillLabel(skillReq, skillRequirementsPane)
+            end
         end
     end
 end

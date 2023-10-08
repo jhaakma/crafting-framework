@@ -1,13 +1,30 @@
 local Util = require("CraftingFramework.util.Util")
 local config = require("CraftingFramework.config")
-local skillsModule = include("OtherSkills.skillModule")
 local logger = Util.createLogger("SkillRequirement")
+-- Keep compatibility with mods using v1 of Skills Module
+local SkillsModule = include("OtherSkills.skillModule")
 
 ---@class CraftingFramework.SkillRequirement.data
----@field skill string **Required.** The name of the skill of this `skillRequirement`. If vanilla skill, it needs to be a camelCased name of the skill. Supports skills added with the Skills Module.
----@field requirement number **Required.** The needed skill value to pass this `skillRequirement`'s skill check.
----@field maxProgress? number *Default*: `30`. The maximal amount of experience the player can get, when crafting an item that has this `skillRequirement`.
+local skilRequirementDataMeta = {
+    --- **Required.** The name of the skill of this `skillRequirement`. If vanilla skill, it needs to be a camelCased name of the skill. Supports skills added with the Skills Module.
+    ---@type string
+    skill = nil,
 
+    --- **Required.** The needed skill value to pass this `skillRequirement`'s skill check.
+    ---@type number
+    requirement = nil,
+
+    --- The amount of experience the player gets, when crafting an item that has this `skillRequirement`.
+    --- Requires v2 of Skills Module.
+    ---@type number
+    progress = nil,
+
+    --- *Default*: `30`. The maximal amount of experience the player can get, when crafting an item that has this `skillRequirement`.
+    --- Only use if your mod still uses v1 of Skills Module
+    ---@deprecated
+    ---@type number
+    maxProgress = nil,
+}
 
 ---@class CraftingFramework.SkillRequirement : CraftingFramework.SkillRequirement.data
 local SkillRequirement = {
@@ -17,6 +34,7 @@ local SkillRequirement = {
             skill = { type = "string", required = true },
             requirement = { type = "number", required = true },
             maxProgress = { type = "number", required = false },
+            progress = { type = "number", required = false },
         }
     }
 }
@@ -34,7 +52,8 @@ function SkillRequirement:new(data)
     Util.validate(data, SkillRequirement.schema)
     skillRequirement.skill = data.skill
     skillRequirement.requirement = data.requirement
-    skillRequirement.maxProgress = data.maxProgress or MAX_PROGRESS_DEFAULT
+    skillRequirement.progress = data.progress
+    skillRequirement.maxProgress = data.maxProgress ---@diagnostic disable-line deprecated
     setmetatable(skillRequirement, self)
     self.__index = self
     return skillRequirement
@@ -49,13 +68,14 @@ function SkillRequirement:getCurrent()
     if vanillaSkill then
         return tes3.mobilePlayer.skills[vanillaSkill + 1].current
     end
-    if skillsModule then
-        local skill = skillsModule.getSkill(self.skill)
+    if SkillsModule then
+        ---@diagnostic disable-next-line: deprecated
+        local skill = SkillsModule.getSkill(self.skill)
         if skill then
-            return skill.value
+            return skill.current
         end
     end
-    logger:debug("getCurrent() - Could not find skill: %s", self.skill)
+    logger:warn("getCurrent() - Could not find skill: %s", self.skill)
     return nil
 end
 
@@ -64,27 +84,65 @@ function SkillRequirement:getVanillaSkill()
     return tes3.skill[self.skill] and tes3.skill[self.skill] + 1
 end
 
-function SkillRequirement:progressSkill()
-    logger:debug("Progressing %s skill", self:getSkillName())
+---For V2, we either get the progress provided or
+--- calculate it based on the difficulty (requirement).
+---@private
+---@return number
+function SkillRequirement:getV2Progress()
+    if self.progress then
+        return self.progress
+    else
+        return MAX_PROGRESS_DEFAULT * (self.requirement / 100)
+    end
+end
+
+---For V1, we compare the current skill
+--- level to the requirement to determine
+--- the progress.
+---@private
+---@return number
+function SkillRequirement:getV1Progress()
     local current = self:getCurrent()
     local required = self.requirement
     local difference = math.clamp(current - required, 0, MAX_SKILL_DIFF)
     --The higher the current skill is above the requirement,
     -- the less the skill progresses.
     local differenceMulti = (MAX_SKILL_DIFF-difference) / MAX_SKILL_DIFF
-    local progress = differenceMulti * self.maxProgress
-    logger:debug("Progress: %s", progress)
+    local maxProgress = table.get(self, "maxProgress", MAX_PROGRESS_DEFAULT)
+    local progress = differenceMulti * maxProgress
+    return progress
+end
+
+---@private
+---@param skill SkillsModule.Skill.v1 | SkillsModule.Skill
+function SkillRequirement:getCustomSkillProgress(skill)
+    if skill.getApiVersion and skill:getApiVersion() > 1 then
+        return self:getV2Progress()
+    else
+        return self:getV1Progress()
+    end
+end
+
+function SkillRequirement:progressSkill()
+    logger:debug("Progressing %s skill", self:getSkillName())
+
+    --Vanilla Skill
+
     local vanillaSkill = self:getVanillaSkill()
     if vanillaSkill then
         logger:trace("Vanilla skill")
-        tes3.mobilePlayer:exerciseSkill(vanillaSkill, progress)
+        tes3.mobilePlayer:exerciseSkill(vanillaSkill, self:getV2Progress())
+        return
     end
-    if skillsModule then
-        local skill = skillsModule.getSkill(self.skill)
-        if skill then
-            logger:trace("Custom Skill")
-            skill:progressSkill(progress)
-        end
+
+    --Skills Module Skill
+    ---@diagnostic disable-next-line: deprecated
+    local skill = SkillsModule and SkillsModule.getSkill(self.skill)
+    if skill then
+        local progress = self:getCustomSkillProgress(skill)
+        logger:trace("Skills Module skill")
+        skill:progressSkill(progress)
+        return
     end
 end
 
@@ -97,8 +155,9 @@ function SkillRequirement:getSkillName()
         logger:trace("Skill Name: %s", skillNameGMST.value)
         return skillNameGMST.value ---@diagnostic disable-line
     end
-    if skillsModule then
-        local skill = skillsModule.getSkill(self.skill)
+    if SkillsModule then
+        ---@diagnostic disable-next-line: deprecated
+        local skill = SkillsModule.getSkill(self.skill)
         if skill then
             return skill.name
         end
