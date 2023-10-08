@@ -102,3 +102,8 @@ local function onDrop(e)
     end
 end
 event.register("itemDropped", onDrop, { priority = -200})
+
+--recalibrate encumbrance on load
+event.register("loaded", function()
+    CarryableContainer.recalculateEncumbrance()
+end)
