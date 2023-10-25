@@ -32,11 +32,11 @@ local config = require("CraftingFramework.config")
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
 ---@field craftableId nil|string **Required.** The id of the object crafted by this recipe
----@field description nil|string The description of the recipe, displayed in the crafting menu.
+---@field description nil|string **Required.** The description of the recipe, displayed in the crafting menu.
 ---@field persist nil|boolean *Default*: `true`. If `false`, the recipe will not be saved to the global recipe list and can't be accessed with Recipe.getRecipe.
 ---@field noResult nil|boolean *Defualt*: `false`. If `true`, no object or item will actually be crafted. Instead, use craftCallback to implement a custom result.
 ---@field craftable nil|CraftingFramework.Craftable.data
----@field materials nil|CraftingFramework.MaterialRequirement[] **Required.** A table with the materials required by this recipe.
+---@field materials nil|CraftingFramework.MaterialRequirement[] A table with the materials required by this recipe.
 ---@field timeTaken nil|number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---@field knownByDefault nil|boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
 ---@field knowledgeRequirement nil|fun(self: CraftingFramework.Recipe): boolean A callback which determines whether the player should know how to craft this recipe at the time the menu is opened. This is an alternative approach to using the knownByDefault/learn/unlearn params, and will override their functionality.

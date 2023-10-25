@@ -75,7 +75,9 @@ function MerchantManager:registerMerchantContainer(e)
         self.logger:debug("- %s: %d", id, count)
         contents[id:lower()] = count
     end
-    self.registeredContainers[e.merchantId:lower()] = {
+    local merchantId = e.merchantId:lower()
+    self.registeredContainers[merchantId] = {
+        merchantId = merchantId,
         contents = contents,
         enabled = e.enabled or function() return true end
     }

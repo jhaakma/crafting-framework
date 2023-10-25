@@ -27,33 +27,33 @@ local CraftingMenu = {}
 
 ---@class CraftingMenu.uiids
 local uiids = {
-    titleBlock = tes3ui.registerID("Crafting_Menu_TitleBlock"),
-    craftingMenu = tes3ui.registerID("CF_Menu"),
-    midBlock = tes3ui.registerID("Crafting_Menu_MidBlock"),
-    previewBorder = tes3ui.registerID("Crafting_Menu_PreviewBorder"),
-    nifPreviewBlock = tes3ui.registerID("Crafting_Menu_NifPreviewBlock"),
-    imagePreviewBlock = tes3ui.registerID("Crafting_Menu_ImagePreviewBlock"),
-    selectedItem = tes3ui.registerID("Crafting_Menu_SelectedResource"),
-    nif = tes3ui.registerID("Crafting_Menu_NifPreview"),
-    descriptionBlock = tes3ui.registerID("Crafting_Menu_DescriptionBlock"),
-    buttonsBlock = tes3ui.registerID("Crafting_Menu_ButtonsBlock"),
-    recipeListBlock = tes3ui.registerID("Crafting_Menu_recipeListBlock"),
-    previewPane = tes3ui.registerID("Crafting_Menu_PreviewPane"),
-    previewName = tes3ui.registerID("Crafting_Menu_PreviewName"),
-    previewImage = tes3ui.registerID("Crafting_Menu_PreviewImage"),
-    previewDescription = tes3ui.registerID("Crafting_Menu_PreviewDescription"),
-    materialRequirementsPane = tes3ui.registerID("Crafting_Menu_MaterialRequirementsPane"),
-    materialRequirementsBlock = tes3ui.registerID("Crafting_Menu_MaterialRequirementsBlock"),
-    skillRequirementsBlock = tes3ui.registerID("Crafting_Menu_SkillRequirementsBlock"),
-    skillRequirementsPane = tes3ui.registerID("Crafting_Menu_SkillsPane"),
-    customRequirementsBlock = tes3ui.registerID("Crafting_Menu_CustomRequirementsBlock"),
-    customRequirementsPane = tes3ui.registerID("Crafting_Menu_CustomRequirementsPane"),
-    toolRequirementsPane = tes3ui.registerID("Crafting_Menu_ToolsPane"),
-    toolRequirementsBlock = tes3ui.registerID("Crafting_Menu_ToolsContainer"),
-    createItemButton = tes3ui.registerID("Crafting_Menu_CreateItemButton"),
-    unlockPackButton = tes3ui.registerID("Crafting_Menu_UnlockPackButton"),
-    cancelButton = tes3ui.registerID("Crafting_Menu_CancelButton"),
-    searchBar = tes3ui.registerID("Crafting_Menu_SearchBar"),
+    titleBlock = "Crafting_Menu_TitleBlock",
+    craftingMenu = "CF_Menu",
+    midBlock = "Crafting_Menu_MidBlock",
+    previewBorder = "Crafting_Menu_PreviewBorder",
+    nifPreviewBlock = "Crafting_Menu_NifPreviewBlock",
+    imagePreviewBlock = "Crafting_Menu_ImagePreviewBlock",
+    selectedItem = "Crafting_Menu_SelectedResource",
+    nif = "Crafting_Menu_NifPreview",
+    descriptionBlock = "Crafting_Menu_DescriptionBlock",
+    buttonsBlock = "Crafting_Menu_ButtonsBlock",
+    recipeListBlock = "Crafting_Menu_recipeListBlock",
+    previewPane = "Crafting_Menu_PreviewPane",
+    previewName = "Crafting_Menu_PreviewName",
+    previewImage = "Crafting_Menu_PreviewImage",
+    previewDescription = "Crafting_Menu_PreviewDescription",
+    materialRequirementsPane = "Crafting_Menu_MaterialRequirementsPane",
+    materialRequirementsBlock = "Crafting_Menu_MaterialRequirementsBlock",
+    skillRequirementsBlock = "Crafting_Menu_SkillRequirementsBlock",
+    skillRequirementsPane = "Crafting_Menu_SkillsPane",
+    customRequirementsBlock = "Crafting_Menu_CustomRequirementsBlock",
+    customRequirementsPane = "Crafting_Menu_CustomRequirementsPane",
+    toolRequirementsPane = "Crafting_Menu_ToolsPane",
+    toolRequirementsBlock = "Crafting_Menu_ToolsContainer",
+    createItemButton = "Crafting_Menu_CreateItemButton",
+    unlockPackButton = "Crafting_Menu_UnlockPackButton",
+    cancelButton = "Crafting_Menu_CancelButton",
+    searchBar = "Crafting_Menu_SearchBar",
 }
 local m1 = tes3matrix33.new()
 local m2 = tes3matrix33.new()
@@ -201,7 +201,7 @@ local menuButtons = {
         end
     },
     {
-        id = tes3ui.registerID("CraftingFramework_Button_ShowCategories"),
+        id = "CraftingFramework_Button_ShowCategories",
         name = function(self)
             return "Categories: " .. (self.showCategories and "Visible" or "Hidden")
         end,
@@ -239,7 +239,7 @@ local menuButtons = {
         end
     },
     {
-        id = tes3ui.registerID("CraftingFramework_Button_Sort"),
+        id = "CraftingFramework_Button_Sort",
         name = function(self)
             return "Sort: " .. sorters[self.currentSorter].name
         end,
@@ -259,7 +259,7 @@ local menuButtons = {
         end
     },
     {
-        id = tes3ui.registerID("CraftingFramework_Button_CraftItem"),
+        id = "CraftingFramework_Button_CraftItem",
         name = function(self) return self.craftButtonText end,
         callback = function(self)
             local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
@@ -1116,7 +1116,7 @@ function CraftingMenu:createSearchBar(parent)
     searchBar.autoHeight = true
     -- Create the search input itself.
     local placeholderText = "Search..."
-	local input = searchBar:createTextInput({ id = tes3ui.registerID("ExclusionsSearchInput") })
+	local input = searchBar:createTextInput{ id = "ExclusionsSearchInput"}
 	input.color = self.searchText and tes3ui.getPalette("normal_color") or tes3ui.getPalette("disabled_color")
 	input.text = self.searchText or placeholderText
 	input.borderLeft = 5
