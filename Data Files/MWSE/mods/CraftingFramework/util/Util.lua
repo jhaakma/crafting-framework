@@ -118,7 +118,6 @@ Util.removeLight = function(lightNode)
                 local emissive = materialProperty.emissive
                 emissive.r, emissive.g, emissive.b = 0,0,0
                 materialProperty.emissive = emissive
-
                 node:updateProperties()
             end
         end
@@ -126,7 +125,7 @@ Util.removeLight = function(lightNode)
         local texturingProperty = node:getProperty(0x4)
         local newTextureFilepath = "Textures\\tx_black_01.dds"
         if (texturingProperty and texturingProperty.maps[4]) then
-        texturingProperty.maps[4].texture = niSourceTexture.createFromPath(newTextureFilepath)
+            texturingProperty.maps[4].texture = niSourceTexture.createFromPath(newTextureFilepath)
         end
         if (texturingProperty and texturingProperty.maps[5]) then
             texturingProperty.maps[5].texture = niSourceTexture.createFromPath(newTextureFilepath)

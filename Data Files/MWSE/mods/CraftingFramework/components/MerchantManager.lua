@@ -1,9 +1,8 @@
----@class MerchantManager.registerEvents.params
----@field enabledEvent string (optional) event to listen for to enable the merchant inventories
+---@alias MerchantManager.contents table<string, number> Key: item ID, Value: count
 
 ---@class MerchantManager.ContainerData
 ---@field merchantId string
----@field contents table<string, number> list of items to add to the merchant container
+---@field contents MerchantManager.contents list of items to add to the merchant container
 ---@field enabled fun(merchant: tes3reference):boolean (optional) whether the merchant container is enabled by default. Defaults to true
 
 ---@class MerchantManager.new.params
@@ -83,15 +82,17 @@ function MerchantManager:registerMerchantContainer(e)
     }
 end
 
----@param e MerchantManager.registerEvents.params|nil
---- Register the mobileActivated event to add containers to merchants
----
---- `enabledEvent` (optional) event to listen for to trigger a refresh of merchants that are currently active.
+---@param e? { enabledEvent: string }
+--- Register the events that keep the merchant containers up to date.
+--- Pass an "enabledEvent" to update merchants when the event is fired.
 function MerchantManager:registerEvents(e)
     e = e or {}
     ---@param e mobileActivatedEventData
     event.register("mobileActivated", function(e)
         self:processMerchant(e.reference)
+    end)
+    event.register("activate", function(e)
+        self:processMerchant(e.target)
     end)
     if type(e.enabledEvent) == "string" then
         event.register(e.enabledEvent, function()
@@ -100,33 +101,40 @@ function MerchantManager:registerEvents(e)
     end
 end
 
+--- Get the container data for a given merchant reference
 ---@param merchantRef tes3reference
 function MerchantManager:getContainerData(merchantRef)
     return self.registeredContainers[merchantRef.baseObject.id:lower()]
 end
 
+--- Get the data field name for the container id, based on the mod name
 ---@return string data field name for the container id
 function MerchantManager:getMerchantDataField()
     return self.modName .. "_containerData"
 end
 
+--- Get the merchant data for a given merchant reference
 ---@param merchantRef tes3reference
+---@return { containerId: string, contents: MerchantManager.contents}
 function MerchantManager:getMerchantData(merchantRef)
     local key = self:getMerchantDataField()
     return merchantRef.data[key] or {}
 end
 
+--- Set the merchant data for a given merchant reference
 ---@param merchantRef tes3reference
 function MerchantManager:setMerchantData(merchantRef, data)
     local key = self:getMerchantDataField()
     merchantRef.data[key] = data
 end
 
+--- Get the container id for a given merchant reference
 ---@param merchantRef tes3reference
 function MerchantManager:getContainerId(merchantRef)
     return self:getMerchantData(merchantRef).containerId
 end
 
+--- Set the container id for a given merchant reference
 ---@param merchantRef tes3reference
 ---@param containerId string
 function MerchantManager:setContainerId(merchantRef, containerId)
@@ -135,30 +143,34 @@ function MerchantManager:setContainerId(merchantRef, containerId)
     self:setMerchantData(merchantRef, data)
 end
 
+--- Set the contents data for a given merchant reference
 function MerchantManager:setContentsData(merchantRef)
     local data = self:getMerchantData(merchantRef)
     data.contents = table.copy(self:getContainerData(merchantRef).contents)
     self:setMerchantData(merchantRef, data)
 end
 
+--- Clear the contents data for a given merchant reference
 function MerchantManager:clearContentsData(merchantRef)
     local key = self:getMerchantDataField()
     merchantRef.data[key] = nil
 end
 
+--- Get the reference of the container for a given merchant reference, if it exists
 ---@param merchantRef tes3reference
 ---@return tes3reference|nil
 function MerchantManager:getExistingContainer(merchantRef)
     local containerId = self:getContainerId(merchantRef)
     if not containerId then return end
     local container = tes3.getReference(containerId)
-    if not container then return end
     return container
 end
 
+--- Create a container for a given merchant reference
 ---@param merchantRef tes3reference
 ---@return tes3reference|nil
 function MerchantManager:createContainer(merchantRef)
+    self.logger:debug("Creating container for merchant %s", merchantRef.id)
     local containerObj = tes3.createObject {
         objectType = tes3.objectType.container,
         getIfExists = true,
@@ -185,21 +197,61 @@ function MerchantManager:createContainer(merchantRef)
     end
 end
 
+--- Remove all items from a given container reference
+---@param containerRef tes3reference
 function MerchantManager:clearContainer(containerRef)
+    self.logger:debug("Clearing container %s", containerRef.id)
     for _, stack in pairs(containerRef.object.inventory) do
-        self.logger:debug("Removing %s %s from container %s", stack.count, stack.object.id, containerRef.id)
+        self.logger:debug("- Removing %s %s from container %s", stack.count, stack.object.id, containerRef.id)
         tes3.removeItem {
             reference = containerRef,
             item = stack.object,
-            itemData = stack.itemData,
             count = stack.count
         }
     end
 end
 
----@param merchantRef tes3reference
----@param containerRef tes3reference
+--- Add an item to a given container reference, if the item exists
+---@param e { containerRef: tes3reference, itemId: string, count: number }
+function MerchantManager:addItem(e)
+    local item = tes3.getObject(e.itemId)
+    if not item then
+        self.logger:warn("Item %s not found", e.itemId)
+        return
+    end
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    tes3.addItem { reference = e.containerRef, item = item, count = math.abs(e.count) }
+end
+
+---Restock any items with negative counts to their absolute value
+---@param merchantRef tes3reference The reference of the merchant
+---@param containerRef tes3reference The reference of the container
+function MerchantManager:restockNegativeCounts(merchantRef, containerRef)
+    self.logger:debug("Restocking negative counts for merchant %s", merchantRef.id)
+    local containerData = self:getContainerData(merchantRef)
+    if not containerData then return end
+    local contents = containerData.contents
+    for id, count in pairs(contents) do
+        if count < 0 then
+            local currentCount = containerRef.object.inventory:getItemCount(id)
+            local restockCount = math.abs(count) - currentCount
+            if restockCount > 0 then
+                self.logger:debug("- Restocking %s %s in container %s", restockCount, id, containerRef.id)
+                self:addItem {
+                    containerRef = containerRef,
+                    itemId = id,
+                    count = restockCount
+                }
+            end
+        end
+    end
+end
+
+---Populate a container with the contents list for a given merchant reference
+---@param merchantRef tes3reference The reference of the merchant
+---@param containerRef tes3reference The reference of the container
 function MerchantManager:populateContainer(merchantRef, containerRef)
+    self.logger:debug("Populating container %s for merchant %s", containerRef.id, merchantRef.id)
     --For each item in the container, check if it is in the contents list, and sync the container with the item list
     local containerData = self:getContainerData(merchantRef)
     if not containerData then
@@ -213,52 +265,32 @@ function MerchantManager:populateContainer(merchantRef, containerRef)
         self:setContentsData(merchantRef)
     else
         --Check if contentsData is different from newContents
-        local contentsDataChanged = false
-        for id, count in pairs(newContents) do
-            if contentsData[id] ~= count then
-                contentsDataChanged = true
-                break
-            end
-        end
-        if not contentsDataChanged then
-            for id, count in pairs(contentsData) do
-                if newContents[id] ~= count then
-                    contentsDataChanged = true
-                    break
-                end
-            end
-        end
+        local contentsDataChanged = self.checkContentsChanged(contentsData, newContents)
         if contentsDataChanged then
             self.logger:debug("Contents data changed, updating container")
             self:setContentsData(merchantRef)
         else
-            self.logger:debug("Contents data unchanged, skipping update")
+            self.logger:debug("Contents data unchanged, do negative restocking")
+            self:restockNegativeCounts(merchantRef, containerRef)
             return
         end
     end
-
     --Remove all items from the container
     self:clearContainer(containerRef)
     --Add all items from the contents list
     for id, count in pairs(newContents) do
-        local item = tes3.getObject(id) --[[@as tes3misc]]
-        if item then
-            self.logger:debug("Adding item %s to container %s", item.id, containerRef.id)
-            ---@diagnostic disable-next-line: assign-type-mismatch
-            tes3.addItem { reference = containerRef, item = item, count = math.abs(count) }
-            -- TODO - Fix negative counts
-            if count < 0 then
-                self.logger:debug("Setting item %s count to %s", item.id, count)
-                --Find the item stack and explicitly set the count to negative
-                containerRef.object.inventory:findItemStack(item).count = count
-            end
-        else
-            self.logger:warn("Item %s not found", id)
-        end
+        self.logger:debug("- Adding %s %s to container %s", count, id, containerRef.id)
+        self:addItem {
+            containerRef = containerRef,
+            itemId = id,
+            count = count
+        }
     end
 end
 
+---Check if a merchant container is enabled for a given merchant reference
 ---@param merchantRef tes3reference
+---@return boolean whether the merchant container is enabled for the given merchant reference
 function MerchantManager:enabledForMerchant(merchantRef)
     local containerData = self:getContainerData(merchantRef)
     if not containerData then return false end
@@ -270,6 +302,10 @@ function MerchantManager:enabledForMerchant(merchantRef)
     return enabled
 end
 
+---Process a merchant.
+--- This entails adding missing containers for active merchants,
+--- removing containers for inactive merchants,
+--- and populating the containers with gear
 ---@param merchantRef tes3reference
 function MerchantManager:processMerchant(merchantRef)
     if not merchantRef then return end
@@ -286,17 +322,17 @@ function MerchantManager:processMerchant(merchantRef)
             return
         end
     else
-        self.logger:debug("Existing container not found, creating new container")
+        self.logger:debug("Existing container not found")
         containerRef = self:createContainer(merchantRef)
         if not containerRef then
             self.logger:error("Failed to create container for merchant %s", merchantRef.id)
             return
         end
     end
-    self.logger:debug("Populating container %s for merchant %s", containerRef.id, merchantRef.id)
     self:populateContainer(merchantRef, containerRef)
 end
 
+---Process all merchants in a given cell
 ---@param cell tes3cell
 function MerchantManager:processMerchantsInCell(cell)
     for ref in cell:iterateReferences() do
@@ -304,11 +340,34 @@ function MerchantManager:processMerchantsInCell(cell)
     end
 end
 
+---Process all merchants in active cells
 function MerchantManager:processMerchantsInActiveCells()
     for _, cell in pairs(tes3.getActiveCells()) do
         self.logger:debug("Cell: %s", cell.id)
         self:processMerchantsInCell(cell)
     end
+end
+
+--------------------------------------------------------
+--- Private functions
+--------------------------------------------------------
+
+---@private
+---@param a MerchantManager.contents
+---@param b MerchantManager.contents
+---@return boolean #whether the contents have changed
+function MerchantManager.checkContentsChanged(a, b)
+    for id, count in pairs(a) do
+        if b[id] ~= count then
+            return true
+        end
+    end
+    for id, count in pairs(b) do
+        if a[id] ~= count then
+            return true
+        end
+    end
+    return false
 end
 
 return MerchantManager
