@@ -338,8 +338,7 @@ function CarryableContainer:replaceInWorld()
                 orientation = self.reference.orientation,
                 cell = self.reference.cell,
             }
-
-
+            self.reference.scale = 0
         end)
     end
 
@@ -475,6 +474,7 @@ function CarryableContainer:pickup(e)
                     orientation = tes3.player.orientation,
                     cell = tes3.player.cell,
                 }
+                container.scale = 0
             end
         end
     end)
