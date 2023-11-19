@@ -1,7 +1,8 @@
 ---@alias MerchantManager.contents table<string, number> Key: item ID, Value: count
 
+---Holds container data for a merchant
 ---@class MerchantManager.ContainerData
----@field merchantId string
+---@field merchantId string id of the merchant to add the container to
 ---@field contents MerchantManager.contents list of items to add to the merchant container
 ---@field enabled fun(merchant: tes3reference):boolean (optional) whether the merchant container is enabled by default. Defaults to true
 

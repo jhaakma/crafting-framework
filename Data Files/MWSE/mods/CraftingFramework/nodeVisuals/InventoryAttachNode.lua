@@ -96,6 +96,7 @@ function InventoryAttachNode:doSwitchNode(e, hasItem)
     local index = SwitchNode.getIndex(switchNode, childName)
     switchNode.switchIndex = index
 end
+
 function InventoryAttachNode:attachItem(e, item)
     logger:trace("Attaching %s to %s:%s", item.id, e.reference, e.node.name)
     local mesh = tes3.loadMesh(item.mesh, true):clone()

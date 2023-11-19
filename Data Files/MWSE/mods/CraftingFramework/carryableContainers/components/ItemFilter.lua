@@ -6,7 +6,7 @@ local logger = util.createLogger("ItemFilter")
 ---@field id string The id of this filter
 ---@field name string The name shown in the UI
 ---@field description? string The description shown in the UI
----@field objectTypes table<tes3.objectType, boolean> object types that are allowed through this filter
+---@field objectTypes? table<tes3.objectType, boolean> object types that are allowed through this filter
 ---@field isValidItem? fun(item: tes3item, itemData: tes3itemData?): boolean A function that returns true if the item is allowed through this filter
 ---@field getInvalidMessage? fun(self: CarryableContainers.ItemFilter, item: tes3item, itemData: tes3itemData?): string A function that returns a message to display if the item is not allowed through this filter
 
