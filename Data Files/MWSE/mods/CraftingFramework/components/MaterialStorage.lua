@@ -1,6 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("MaterialStorage")
 local ReferenceManager = require("CraftingFramework.components.ReferenceManager")
+local CarryableContainer = require("CraftingFramework.carryableContainers.components.CarryableContainer")
 
 ---@class CraftingFramework.MaterialStorage.storedMaterial
 ---@field item tes3item The stored item
@@ -51,12 +52,11 @@ function MaterialStorage:new(data)
     local materialStorage = table.copy(data)
     setmetatable(materialStorage, self)
     self.__index = self
-
     table.insert(MaterialStorage.registeredMaterialStorages, materialStorage)
-
     return materialStorage
 end
 
+---@return CraftingFramework.MaterialStorage?
 function MaterialStorage.getStorageForRef(reference)
     for _, materialStorage in ipairs(MaterialStorage.registeredMaterialStorages) do
         if materialStorage:isStorage(reference) then
@@ -65,6 +65,23 @@ function MaterialStorage.getStorageForRef(reference)
     end
 end
 
+---Check if the stored material is valid for use
+--- - if it is a carryable container, check that it is empty
+---@param storedMaterial CraftingFramework.MaterialStorage.storedMaterial
+---@return boolean isValid
+function MaterialStorage.isValidStoredMaterial(storedMaterial)
+    local carryable = CarryableContainer:new{ item = storedMaterial.item }
+    if carryable then
+        local containerRef = carryable:getContainerRef()
+        if containerRef then
+            if #containerRef.object.inventory.items > 0 then
+                logger:warn("Found non-empty carryable container material")
+                return false
+            end
+        end
+    end
+    return true
+end
 
 --[[
     The list of nearby storage refs is cached for one simulation frame
@@ -90,28 +107,24 @@ function MaterialStorage.getNearbyStorageRefs(maxDistance)
 end
 
 
-function MaterialStorage:isStorage(reference)
-    logger:assert(self.ids ~= nil, "MaterialStorage %s has no ids", reference.object.id)
-    return self.ids[reference.baseObject.id:lower()] == true
-end
-
 ---@class CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@field maxDistance number The maximum distance to search for nearby material storages
 ---@field searchAllContainers boolean? `Default: false` If true, will search all containers for materials, not just registered material storages
 
 ---@param e CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@return CraftingFramework.MaterialStorage.storedMaterial[]
-function MaterialStorage.getNearbyMaterials(e)
-    logger:trace("Getting nearby Materials")
+function MaterialStorage:getNearbyMaterials(e)
     local storageRefs = MaterialStorage.getNearbyStorageRefs(e.maxDistance)
     ---@type CraftingFramework.MaterialStorage.storedMaterial[]
     local nearbyMaterials = {}
     for _, ref in ipairs(storageRefs) do
         local materialStorage = MaterialStorage.getStorageForRef(ref)
-        logger:assert(materialStorage~=nil, "No material storage registered for %s", ref.baseObject.id)
-        local storedMaterials = materialStorage:getMaterials(ref)
-        for _, storedMaterial in ipairs(storedMaterials) do
-            table.insert(nearbyMaterials, storedMaterial)
+        if materialStorage then
+            logger:assert(materialStorage~=nil, "No material storage registered for %s", ref.baseObject.id)
+            local storedMaterials = materialStorage:getMaterials(ref)
+            for _, storedMaterial in ipairs(storedMaterials) do
+                table.insert(nearbyMaterials, storedMaterial)
+            end
         end
     end
     if e.searchAllContainers then
@@ -130,10 +143,44 @@ function MaterialStorage.getNearbyMaterials(e)
             end
         end
     end
+    --Search carryable containers in player inventory
+    for _, carryable in ipairs(CarryableContainer.getCarryableContainersInInventory()) do
+        local carryableRef = carryable:getContainerRef()
+        if carryableRef then
+            local storedMaterials = MaterialStorage:getMaterials(carryableRef)
+            for _, storedMaterial in ipairs(storedMaterials) do
+                table.insert(nearbyMaterials, storedMaterial)
+            end
+        end
+    end
+
+    --Search the player's inventory itself
+    for _, itemStack in pairs(tes3.player.object.inventory) do
+        local storedMaterial = {
+            item = itemStack.object,
+            itemDatas = itemStack.variables,
+            count = itemStack.count,
+            storedIn = tes3.player,
+            storageInstance = self
+        }
+        if MaterialStorage.isValidStoredMaterial(storedMaterial) then
+            table.insert(nearbyMaterials, storedMaterial)
+        end
+    end
+
     logger:trace("Found %s nearby materials", #nearbyMaterials)
     return nearbyMaterials
 end
 
+
+
+---Can be overridden by implementations of MaterialStorage
+function MaterialStorage:isStorage(reference)
+    logger:assert(self.ids ~= nil, "MaterialStorage %s has no ids", reference.object.id)
+    return self.ids[reference.baseObject.id:lower()] == true
+end
+
+---Can be overridden by implementations of MaterialStorage
 ---@param reference tes3reference
 function MaterialStorage:getMaterials(reference)
     logger:assert(reference.object.inventory ~= nil, "MaterialStorage %s has no inventory", reference.object.id)
@@ -147,15 +194,20 @@ function MaterialStorage:getMaterials(reference)
             storedIn = reference,
             storageInstance = self
         }
-        table.insert(materials, storedMaterial)
+        if MaterialStorage.isValidStoredMaterial(storedMaterial) then
+            table.insert(materials, storedMaterial)
+        end
     end
     return materials
 end
 
+---Can be overridden by implementations of MaterialStorage
 ---@param params CraftingFramework.MaterialStorage.removeItem.params
 ---@return number The amount of items removed
 function MaterialStorage:removeItem(params)
     logger:assert(params.reference.object.inventory ~= nil, "MaterialStorage %s has no inventory", params.reference.object.id)
+
+    logger:info("Removing %s %s", params.count, params.item.name)
     local numRemoved = tes3.removeItem{
         reference = params.reference,
         item = params.item,

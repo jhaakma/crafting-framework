@@ -21,5 +21,6 @@ CraftingFramework.MaterialStorage = require("CraftingFramework.components.Materi
 --Carryabe Containers
 CraftingFramework.CarryableContainer =require("CraftingFramework.carryableContainers.components.CarryableContainer")
 CraftingFramework.ItemFilter = require("CraftingFramework.carryableContainers.components.ItemFilter")
+CraftingFramework.Util = require("CraftingFramework.util.Util")
 
 return CraftingFramework

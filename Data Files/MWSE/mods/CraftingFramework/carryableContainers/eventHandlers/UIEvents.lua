@@ -84,12 +84,27 @@ local function onTooltip(e)
     filterLabel.borderRight = 10
     filterLabel.borderBottom = 10
 
+    --Display optional tooltip
+    if carryable.containerConfig.getTooltip then
+        local tooltipText = carryable.containerConfig.getTooltip(carryable)
+        local tooltipLabel = e.tooltip:createLabel{
+            text = tooltipText
+        }
+        tooltipLabel.borderLeft = 10
+        tooltipLabel.borderRight = 10
+        tooltipLabel.borderBottom = 10
+    end
+
     --Display Weight Modifier
     local weightModifier = carryable:getWeightModifier()
     if weightModifier then
-        local weightModifierLabel = e.tooltip:createLabel{
-            text = string.format("Weight Modifier: %.1f", weightModifier)
-        }
+        local weightModifierText
+        if carryable.containerConfig.getWeightModifierText then
+            weightModifierText = carryable.containerConfig.getWeightModifierText(carryable)
+        else
+            weightModifierText = string.format("Weight Modifier: %.1fx", weightModifier)
+        end
+        local weightModifierLabel = e.tooltip:createLabel{ text = weightModifierText }
         weightModifierLabel.borderLeft = 10
         weightModifierLabel.borderRight = 10
         weightModifierLabel.borderBottom = 10

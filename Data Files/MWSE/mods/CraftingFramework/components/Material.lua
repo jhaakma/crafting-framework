@@ -1,6 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("Material")
 local MaterialStorage = require("CraftingFramework.components.MaterialStorage")
+local CarryableContainer = require("CraftingFramework.carryableContainers.components.CarryableContainer")
 
 ---@class CraftingFramework.Material.data
 ---@field id string **Required.**  This will be the unique identifier used internally by Crafting Framework to identify this `material`.
@@ -125,38 +126,42 @@ function Material:hasValidIngredient()
 end
 
 
+
 --Removes the required number of ingredients from the player
 -- or any nearby containers
 ---@return table<string, number> itemsUsed - A table of item ids and the number of items used
 function Material:use(count)
+    logger:debug("Using %s %s", count, self.name)
     local itemsUsed = {}
     local remaining = count
     for id, _ in pairs(self.ids) do
         local item = tes3.getObject(id)
         if item then
-            local storedMaterials = MaterialStorage.getNearbyMaterials{
+            local storedMaterials = MaterialStorage:getNearbyMaterials{
                 maxDistance = 1000,
                 searchAllContainers = false,
             }
             for _, storedMaterial in ipairs(storedMaterials) do
-                local num = storedMaterial.storageInstance:removeItem{
-                    reference = storedMaterial.storedIn,
-                    item = item,
-                    count = remaining
-                }
-                if num > 0 then
-                    logger:debug("Removed %s %s from %s", num, item.name, storedMaterial.storedIn.object.name)
-                    remaining = remaining - num
-                    itemsUsed[item.id] = (itemsUsed[item.id] or 0) + num
+                if item == storedMaterial.item then
+                    local num = storedMaterial.storageInstance:removeItem{
+                        reference = storedMaterial.storedIn,
+                        item = item,
+                        count = remaining
+                    }
+                    if num > 0 then
+                        logger:debug("Removed %s %s from %s", num, item.name, storedMaterial.storedIn.object.name)
+                        remaining = remaining - num
+                        itemsUsed[item.id] = (itemsUsed[item.id] or 0) + num
+                    end
+                    if remaining <= 0 then
+                        break
+                    end
                 end
             end
-            if remaining > 0 then
-                local num = tes3.removeItem{ reference = tes3.player, item = item, count = remaining }
-                logger:debug("Removed %s %s from player", num, item.name)
-                remaining = remaining - num
-                itemsUsed[item.id] = (itemsUsed[item.id] or 0) + num
-            end
         end
+    end
+    for _, carryable in ipairs(CarryableContainer.getCarryableContainersInInventory()) do
+        carryable:updateStats()
     end
     tes3ui.forcePlayerInventoryUpdate()
     return itemsUsed
@@ -168,8 +173,8 @@ function Material:getItemCount(id)
     logger:assert(self.ids[id], "Material %s does not contain %s", self.id, id)
     local item = tes3.getObject(id)
     if item then
-        local count = tes3.getItemCount{ reference = tes3.player, item = item }
-        local storedMaterials = MaterialStorage.getNearbyMaterials{
+        local count = 0
+        local storedMaterials = MaterialStorage:getNearbyMaterials{
             maxDistance = 1000,
             searchAllContainers = false,
         }

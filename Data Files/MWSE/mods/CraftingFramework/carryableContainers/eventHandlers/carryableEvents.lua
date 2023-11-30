@@ -30,18 +30,35 @@ event.register("equip", onEquipContainer)
 ---@param e activateEventData
 local function onActivateContainer(e)
 
-    logger:debug("activate")
+    logger:info("activate")
     if tes3ui.menuMode() then
+        logger:info("Menu mode, skip")
         return
     end
-    local carryableMisc = CarryableContainer:new{
-        reference = e.target,
-    }
-    if not carryableMisc then return end
 
-    logger:debug("Activating container")
-    carryableMisc:open()
-    return true
+    --If actiuvating a container, pick up if shift down, otherwise do nothing
+    --If activating a misc item, pick up if shift down, otherwise open
+    local miscCarryable = CarryableContainer:new{ reference = e.target }
+    if miscCarryable then
+        logger:info("Activating misc item")
+        if not util.isQuickModifierDown() then
+            logger:info("Opening misc item")
+            miscCarryable:open()
+            return true
+        end
+        return --else pick up misc ref
+    end
+
+    local containerCarryable = CarryableContainer:new{ containerRef = e.target }
+    if containerCarryable then
+        logger:info("Activating container")
+        if util.isQuickModifierDown() then
+            logger:info("Quick modifier is down, picking up")
+            containerCarryable:pickup{ doPlaySound = true }
+            return true
+        end
+        return --else activate container
+    end
 end
 event.register("activate", onActivateContainer)
 

@@ -6,6 +6,11 @@ local ItemFilter = require("CraftingFramework.carryableContainers.components.Ite
 local Container = require("CraftingFramework.carryableContainers.components.Container")
 local RefStack = require("CraftingFramework.util.RefStack")
 local MAX_CAPACITY = 65535
+
+---@alias CarryableContainer.openFromInventory fun(self:CarryableContainer)
+
+---@alias CarryableContainer.onCopyCreatedData { copy: tes3misc, original: tes3misc }
+
 ---@class CarryableContainer.containerConfig
 ---@field itemId string The id of the item to use for the container
 ---@field filter CarryableContainers.DefaultItemFilter? The id of the filter to use for the container
@@ -13,6 +18,11 @@ local MAX_CAPACITY = 65535
 ---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
 ---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.
 ---@field scale number? The scale of the placed container
+---@field openFromInventory? fun(self:CarryableContainer) Overrride function when activating from inventory
+---@field onCopyCreated? fun(self:CarryableContainer, data:CarryableContainer.onCopyCreatedData) Callback function when a copy of this container is created
+---@field getWeightModifier? fun(self:CarryableContainer):number Override function to get the weight modifier for this container
+---@field getWeightModifierText? fun(self:CarryableContainer):string Override function to get the weight modifier text for this container
+---@field getTooltip? fun(self:CarryableContainer):string An optional callback to add an additional tooltip to the container
 
 ---@class CarryableContainer.new.params : ItemInstance.new.params
 ---@field containerRef tes3reference? If provided, the item will be created from the container reference
@@ -55,6 +65,36 @@ function CarryableContainer.getContainerConfig(item)
         return containerConfig
     end
 end
+
+---@return CarryableContainer|nil
+function CarryableContainer.getCarryableFromReference(reference)
+    if reference.baseObject.objectType == tes3.objectType.container then
+        return CarryableContainer:new{
+            containerRef = reference
+        }
+    else
+        return CarryableContainer:new{
+            item = reference.baseObject
+        }
+    end
+end
+
+---@param reference? tes3reference
+---@return CarryableContainer[]
+function CarryableContainer.getCarryableContainersInInventory(reference)
+    local carriedContainers = {}
+
+    reference = reference or tes3.player
+    for _, stack in pairs(reference.object.inventory) do
+        local carryable = CarryableContainer:new{ item = stack.object }
+        if carryable then
+            table.insert(carriedContainers, carryable)
+        end
+    end
+
+    return carriedContainers
+end
+
 
 ---Construct an instance of a carryable container
 ---@param e CarryableContainer.new.params
@@ -144,11 +184,16 @@ function CarryableContainer:openFromWorld()
 end
 
 function CarryableContainer:open()
+    self.logger:info("open")
     --if ref, open from world, otherwise open from inventory
     if self.reference then
         self:openFromWorld()
     else
-        self:openFromInventory()
+        if self.containerConfig.openFromInventory then
+            self.containerConfig.openFromInventory(self)
+        else
+            self:openFromInventory()
+        end
     end
 end
 
@@ -214,6 +259,9 @@ function CarryableContainer:createCopy()
     logger:debug("Created copy %s", copy.id)
     config.persistent.miscCopyToBaseMapping[copy.id:lower()] = self.item.id:lower()
     event.trigger("CraftingFramework:CarryableContainer_CopyCreated", {copy = copy, original = self.item})
+    if self.containerConfig.onCopyCreated then
+        self.containerConfig.onCopyCreated(self, {copy = copy, original = self.item})
+    end
     return copy
 end
 
@@ -246,7 +294,11 @@ end
 
 --Get the weight modifier for this container
 function CarryableContainer:getWeightModifier()
-    return self.containerConfig.weightModifier
+    if self.containerConfig.getWeightModifier then
+        return self.containerConfig.getWeightModifier(self)
+    else
+        return self.containerConfig.weightModifier
+    end
 end
 
 function CarryableContainer:replaceInWorld()

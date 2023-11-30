@@ -21,13 +21,8 @@ local config = require("CraftingFramework.config")
 ---@field count number *Default*: `1`. The required amount of the material.
 
 
----@class CraftingFramework.Recipe.containerConfig
---- Same as CarryableContainer.containerConfig except the id is taken from the craftable id
----@field filter CarryableContainers.DefaultItemFilter? The id of the filter to use for the container
----@field capacity number The capacity of the container
----@field hasCollision nil|boolean If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
----@field weightModifier nil|number The weight of the contents of this container will be multiplied by this value.
-
+---@class CraftingFramework.Recipe.containerConfig : CarryableContainer.containerConfig
+---@field id? string This is provided by the recipe and should not be set manually
 
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
@@ -146,14 +141,9 @@ function Recipe:new(data)
     --Register as carryable container
     if recipe.containerConfig then
         ---@type CarryableContainer.containerConfig
-        local carryableContainerConfig = {
-            itemId = recipe.craftable.id,
-            filter = recipe.containerConfig.filter,
-            capacity = recipe.containerConfig.capacity,
-            hasCollision = recipe.containerConfig.hasCollision,
-            weightModifier = recipe.containerConfig.weightModifier,
-            scale = recipe.scale
-        }
+        local carryableContainerConfig = table.copy(recipe.containerConfig)
+        carryableContainerConfig.itemId = recipe.craftable.id
+        carryableContainerConfig.scale = recipe.scale
         CarryableContainer.register(carryableContainerConfig)
     end
 

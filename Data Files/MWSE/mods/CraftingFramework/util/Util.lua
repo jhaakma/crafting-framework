@@ -142,11 +142,31 @@ function Util.deleteRef(ref, no)
     ---@diagnostic disable-next-line: deprecated
     mwscript.setDelete{ reference = ref}
 end
+
 function Util.isShiftDown()
     local ic = tes3.worldController.inputController
 	return ic:isKeyDown(tes3.scanCode.leftShift) or ic:isKeyDown(tes3.scanCode.rightShift)
 end
 
+function Util.getQuickModifierKey()
+    return config.mcm.quickModifierHotkey.keyCode
+end
+
+---Get the human readable string value of the given key code
+function Util.getLetter(keyCode)
+	local letter = table.find(tes3.scanCode, keyCode)
+	local returnString = tes3.scanCodeToNumber[keyCode] or letter
+	if returnString then
+		return string.upper(returnString)
+	end
+end
+
+---Get the human readable string value of the quick modifier key
+function Util.getQuickModifierKeyText()
+    return Util.getLetter(Util.getQuickModifierKey())
+end
+
+---Check if the player is holding down the configured quick modifier key
 function Util.isQuickModifierDown()
     local quickModifier = config.mcm.quickModifierHotkey
     local ic = tes3.worldController.inputController

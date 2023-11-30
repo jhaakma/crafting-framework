@@ -7,6 +7,7 @@ local mwseCommon = require("mwse.common")
 ---@class CarryableContainers.Container
 local Container = {}
 
+
 function Container.getMiscIdfromReference(reference)
     if not reference then
         logger:trace("No container ref")

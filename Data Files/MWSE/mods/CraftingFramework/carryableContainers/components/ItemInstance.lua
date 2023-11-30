@@ -34,7 +34,7 @@ function ItemInstance:new(e)
     itemInstance.id = itemInstance.item.id:lower()
     itemInstance.logger = e.logger or require("logging.logger").new{
         name = "ItemInstance",
-        level = "debug",
+        level = "DEBUG",
     }
     -- reference data
     itemInstance._dataKey = e.dataKey
