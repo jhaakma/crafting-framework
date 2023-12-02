@@ -7,6 +7,25 @@ local mwseCommon = require("mwse.common")
 ---@class CarryableContainers.Container
 local Container = {}
 
+---@param e tes3.positionCell.params
+function Container.positionCell(e)
+    tes3.positionCell(e)
+    e.reference.position = e.position:copy()
+    e.reference.orientation = e.orientation:copy()
+end
+
+---@param reference tes3reference
+function Container.hide(reference)
+    logger:info("Hiding container %s", reference)
+    reference:disable()
+    reference.hasNoCollision = true
+end
+
+function Container.unhide(reference)
+    logger:info("Unhiding container %s", reference)
+    reference:enable()
+    reference.hasNoCollision = false
+end
 
 function Container.getMiscIdfromReference(reference)
     if not reference then

@@ -83,7 +83,6 @@ end
 ---@return CarryableContainer[]
 function CarryableContainer.getCarryableContainersInInventory(reference)
     local carriedContainers = {}
-
     reference = reference or tes3.player
     for _, stack in pairs(reference.object.inventory) do
         local carryable = CarryableContainer:new{ item = stack.object }
@@ -96,6 +95,31 @@ end
 
 ---@class CarryableContainer.getItemCount.params : tes3.getItemCount.params
 ---@field reference tes3reference Default: tes3.player
+
+
+---Gets the full list of items in the reference's inventory, including items in containers
+---@param reference? tes3reference Default: tes3.player
+---@return tes3itemStack[] #The list of items
+function CarryableContainer.getFullInventory(reference)
+    --- all items in inventory and in containers
+    ---@type tes3itemStack[]
+    local inventory = {}
+    reference = reference or tes3.player
+    for _, stack in pairs(reference.object.inventory) do
+        table.insert(inventory, stack)
+        local carryable = CarryableContainer:new{ item = stack.object }
+        if carryable then
+            local containerRef = carryable:getContainerRef()
+            if containerRef then
+                local containerInventory = CarryableContainer.getFullInventory(containerRef)
+                for _, stack in pairs(containerInventory) do
+                    table.insert(inventory, stack)
+                end
+            end
+        end
+    end
+    return inventory
+end
 
 ---Gets the number of items in the reference's inventory,
 --- recursing through any containers
@@ -266,7 +290,7 @@ function CarryableContainer:openFromWorld()
 end
 
 function CarryableContainer:open()
-    self.logger:info("open")
+    self.logger:debug("open")
     --if ref, open from world, otherwise open from inventory
     if self.reference then
         self:openFromWorld()
@@ -437,21 +461,21 @@ function CarryableContainer:replaceInWorld()
 
             local containerRef = self:getCreateContainerRef()
 
-            logger:debug("Moving %s to position %.f, %.f, %.f",
+            logger:debug("Moving containerRef %s to position %.f, %.f, %.f",
                 containerRef.object.id,
                 self.reference.position.x,
                 self.reference.position.y,
                 self.reference.position.z)
 
-            tes3.positionCell{
+            local newPosition = self.reference.position:copy()
+            Container.positionCell{
                 reference = containerRef,
-                position = self.reference.position,
-                orientation = self.reference.orientation,
+                position = newPosition,
+                orientation = self.reference.orientation:copy(),
                 cell = self.reference.cell,
                 forceCellChange = true
             }
-            containerRef.scale = self.containerConfig.scale or 1.0
-            containerRef.hasNoCollision = false
+            Container.unhide(containerRef)
             containerRef:updateLighting()
             if containerRef.sceneNode then
                 containerRef.sceneNode.appCulled = false
@@ -462,17 +486,7 @@ function CarryableContainer:replaceInWorld()
             end
             tes3.dataHandler:updateCollisionGroupsForActiveCells{}
 
-
-            --move miscRef elsewhere -1000 z
-            local position = self.reference.position:copy()
-            position.z = position.z - 1000
-            tes3.positionCell{
-                reference = self.reference,
-                position = position,
-                orientation = self.reference.orientation,
-                cell = self.reference.cell,
-            }
-            self.reference.scale = 0
+            Container.hide(self.reference)
         end)
     end
 
@@ -593,22 +607,9 @@ function CarryableContainer:pickup(e)
             local ref = safeRef:getObject()
             logger:debug("- Activating %s", ref.id)
             tes3.player:activate(ref)
-            local container = self:getContainerRef()
-            if container then
-                --moving container out of the way
-                --container.sceneNode.appCulled = true
-                container.hasNoCollision = true
-                tes3.positionCell{
-                    reference = container,
-                    position = {
-                        x = tes3.player.position.x,
-                        y = tes3.player.position.y,
-                        z = tes3.player.position.z - 1000,
-                    },
-                    orientation = tes3.player.orientation,
-                    cell = tes3.player.cell,
-                }
-                container.scale = 0
+            local containerRef = self:getContainerRef()
+            if containerRef then
+                Container.hide(containerRef)
             end
         end
     end)
