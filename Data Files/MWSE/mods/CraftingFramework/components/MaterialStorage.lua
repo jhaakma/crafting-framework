@@ -110,39 +110,45 @@ end
 ---@class CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@field maxDistance number The maximum distance to search for nearby material storages
 ---@field searchAllContainers boolean? `Default: false` If true, will search all containers for materials, not just registered material storages
+---@field ignoreNearbyContainers boolean? `Default: false` If true, will not search nearby containers for materials
 
 ---@param e CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@return CraftingFramework.MaterialStorage.storedMaterial[]
 function MaterialStorage:getNearbyMaterials(e)
-    local storageRefs = MaterialStorage.getNearbyStorageRefs(e.maxDistance)
-    ---@type CraftingFramework.MaterialStorage.storedMaterial[]
+
     local nearbyMaterials = {}
-    for _, ref in ipairs(storageRefs) do
-        local materialStorage = MaterialStorage.getStorageForRef(ref)
-        if materialStorage then
-            logger:assert(materialStorage~=nil, "No material storage registered for %s", ref.baseObject.id)
-            local storedMaterials = materialStorage:getMaterials(ref)
-            for _, storedMaterial in ipairs(storedMaterials) do
-                table.insert(nearbyMaterials, storedMaterial)
+
+    if not e.ignoreNearbyContainers then
+        local storageRefs = MaterialStorage.getNearbyStorageRefs(e.maxDistance)
+        ---@type CraftingFramework.MaterialStorage.storedMaterial[]
+        for _, ref in ipairs(storageRefs) do
+            local materialStorage = MaterialStorage.getStorageForRef(ref)
+            if materialStorage then
+                logger:assert(materialStorage~=nil, "No material storage registered for %s", ref.baseObject.id)
+                local storedMaterials = materialStorage:getMaterials(ref)
+                for _, storedMaterial in ipairs(storedMaterials) do
+                    table.insert(nearbyMaterials, storedMaterial)
+                end
             end
         end
-    end
-    if e.searchAllContainers then
-        ---find all containers which aren't already storages
-        for _, cell in pairs(tes3.getActiveCells()) do
-            for containerRef in cell:iterateReferences(tes3.objectType.container) do
-                local isValid = containerRef.object.organic ~= true
-                    and tes3.getOwner{ reference = containerRef } == nil
-                    and not MaterialStorage.referenceManager.references[containerRef]
-                if isValid then
-                    local storedMaterials = MaterialStorage:getMaterials(containerRef)
-                    for _, storedMaterial in ipairs(storedMaterials) do
-                        table.insert(nearbyMaterials, storedMaterial)
+        if e.searchAllContainers then
+            ---find all containers which aren't already storages
+            for _, cell in pairs(tes3.getActiveCells()) do
+                for containerRef in cell:iterateReferences(tes3.objectType.container) do
+                    local isValid = containerRef.object.organic ~= true
+                        and tes3.getOwner{ reference = containerRef } == nil
+                        and not MaterialStorage.referenceManager.references[containerRef]
+                    if isValid then
+                        local storedMaterials = MaterialStorage:getMaterials(containerRef)
+                        for _, storedMaterial in ipairs(storedMaterials) do
+                            table.insert(nearbyMaterials, storedMaterial)
+                        end
                     end
                 end
             end
         end
     end
+
     --Search carryable containers in player inventory
     for _, carryable in ipairs(CarryableContainer.getCarryableContainersInInventory()) do
         local carryableRef = carryable:getContainerRef()
