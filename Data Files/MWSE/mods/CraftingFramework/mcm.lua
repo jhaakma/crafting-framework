@@ -76,6 +76,8 @@ local function registerMCM()
         callback = function(self)
             for _, logger in pairs(Util.loggers) do
                 logger:setLogLevel(self.variable.value)
+                ---@diagnostic disable-next-line
+                logger:info("New Log Level: %s", logger.logLevel)
             end
         end
     }

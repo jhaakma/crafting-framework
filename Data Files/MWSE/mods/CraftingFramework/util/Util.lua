@@ -2,6 +2,7 @@
 local Util = {}
 local config = require("CraftingFramework.config")
 
+---@type table<string, mwseLogger>
 Util.loggers = {}
 do --logger
     local logLevel = config.mcm.logLevel
@@ -211,6 +212,7 @@ end
 function Util.forceInstance(reference)
     local object = reference.object
     if (object.isInstance == false) then
+        ---@diagnostic disable-next-line
         object:clone(reference)
         reference.modified = true
     end

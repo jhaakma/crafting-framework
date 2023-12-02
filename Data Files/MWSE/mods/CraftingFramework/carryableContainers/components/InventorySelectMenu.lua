@@ -73,15 +73,15 @@ local function referenceHasItems(filter, reference)
     else
         ---@param stack tes3itemStack
         for _, stack in pairs(reference.object.inventory) do
-            if filter{ item = stack.object } then
-                return true
-            end
+
             if stack.variables and #stack.variables then
                 for _, itemData in ipairs(stack.variables) do
                     if filter{ item = stack.object, itemData = itemData } then
                         return true
                     end
                 end
+            elseif filter{ item = stack.object } then
+                return true
             end
         end
     end
@@ -228,8 +228,16 @@ function InventorySelectMenu.doOpenMenu(e, containerInfoList, activeIndex)
 
     tes3ui.showInventorySelectMenu(params)
     local selectMenu = tes3ui.findMenu("MenuInventorySelect") --[[@as tes3uiElement]]
+    if not selectMenu then
+        logger:debug("no selectMenu, probably means nothing passed filter")
+        return
+    end
     selectMenu:registerBefore("unfocus", function(e) return true end)
-    if #containerInfoList > 1 then
+
+    --don't show if the only container is the player
+    if #containerInfoList == 1 and containerInfoList[1].icon == nil then
+        --don't show container list
+    else
         InventorySelectMenu.createSideMenu(e, containerInfoList, activeIndex)
     end
 
@@ -242,14 +250,16 @@ function InventorySelectMenu.doOpenMenu(e, containerInfoList, activeIndex)
         if sidebarMenu then
             sidebarMenu:destroy()
         end
-
     end)
 end
 
 
+---@class CraftingFramework.showInventorySelectMenu.params : tes3ui.showInventorySelectMenu.params
+---@field callback? fun(e:{item:tes3item, itemData:tes3itemData, reference:tes3reference})
+---@field noResultsCallback? fun(e:{item:tes3item, itemData:tes3itemData, reference:tes3reference})
 
 ---Open an inventory select menu with a sidebar of containers
----@param e tes3ui.showInventorySelectMenu.params
+---@param e CraftingFramework.showInventorySelectMenu.params
 function InventorySelectMenu.open(e)
     e.reference = e.reference or tes3.player
 
@@ -278,7 +288,7 @@ function InventorySelectMenu.open(e)
     if #containerInfoList == 0 then
         tes3.messageBox(e.noResultsText)
         if e.noResultsCallback then
-            e.noResultsCallback()
+            e.noResultsCallback(e)
         end
     end
     InventorySelectMenu.doOpenMenu(e, containerInfoList, 1)
