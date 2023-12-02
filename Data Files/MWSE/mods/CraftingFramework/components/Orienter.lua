@@ -99,7 +99,8 @@ function this.getGroundBelowRef(e)
         ignore = ignoreList,
         returnNormal = true,
         useBackTriangles = false,
-        root = e.terrainOnly and tes3.game.worldLandscapeRoot or nil
+        root = e.terrainOnly and tes3.game.worldLandscapeRoot or nil,
+        accurateSkinned = true,
     }
     if not result then --look up instead
         result = tes3.rayTest {
@@ -108,7 +109,8 @@ function this.getGroundBelowRef(e)
             ignore = ignoreList,
             returnNormal = true,
             useBackTriangles = true,
-            root = e.terrainOnly and tes3.game.worldLandscapeRoot or nil
+            root = e.terrainOnly and tes3.game.worldLandscapeRoot or nil,
+            accurateSkinned = true,
         }
         if not result then
             return

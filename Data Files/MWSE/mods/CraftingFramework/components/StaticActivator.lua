@@ -138,6 +138,7 @@ function StaticActivator.getLookingAt()
         direction = eyeDirection,
         ignore = { tes3.player },
         maxDistance = activationDistance,
+        accurateSkinned = true
     }
     return result
 end

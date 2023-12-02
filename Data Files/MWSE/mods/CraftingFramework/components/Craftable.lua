@@ -572,7 +572,8 @@ function Craftable:place(materialsUsed)
         position = tes3.getPlayerEyePosition(),
         direction = tes3.getPlayerEyeVector(),
         ignore = { tes3.player},
-        maxDistance = 200
+        maxDistance = 200,
+        accurateSkinned = true,
     }
     local rayDist = ray and ray.intersection and math.min(ray.distance -5, 200) or 200
     local position = eyePos + eyeOri * rayDist

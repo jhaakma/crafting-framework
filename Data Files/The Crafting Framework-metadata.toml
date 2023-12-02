@@ -10,7 +10,7 @@ version = "1.19.0"
 assets = [ "MWSE/mods/CraftingFramework", "Meshes/craftingFramework", "Textures/craftingFramework", "Sound/craftingFramework",]
 
 [dependencies.mwse]
-buildnumber = 3066
+buildnumber = 3497
 
 [dependencies.mge-xe]
 version = ">=0.15.0"

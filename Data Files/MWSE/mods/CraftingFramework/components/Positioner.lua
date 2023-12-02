@@ -186,6 +186,7 @@ local function simulatePlacement()
             direction = rayVec,
             ignore = { Positioner.active, tes3.player },
             maxDistance = Positioner.currentReach,
+            accurateSkinned = true,
         }
         if ray and ray.intersection then
             local width = getWidth()
@@ -301,7 +302,8 @@ Positioner.togglePlacement = function(e)
             ignore = { tes3.player, Positioner.active },
             maxDistance = Positioner.maxReach,
             root = config.persistent.placementSetting == "ground"
-                and tes3.game.worldLandscapeRoot or nil
+                and tes3.game.worldLandscapeRoot or nil,
+            accurateSkinned = true,
         })
 
         target = ray and ray.reference
