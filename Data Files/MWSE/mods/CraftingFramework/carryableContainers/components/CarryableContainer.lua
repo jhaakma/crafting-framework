@@ -91,9 +91,91 @@ function CarryableContainer.getCarryableContainersInInventory(reference)
             table.insert(carriedContainers, carryable)
         end
     end
-
     return carriedContainers
 end
+
+---@class CarryableContainer.getItemCount.params : tes3.getItemCount.params
+---@field reference tes3reference Default: tes3.player
+
+---Gets the number of items in the reference's inventory,
+--- recursing through any containers
+---@param e CarryableContainer.getItemCount.params
+---@return number The number of items in the reference's inventory
+function CarryableContainer.getItemCount(e)
+    local reference = e.reference or tes3.player
+    ---@type tes3item
+    local item
+    if type(e.item) == "string" then
+        item = tes3.getObject(e.item--[[@as string]])
+    else
+        item = e.item
+    end
+    if not item then
+        --getObject failed
+        return 0
+    end
+    local count = tes3.getItemCount(e)
+    for _, stack in pairs(reference.object.inventory) do
+        local carryable = CarryableContainer:new{ item = stack.object }
+        if carryable then
+            local containerRef = carryable:getContainerRef()
+            if containerRef then
+                count = count + CarryableContainer.getItemCount{
+                    reference = carryable:getContainerRef(),
+                    item = item,
+                }
+            end
+        end
+    end
+    return count
+end
+
+---@class CarryableContainer.removeItem.params : tes3.removeItem.params
+---@field reference tes3reference
+
+---Removes an item from the reference's inventory,
+--- recursing through any containers
+---@param e CarryableContainer.removeItem.params
+---@returns number #The number of items removed
+function CarryableContainer.removeItem(e)
+    ---@type tes3item
+    local item
+    if type(e.item) == "string" then
+        item = tes3.getObject(e.item--[[@as string]])
+    else
+        item = e.item
+    end
+    if not item then
+        --getObject failed
+        return 0
+    end
+
+    local reference = e.reference or tes3.player
+    local count = e.count or 1
+    local removed = tes3.removeItem(e)
+    local remaining = count - removed
+    if remaining > 0 then
+        for _, stack in pairs(reference.object.inventory) do
+            local carryable = CarryableContainer:new{ item = stack.object }
+            if carryable then
+                local containerRef = carryable:getContainerRef()
+                if containerRef then
+                    ---@type CarryableContainer.removeItem.params
+                    local params = table.copy(e)
+                    params.reference = containerRef
+                    params.count = remaining
+                    local removed =  CarryableContainer.removeItem(params)
+                    remaining = remaining - removed
+                    if remaining <= 0 then
+                        break
+                    end
+                end
+            end
+        end
+    end
+    return count - remaining
+end
+
 
 
 ---Construct an instance of a carryable container
