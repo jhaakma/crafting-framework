@@ -82,11 +82,17 @@ end
 ---Gets a previously saved safe version of this instance
 ---@return ItemInstance|nil
 function ItemInstance:getSafeInstance()
-    if self.safeRef and self.safeRef:valid() then
+    if self:valid() then
         self.reference = self.safeRef:getObject()
         self.safeRef = nil
         return self
     end
+end
+
+---Check if this instance is still valid.
+---Must have called setSafeInstance() previously
+function ItemInstance:valid()
+    return self.safeRef and self.safeRef:valid()
 end
 
 return ItemInstance

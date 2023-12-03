@@ -105,7 +105,7 @@ end
 
 local function createButtonClickCallback(e, sidebarMenu, containerInfoList, activeIndex, currentIndex, containerInfo)
     return function()
-        logger:info("on sidebar button click, closing menu")
+        logger:debug("on sidebar button click, closing menu")
         local selectMenu = tes3ui.findMenu("MenuInventorySelect") --[[@as tes3uiElement]]
         if selectMenu then
             selectMenu:destroy()
@@ -188,7 +188,7 @@ function InventorySelectMenu.createSideMenu(e, containerInfoList, activeIndex)
     }
     sidebarMenu.minHeight = 560
     sidebarMenu.minWidth = 300
-    sidebarMenu.absolutePosAlignX = 0.312
+    sidebarMenu.absolutePosAlignX = 0.315
     sidebarMenu.absolutePosAlignY = 0.5
     sidebarMenu.flowDirection = "top_to_bottom"
 
@@ -215,14 +215,14 @@ function InventorySelectMenu.doOpenMenu(e, containerInfoList, activeIndex)
         callbackParams = callbackParams or {}
         callbackParams.reference = activeContainer.reference
         if e.callback then e.callback(callbackParams) end
-        logger:info("callback - closing menu")
+        logger:debug("callback - closing menu")
         InventorySelectMenu.closeSideMenu()
     end
     params.noResultsCallback = function(callbackParams)
         callbackParams = callbackParams or {}
         callbackParams.reference = activeContainer.reference
         if e.noResultsCallback then e.noResultsCallback(callbackParams) end
-        logger:info("noResultsCallback - closing menu")
+        logger:debug("noResultsCallback - closing menu")
         InventorySelectMenu.closeSideMenu()
     end
 
@@ -255,8 +255,8 @@ end
 
 
 ---@class CraftingFramework.showInventorySelectMenu.params : tes3ui.showInventorySelectMenu.params
----@field callback? fun(e:{item:tes3item, itemData:tes3itemData, reference:tes3reference})
----@field noResultsCallback? fun(e:{item:tes3item, itemData:tes3itemData, reference:tes3reference})
+---@field callback? fun(e:{item:tes3item|tes3misc, itemData:tes3itemData, reference:tes3reference})
+---@field noResultsCallback? fun(e:{item:tes3item|tes3misc, itemData:tes3itemData, reference:tes3reference})
 
 ---Open an inventory select menu with a sidebar of containers
 ---@param e CraftingFramework.showInventorySelectMenu.params
@@ -290,6 +290,7 @@ function InventorySelectMenu.open(e)
         if e.noResultsCallback then
             e.noResultsCallback(e)
         end
+        return
     end
     InventorySelectMenu.doOpenMenu(e, containerInfoList, 1)
 end
