@@ -507,9 +507,6 @@ function CarryableContainer:replaceInWorld()
 end
 
 function CarryableContainer:replaceInInventory()
-
-
-
     if self:isCopy() then
         logger:debug("This is a copy, not replacing")
         return self
@@ -518,8 +515,6 @@ function CarryableContainer:replaceInInventory()
         logger:error("Trying to replace in inventory for reference %s", self.reference.id)
         return
     end
-    logger:debug("Replacing container in inventory %s", self.item.id)
-
     local reference = tes3.player
     --get contents Menu
     local contentsMenu = tes3ui.findMenu(tes3ui.registerID("MenuContents"))
@@ -531,7 +526,6 @@ function CarryableContainer:replaceInInventory()
             reference = contentsMenuOwnerRef
         end
     end
-
     logger:debug("replacing container %s in inventory of %s", self:getName(), reference.id)
 
     local copy = self:createCopy()
