@@ -132,6 +132,8 @@ local function onInventoryTileClicked(e)
     -- Fire off an event when the tile is clicked for other modules to hook into.
     local tileData = e.source:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile") --- @type tes3inventoryTile
     tileData = tileData or e.source:getPropertyObject("MenuContents_Thing", "tes3inventoryTile")
+    if not tileData then return end
+
     logger:debug("Clicked on container")
     local container = CarryableContainer:new{ item = tileData.item, itemData = tileData.itemData }
     if not container then
@@ -139,15 +141,17 @@ local function onInventoryTileClicked(e)
         return
     end
     if util.isQuickModifierDown() then
-        local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
-        if isEquipped then
-            logger:debug("Container is equipped, triggering equip again")
-            tes3.mobilePlayer:equip{ item = tileData.item }
-        end
 
         --menu click sound
         tes3.worldController.menuClickSound:play()
         container:openFromInventory()
+
+        local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
+        if isEquipped then
+            logger:debug("Container is equipped, triggering equip again in case it was replaced")
+            tes3.mobilePlayer:equip{ item = container.item }
+        end
+
         return false
     end
     container:setSafeInstance()
@@ -163,5 +167,4 @@ end
 local function onInventoryTileUpdated(e)
     e.element:registerBefore("mouseClick", onInventoryTileClicked)
 end
-event.register("itemTileUpdated", onInventoryTileUpdated)
 event.register("itemTileUpdated", onInventoryTileUpdated)

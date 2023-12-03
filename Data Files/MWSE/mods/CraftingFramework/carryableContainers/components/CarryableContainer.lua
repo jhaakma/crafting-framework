@@ -279,7 +279,7 @@ end
 
 function CarryableContainer:openFromInventory()
     self:replaceInInventory()
-    logger:debug("Opening container from inventory %s", self:getContainerId())
+    logger:debug("Opening container from inventory %s", (self:getContainerId() or tes3.player))
     local containerRef = self:getCreateContainerRef()
     tes3.player:activate(containerRef)
     timer.delayOneFrame(function()
