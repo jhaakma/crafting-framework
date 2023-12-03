@@ -137,7 +137,7 @@ function Material:use(count)
     for id, _ in pairs(self.ids) do
         local item = tes3.getObject(id)
         if item then
-            local storedMaterials = MaterialStorage:getNearbyMaterials{
+            local storedMaterials = MaterialStorage.getNearbyMaterials{
                 maxDistance = 1000,
                 searchAllContainers = false,
             }
@@ -174,7 +174,7 @@ function Material:getItemCount(id)
     local item = tes3.getObject(id)
     if item then
         local count = 0
-        local storedMaterials = MaterialStorage:getNearbyMaterials{
+        local storedMaterials = MaterialStorage.getNearbyMaterials{
             maxDistance = 1000,
             searchAllContainers = false,
         }

@@ -107,6 +107,23 @@ function MaterialStorage.getNearbyStorageRefs(maxDistance)
 end
 
 
+---@return CraftingFramework.MaterialStorage.storedMaterial[]?
+function MaterialStorage.getNearbyMaterialsCache()
+    return tes3.player.tempData.nearbyMaterials
+end
+
+---@param materials CraftingFramework.MaterialStorage.storedMaterial[]
+function MaterialStorage.setNearbyMaterialsCache(materials)
+    tes3.player.tempData.nearbyMaterials = materials
+    timer.delayOneFrame(function()
+        tes3.player.tempData.nearbyMaterials = nil
+    end)
+end
+
+function MaterialStorage.clearNearbyMaterialsCache()
+    tes3.player.tempData.nearbyMaterials = nil
+end
+
 ---@class CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@field maxDistance number The maximum distance to search for nearby material storages
 ---@field searchAllContainers boolean? `Default: false` If true, will search all containers for materials, not just registered material storages
@@ -114,7 +131,11 @@ end
 
 ---@param e CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@return CraftingFramework.MaterialStorage.storedMaterial[]
-function MaterialStorage:getNearbyMaterials(e)
+function MaterialStorage.getNearbyMaterials(e)
+
+    if MaterialStorage.getNearbyMaterialsCache() then
+        return MaterialStorage.getNearbyMaterialsCache()
+    end
 
     local nearbyMaterials = {}
 
@@ -167,7 +188,7 @@ function MaterialStorage:getNearbyMaterials(e)
             itemDatas = itemStack.variables,
             count = itemStack.count,
             storedIn = tes3.player,
-            storageInstance = self
+            storageInstance = MaterialStorage
         }
         if MaterialStorage.isValidStoredMaterial(storedMaterial) then
             table.insert(nearbyMaterials, storedMaterial)
@@ -175,6 +196,7 @@ function MaterialStorage:getNearbyMaterials(e)
     end
 
     logger:trace("Found %s nearby materials", #nearbyMaterials)
+    MaterialStorage.setNearbyMaterialsCache(nearbyMaterials)
     return nearbyMaterials
 end
 

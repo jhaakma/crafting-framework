@@ -1,4 +1,5 @@
 local Material = require("CraftingFramework.components.Material")
+local MaterialStorage = require("CraftingFramework.components.MaterialStorage")
 local Util = require("CraftingFramework.util.Util")
 local log = Util.createLogger("CraftingMenu")
 
@@ -923,6 +924,7 @@ function CraftingMenu:updateSidebar()
 end
 
 function CraftingMenu:updateMenu()
+    MaterialStorage.clearNearbyMaterialsCache()
     self:populateRecipeList()
     self:updateSidebar()
     self:updateButtons()
@@ -942,6 +944,7 @@ end
 
 ---@param recipes CraftingFramework.Recipe[]
 function CraftingMenu:populateCategoryList(recipes, parent)
+    log:debug("populateCategoryList()")
     table.sort(recipes, sorters[self.currentSorter].sorter)
     for _, recipe in ipairs(recipes) do
         if recipe:isKnown() then
@@ -1005,6 +1008,7 @@ end
 
 
 function CraftingMenu:updateCategoriesList()
+    log:debug("updateCategoriesList()")
     for _, category in pairs(self.categories) do
         log:debug("Clearing recipes for %s", category.name)
         category.recipes = {}
@@ -1035,6 +1039,7 @@ end
 
 
 function CraftingMenu:populateRecipeList()
+    log:debug("populateRecipeList()")
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
     local parent = craftingMenu:findChild(uiids.recipeListBlock)
