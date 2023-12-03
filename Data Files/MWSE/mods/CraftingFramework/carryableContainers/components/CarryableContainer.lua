@@ -88,6 +88,13 @@ function CarryableContainer.getCarryableContainersInInventory(reference)
         local carryable = CarryableContainer:new{ item = stack.object }
         if carryable then
             table.insert(carriedContainers, carryable)
+            --Get containers inside this container
+            if carryable:getContainerRef() then
+                local innerCarryables = CarryableContainer.getCarryableContainersInInventory(carryable:getContainerRef())
+                for _, innerCarryable in pairs(innerCarryables) do
+                    table.insert(carriedContainers, innerCarryable)
+                end
+            end
         end
     end
     return carriedContainers
@@ -271,7 +278,6 @@ function CarryableContainer:getContainerId()
 end
 
 function CarryableContainer:openFromInventory()
-    logger:debug("openFromInventory()")
     self:replaceInInventory()
     logger:debug("Opening container from inventory %s", self:getContainerId())
     local containerRef = self:getCreateContainerRef()
@@ -282,7 +288,6 @@ function CarryableContainer:openFromInventory()
 end
 
 function CarryableContainer:openFromWorld()
-    logger:debug("openFromWorld()")
     self:replaceInWorld()
     logger:debug("Opening container from world %s", self:getContainerId())
     local containerRef = self:getCreateContainerRef()
@@ -315,16 +320,20 @@ function CarryableContainer.recalculateEncumbrance()
     end
 end
 
-function CarryableContainer:calculateWeight()
+---@param e { includeWeightModifier: boolean? }?
+function CarryableContainer:calculateWeight(e)
+    e = e or { includeWeightModifier = false}
+    e.includeWeightModifier = e.includeWeightModifier or false
     local container = self:getCreateContainerRef()
+    local weightModifier = e.includeWeightModifier and self:getWeightModifier() or 1.0
     return container.object.inventory:calculateWeight()
-        * (self:getWeightModifier() or 1.0)
+        * weightModifier
 end
 
 function CarryableContainer:updateStats()
     logger:debug("Updating weight of %s", self.item.id)
     local weightModifier = self:getWeightModifier() or 1.0
-    logger:debug("Weight modifier is %s", weightModifier)
+    logger:debug(" - Weight modifier is %s", weightModifier)
     --add up the weight off all items in the container ref and set it to this item's base weight plus the total
     local totalWeight = self:getBaseWeight()
     local totalValue = self:getBaseValue()
@@ -334,8 +343,8 @@ function CarryableContainer:updateStats()
         totalWeight = totalWeight + (stack.object.weight * stack.count * weightModifier)
         local value = stack.object.value
         local count = stack.count or 1
-        logger:debug("Item %s has value %s", stack.object.id, value)
-        logger:debug("Item %s has count %s", stack.object.id, count)
+        logger:trace(" - Item %s has value %s", stack.object.id, value)
+        logger:trace(" - Item %s has count %s", stack.object.id, count)
         --if has variables, iterate through and multiply value by condition
         if stack.variables then
             ---@param itemData tes3itemData
@@ -345,9 +354,9 @@ function CarryableContainer:updateStats()
             end
         end
         totalValue = totalValue + (value * count)
-        logger:debug("Total value of %s is %s", self.item.id, totalValue)
+        logger:trace(" - Total value of %s is %s", self.item.id, totalValue)
     end
-    logger:debug("Total weight of %s is %s", self.item.id, totalWeight)
+    logger:debug(" - Total weight of %s is %s", self.item.id, totalWeight)
     self.item.weight = totalWeight
     self.item.value = math.floor(totalValue)
 
@@ -362,7 +371,7 @@ end
 function CarryableContainer:createCopy()
     logger:debug("Creating copy of %s", self.item.id)
     local copy = self.item:createCopy{}
-    logger:debug("Created copy %s", copy.id)
+    logger:trace("Created copy %s", copy.id)
     config.persistent.miscCopyToBaseMapping[copy.id:lower()] = self.item.id:lower()
     event.trigger("CraftingFramework:CarryableContainer_CopyCreated", {copy = copy, original = self.item})
     if self.containerConfig.onCopyCreated then
@@ -396,6 +405,10 @@ function CarryableContainer:getBaseValue()
         return 0
     end
     return baseObject.value
+end
+
+function CarryableContainer:getName()
+    return self.item.name
 end
 
 --Get the weight modifier for this container
@@ -484,9 +497,9 @@ function CarryableContainer:replaceInWorld()
             else
                 logger:error("No scene node for %s", containerRef.object.id)
             end
-            tes3.dataHandler:updateCollisionGroupsForActiveCells{}
 
             Container.hide(self.reference)
+            tes3.dataHandler:updateCollisionGroupsForActiveCells{}
         end)
     end
 
@@ -494,6 +507,9 @@ function CarryableContainer:replaceInWorld()
 end
 
 function CarryableContainer:replaceInInventory()
+
+
+
     if self:isCopy() then
         logger:debug("This is a copy, not replacing")
         return self
@@ -503,16 +519,31 @@ function CarryableContainer:replaceInInventory()
         return
     end
     logger:debug("Replacing container in inventory %s", self.item.id)
+
+    local reference = tes3.player
+    --get contents Menu
+    local contentsMenu = tes3ui.findMenu(tes3ui.registerID("MenuContents"))
+    if contentsMenu and contentsMenu.visible then
+        local contentsMenuOwnerRef = contentsMenu:getPropertyObject("MenuContents_ObjectRefr")
+        local containerInContents = contentsMenuOwnerRef
+            and contentsMenuOwnerRef.object.inventory:contains(self.item)
+        if containerInContents then
+            reference = contentsMenuOwnerRef
+        end
+    end
+
+    logger:debug("replacing container %s in inventory of %s", self:getName(), reference.id)
+
     local copy = self:createCopy()
     local itemData
     if not self.reference then
         itemData = self.dataHolder --[[@as tes3itemData]]
     end
-    tes3.player.object.inventory:removeItem{
+    reference.object.inventory:removeItem{
         item = self.item,
         itemData = itemData,
     }
-    tes3.player.object.inventory:addItem{
+    reference.object.inventory:addItem{
         item = copy,
         itemData = itemData,
     }
@@ -523,7 +554,9 @@ end
 
 ---Returns what the capacity of the container should be, based on containerConfig and current MCM setting
 function CarryableContainer:calculateCapacity()
-    return config.mcm.enableInfiniteStorage and MAX_CAPACITY or self.containerConfig.capacity
+    if config.mcm.enableInfiniteStorage then return MAX_CAPACITY end
+    local capacity = self.containerConfig.capacity
+    return capacity
 end
 
 --Get the associated container reference, if it exists
@@ -719,7 +752,7 @@ function CarryableContainer:openRenameMenu(e)
     menu:createLabel{
         text = "Enter a new name:",
     }
-    local t = { name = self.item.name }
+    local t = { name = self:getName() }
     local textField = mwse.mcm.createTextField(menu, {
         buttonText = "Submit",
         variable = mwse.mcm.createTableVariable{
@@ -730,13 +763,13 @@ function CarryableContainer:openRenameMenu(e)
             logger:debug("New name: %s", t.name)
             if t.name == "" then
                 logger:debug("Name is empty, keeping old name")
-                tes3.messageBox("Renamed to %s", self.item.name)
+                tes3.messageBox("Renamed to %s", self:getName())
                 menu:destroy()
                 return
             end
-            if t.name == self.item.name then
+            if t.name == self:getName() then
                 logger:debug("Name is the same, keeping old name")
-                tes3.messageBox("Renamed to %s", self.item.name)
+                tes3.messageBox("Renamed to %s", self:getName())
                 menu:destroy()
                 return
             end
@@ -866,12 +899,12 @@ function CarryableContainer:takeAll()
     local totalWeight = containerInventory:calculateWeight()
     local encumbrance = tes3.mobilePlayer.encumbrance
     local remainingPlayerCapacity = encumbrance.base - encumbrance.current
-    if self.reference then
-        if remainingPlayerCapacity < totalWeight then
-            tes3.messageBox("Not enough space in inventory")
-            return
-        end
-    end
+    -- if self.reference then
+    --     if remainingPlayerCapacity < totalWeight then
+    --         tes3.messageBox("Not enough space in inventory")
+    --         return
+    --     end
+    -- end
     logger:debug("Taking all items from %s", containerRef.id)
     local hasItemsToTransfer = false
     for _, stack in pairs(containerInventory) do
@@ -903,7 +936,7 @@ function CarryableContainer:_openContainerMenu_deprecated()
     self:setSafeInstance()
 
     tes3ui.showMessageMenu{
-        message = self.item.name,
+        message = self:getName(),
         buttons = {
             {
                 text = "Open",

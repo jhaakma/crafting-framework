@@ -16,13 +16,13 @@ end
 
 ---@param reference tes3reference
 function Container.hide(reference)
-    logger:info("Hiding container %s", reference)
+    logger:debug("Hiding container %s", reference)
     reference:disable()
     reference.hasNoCollision = true
 end
 
 function Container.unhide(reference)
-    logger:info("Unhiding container %s", reference)
+    logger:debug("Unhiding container %s", reference)
     reference:enable()
     reference.hasNoCollision = false
 end
@@ -40,6 +40,7 @@ function Container.getMiscIdfromReference(reference)
     logger:trace("Found misc id: %s", miscId)
     return miscId
 end
+
 
 function Container.getMenuReference(contentsMenu)
     local contentsMenu = contentsMenu or tes3ui.findMenu(tes3ui.registerID("MenuContents"))
@@ -66,6 +67,12 @@ local function replaceTakeAllButton(menu, carryable)
     takeAllButton.visible = false
     local takeAllButtonParent = takeAllButton.parent
 
+    --Destroy existing
+    local existingButton = takeAllButtonParent:findChild("merCarryableContainers_takeAllButton")
+    if existingButton then
+        existingButton:destroy()
+    end
+
     local newTakeAllButton = takeAllButtonParent:createButton{
         id = "merCarryableContainers_takeAllButton",
         text = "Take All"
@@ -83,11 +90,19 @@ local function replaceTakeAllButton(menu, carryable)
     return newTakeAllButton
 end
 
+
 local function createFilterButton(transferButtonParent, menu, carryable)
+
+    --Destroy existing
+    local existingButton = transferButtonParent:findChild("merCarryableContainers_filterButton")
+    if existingButton then
+        existingButton:destroy()
+    end
+
     local filter = carryable:getFilter()
     local transferText = string.format("Transfer %s", filter.name)
     local transferButton = transferButtonParent:createButton{
-        id = "merCarryableContainers_transferButton",
+        id = "merCarryableContainers_filterButton",
         text = transferText
     }
     transferButton:register("mouseClick", function()
@@ -105,6 +120,12 @@ end
 ---@param parent tes3uiElement
 ---@param carryable CarryableContainer
 local function addRenameButton(parent, carryable)
+    --Destroy existing
+    local existingButton = parent:findChild("merCarryableContainers_renameButton")
+    if existingButton then
+        existingButton:destroy()
+    end
+
     local renameButton = parent:createButton{
         id = "merCarryableContainers_renameButton",
         text = "Rename"
@@ -126,6 +147,13 @@ end
 ---@param parent tes3uiElement
 ---@param carryable CarryableContainer
 local function addPickupButton(parent, carryable, menu)
+    --Destroy existing
+    local existingButton = parent:findChild("merCarryableContainers_pickupButton")
+    if existingButton then
+        existingButton:destroy()
+    end
+
+
     local pickupButton = parent:createButton{
         id = "merCarryableContainers_pickupButton",
         text = "Pick Up"
@@ -143,6 +171,7 @@ local function addPickupButton(parent, carryable, menu)
     return pickupButton
 end
 
+---@param carryable CarryableContainer
 function Container.updateCapacityFillbar(carryable)
     local menu = tes3ui.findMenu("MenuContents")
     if (menu == nil) then return end
@@ -156,7 +185,13 @@ function Container.updateCapacityFillbar(carryable)
     end
 end
 
-function Container.addCapacityFillbar(menu, carryable)
+local function addCapacityFillbar(menu, carryable)
+    --destroy existing
+    local existingBar = menu:findChild("CarryableContainers:MenuContents_capacity")
+    if existingBar then
+        existingBar:destroy()
+    end
+
 	-- Create capacity fillbar for containers.
     local buttonBlock = menu:findChild("Buttons").children[2]
     local capacityBar = buttonBlock:createFillBar{
@@ -177,6 +212,12 @@ end
 ---@param parent tes3uiElement
 ---@param carryable CarryableContainer
 local function addPositionButton(parent, carryable, menu)
+    --Destroy existing
+    local existingButton = parent:findChild("merCarryableContainers_positionButton")
+    if existingButton then
+        existingButton:destroy()
+    end
+
     --Determine which ref to position. hasCollision means the container is the ref
     local reference = carryable.reference
     if carryable.containerConfig.hasCollision then
@@ -258,7 +299,7 @@ function Container.addCarryableButtonsToMenu(e)
     end
 
     --Add capacity fillbar
-    Container.addCapacityFillbar(menu, carryable)
+    addCapacityFillbar(menu, carryable)
 
     menu:updateLayout()
 end
