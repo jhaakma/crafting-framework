@@ -16,8 +16,6 @@ local function getCarryableFromMenu(menu)
 end
 
 
-
-
 --Add buttons to the container menu.
 -- This can happen for carryable containers or
 -- for containers that are crafted
@@ -25,7 +23,6 @@ end
 local function onContentsMenuActivated(e)
     local reference = Container.getMenuReference(e.element)
     if not reference then return end
-    if not e.newlyCreated then return end
     if not e.element.name == "MenuContents" then return end
 
     --Carryable Containers
@@ -84,6 +81,8 @@ local function onTooltip(e)
     filterLabel.borderRight = 10
     filterLabel.borderBottom = 10
 
+
+
     --Display optional tooltip
     if carryable.containerConfig.getTooltip then
         local tooltipText = carryable.containerConfig.getTooltip(carryable)
@@ -94,6 +93,17 @@ local function onTooltip(e)
         tooltipLabel.borderRight = 10
         tooltipLabel.borderBottom = 10
     end
+
+
+    --Display "Shift + click to open" tooltip
+    local key = util.getQuickModifierKeyText()
+    local tooltipText = string.format("%s + click to open", key)
+    local tooltipLabel = e.tooltip:createLabel{
+        text = tooltipText
+    }
+    tooltipLabel.borderLeft = 10
+    tooltipLabel.borderRight = 10
+    tooltipLabel.borderBottom = 10
 
     --Display Weight Modifier
     local weightModifier = carryable:getWeightModifier()
