@@ -88,20 +88,18 @@ end
 ]]
 ---@param maxDistance number The distance to search for nearby material storages
 function MaterialStorage.getNearbyStorageRefs(maxDistance)
-    if tes3.player.tempData.nearbyStorageRefs then
-        return tes3.player.tempData.nearbyStorageRefs
-    end
+    logger:trace("Getting nearby storage refs")
     ---@type tes3reference[]
     local storageRefs = {}
     MaterialStorage.referenceManager:iterateReferences(function(storageRef)
+        logger:trace("- Found %s", storageRef.object.name)
         local closeEnough = tes3.player.position:distance(storageRef.position) <= maxDistance
-        if not closeEnough then return end
-        if storageRef.disabled or storageRef.deleted then return end
+        if not closeEnough then
+            logger:trace("Ignoring %s because it is too far away", storageRef.object.name)
+            return
+        end
+        if storageRef.deleted then return end
         table.insert(storageRefs, storageRef)
-    end)
-    tes3.player.tempData.nearbyStorageRefs = storageRefs
-    timer.delayOneFrame(function()
-        tes3.player.tempData.nearbyStorageRefs = nil
     end)
     return storageRefs
 end
@@ -114,13 +112,23 @@ end
 
 ---@param materials CraftingFramework.MaterialStorage.storedMaterial[]
 function MaterialStorage.setNearbyMaterialsCache(materials)
+    logger:trace("Setting nearby materials cache")
     tes3.player.tempData.nearbyMaterials = materials
+    --Log all cached materials
+    for _, storedMaterial in ipairs(materials) do
+        logger:trace("Cached %s %s in %s",
+        storedMaterial.count,
+        storedMaterial.item.id,
+        storedMaterial.storedIn.object.name
+    )
+    end
     timer.delayOneFrame(function()
-        tes3.player.tempData.nearbyMaterials = nil
+        MaterialStorage.clearNearbyMaterialsCache()
     end)
 end
 
 function MaterialStorage.clearNearbyMaterialsCache()
+    logger:trace("Clearing nearby materials cache")
     tes3.player.tempData.nearbyMaterials = nil
 end
 
@@ -132,14 +140,19 @@ end
 ---@param e CraftingFramework.MaterialStorage.getNearbyMaterials.params
 ---@return CraftingFramework.MaterialStorage.storedMaterial[]
 function MaterialStorage.getNearbyMaterials(e)
+    logger:trace("Getting nearby materials")
 
-    if MaterialStorage.getNearbyMaterialsCache() then
-        return MaterialStorage.getNearbyMaterialsCache()
+    local cache = MaterialStorage.getNearbyMaterialsCache()
+    if cache then
+        logger:trace("Using cached nearby materials")
+        return cache
     end
 
     local nearbyMaterials = {}
 
     if not e.ignoreNearbyContainers then
+        logger:trace("- Searching nearby containers")
+
         local storageRefs = MaterialStorage.getNearbyStorageRefs(e.maxDistance)
         ---@type CraftingFramework.MaterialStorage.storedMaterial[]
         for _, ref in ipairs(storageRefs) do
@@ -148,6 +161,7 @@ function MaterialStorage.getNearbyMaterials(e)
                 logger:assert(materialStorage~=nil, "No material storage registered for %s", ref.baseObject.id)
                 local storedMaterials = materialStorage:getMaterials(ref)
                 for _, storedMaterial in ipairs(storedMaterials) do
+                    logger:trace("Found %s %s in %s", storedMaterial.count, storedMaterial.item, ref.object.name)
                     table.insert(nearbyMaterials, storedMaterial)
                 end
             end
@@ -235,7 +249,7 @@ end
 function MaterialStorage:removeItem(params)
     logger:assert(params.reference.object.inventory ~= nil, "MaterialStorage %s has no inventory", params.reference.object.id)
 
-    logger:info("Removing %s %s", params.count, params.item.name)
+    logger:trace("Removing %s %s", params.count, params.item.name)
     local numRemoved = tes3.removeItem{
         reference = params.reference,
         item = params.item,

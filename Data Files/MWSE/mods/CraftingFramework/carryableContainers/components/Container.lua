@@ -27,12 +27,12 @@ function Container.unhide(reference)
     reference.hasNoCollision = false
 end
 
-function Container.getMiscIdfromReference(reference)
-    if not reference then
+function Container.getMiscIdfromReference(containerRef)
+    if not containerRef then
         logger:trace("No container ref")
         return nil
     end
-    local miscId = config.persistent.containerToMiscCopyMapping[reference.baseObject.id:lower()]
+    local miscId = config.persistent.containerToMiscCopyMapping[containerRef.baseObject.id:lower()]
     if not miscId then
         logger:trace("No misc id")
         return nil

@@ -7,6 +7,8 @@ local Container = require("CraftingFramework.carryableContainers.components.Cont
 local RefStack = require("CraftingFramework.util.RefStack")
 local MAX_CAPACITY = 65535
 
+
+
 ---@alias CarryableContainer.openFromInventory fun(self:CarryableContainer)
 
 ---@alias CarryableContainer.onCopyCreatedData { copy: tes3misc, original: tes3misc }
@@ -30,13 +32,13 @@ local MAX_CAPACITY = 65535
 ---A carrayable container is a misc item that, when activated
 --- or equipped, will open its associated container reference
 ---@class CarryableContainer : ItemInstance
+---@field reference tes3reference The reference of the carryable item
 ---@field item tes3misc
 ---@field containerConfig CarryableContainer.containerConfig
 ---@field data table
 ---@field filter CarryableContainers.ItemFilter|nil
 local CarryableContainer = ItemInstance:new()
 
----Get a container by its base itemId
 
 ---Register a carryable container
 ---@param data CarryableContainer.containerConfig
@@ -52,7 +54,7 @@ function CarryableContainer.register(data)
     config.registeredContainers[id] = data
 end
 
----@param item tes3item|tes3misc|tes3object
+---@param item tes3item|tes3misc|tes3object The carryable object to get the container config for
 ---@return CarryableContainer.containerConfig|nil
 function CarryableContainer.getContainerConfig(item)
     local id = item.id:lower()
@@ -207,6 +209,10 @@ function CarryableContainer.removeItem(e)
     return count - remaining
 end
 
+---Checks whether a container reference is a carryable container
+function CarryableContainer.isCarryableContainer(containerRef)
+    return config.persistent.containerToMiscCopyMapping[containerRef.baseObject.id:lower()] ~= nil
+end
 
 
 ---Construct an instance of a carryable container
@@ -501,6 +507,27 @@ function CarryableContainer:replaceInWorld()
             Container.hide(self.reference)
             tes3.dataHandler:updateCollisionGroupsForActiveCells{}
         end)
+    else
+        self:setSafeInstance()
+        timer.frame.delayOneFrame(function()
+            self = self:getSafeInstance() --[[@as CarryableContainer]]
+            if not self then
+                logger:error("Could not get safe instance for %s", self.item.id)
+                return
+            end
+            --move container to misc position
+            local containerRef = self:getCreateContainerRef()
+            if containerRef then
+                logger:debug("Moving container %s to misc position", containerRef.object.name)
+                Container.positionCell{
+                    reference = containerRef,
+                    position = self.reference.position,
+                    orientation = self.reference.orientation,
+                    cell = self.reference.cell,
+                    forceCellChange = true
+                }
+            end
+        end)
     end
 
     return self
@@ -582,12 +609,13 @@ function CarryableContainer:getCreateContainerRef()
             position = {
                 x = tes3.player.position.x,
                 y = tes3.player.position.y,
-                z = tes3.player.position.z - 1000,
+                z = tes3.player.position.z,
             },
             orientation = tes3.player.orientation,
             cell = tes3.player.cell,
             scale = self.containerConfig.scale or 1.0
         }
+        Container.hide(containerRef)
 
         --Map the container to the misc item
         logger:debug("Mapping container %s to misc %s", containerObject.id, self.item.id)
