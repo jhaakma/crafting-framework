@@ -94,16 +94,17 @@ local function onTooltip(e)
         tooltipLabel.borderBottom = 10
     end
 
-
-    --Display "Shift + click to open" tooltip
-    local key = util.getQuickModifierKeyText()
-    local tooltipText = string.format("%s + click to open", key)
-    local tooltipLabel = e.tooltip:createLabel{
-        text = tooltipText
-    }
-    tooltipLabel.borderLeft = 10
-    tooltipLabel.borderRight = 10
-    tooltipLabel.borderBottom = 10
+    if tes3ui.menuMode() then
+        --Display "Shift + click to open" tooltip
+        local key = util.getQuickModifierKeyText()
+        local tooltipText = string.format("%s + click to open", key)
+        local tooltipLabel = e.tooltip:createLabel{
+            text = tooltipText
+        }
+        tooltipLabel.borderLeft = 10
+        tooltipLabel.borderRight = 10
+        tooltipLabel.borderBottom = 10
+    end
 
     --Display Weight Modifier
     local weightModifier = carryable:getWeightModifier()
