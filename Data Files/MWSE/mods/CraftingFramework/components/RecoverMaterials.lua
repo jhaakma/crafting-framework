@@ -52,4 +52,4 @@ local function showRecoverMaterialsMessage(e)
     end
 end
 
-event.register("equip", showRecoverMaterialsMessage)
+event.register("equip", showRecoverMaterialsMessage, { priority = 500 })
