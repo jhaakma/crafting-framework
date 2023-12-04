@@ -141,12 +141,12 @@ local function onInventoryTileClicked(e)
         return
     end
     if util.isQuickModifierDown() then
-
+        local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
         --menu click sound
         tes3.worldController.menuClickSound:play()
         container:openFromInventory()
 
-        local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
+
         if isEquipped then
             logger:debug("Container is equipped, triggering equip again in case it was replaced")
             tes3.mobilePlayer:equip{ item = container.item }
