@@ -167,6 +167,17 @@ event.register("objectCreated", function (e)
         newConfig.itemId = e.object.id
         CarryableContainer.register(newConfig)
         config.persistent.containerCopies[e.copiedFrom.id:lower()] = e.object.id:lower()
+
+        --Remap the misc copy to the new container
+        local containerId = config.persistent.miscCopyToContainerMapping[e.copiedFrom.id:lower()]
+        if containerId then
+            local containerObject = tes3.getObject(containerId)
+            if containerObject then
+                containerObject.name = e.object.name
+            end
+            local newItemId = e.object.id:lower()
+            CarryableContainer.mapItemToContainer(newItemId, containerId)
+        end
     end
 end)
 

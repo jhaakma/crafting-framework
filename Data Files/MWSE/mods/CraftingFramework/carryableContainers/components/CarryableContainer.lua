@@ -625,16 +625,18 @@ function CarryableContainer:getCreateContainerRef()
         Container.hide(containerRef)
 
         --Map the container to the misc item
-        logger:debug("Mapping container %s to misc %s", containerObject.id, self.item.id)
-        config.persistent.miscCopyToContainerMapping[self.item.id:lower()] = containerObject.id:lower()
-        config.persistent.containerToMiscCopyMapping[containerObject.id:lower()] = self.item.id:lower()
+        CarryableContainer.mapItemToContainer(self.item.id, containerObject.id)
 
         logger:debug("Created container reference %s for %s", containerRef.id, self.item.id)
     end
     return containerRef
 end
 
-
+function CarryableContainer.mapItemToContainer(itemId, containerId)
+    logger:debug("Mapping container %s to misc %s", containerId, itemId)
+    config.persistent.miscCopyToContainerMapping[itemId:lower()] = containerId:lower()
+    config.persistent.containerToMiscCopyMapping[containerId:lower()] = itemId:lower()
+end
 
 ---@class CarryableContainer.pickup.params
 ---@field doPlaySound? boolean `default: false` Whether to play the sound when picking up the item
