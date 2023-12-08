@@ -57,7 +57,14 @@ end
 ---@param item tes3item|tes3misc|tes3object The carryable object to get the container config for
 ---@return CarryableContainer.containerConfig|nil
 function CarryableContainer.getContainerConfig(item)
-    local id = item.id:lower()
+    return CarryableContainer.getContainerConfigById(item.id)
+end
+
+
+---@param id string
+---@return CarryableContainer.containerConfig|nil
+function CarryableContainer.getContainerConfigById(id)
+    local id = id:lower()
     if config.persistent.miscCopyToBaseMapping[id] then
         --if this is a copy of a container, get the base container config
         id = config.persistent.miscCopyToBaseMapping[id]

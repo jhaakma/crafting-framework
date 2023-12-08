@@ -93,8 +93,8 @@ local function updateOnTransfer()
 end
 event.register("enterFrame", updateOnTransfer)
 
----@param e itemTileUpdatedEventData
-local function onItemTileUpdated(e)
+
+event.register("itemTileUpdated", function(e)
     if tileUpdatedThisFrame then return end
     --Check container is open
     local contentsMenu = tes3ui.findMenu(tes3ui.registerID("MenuContents"))
@@ -102,12 +102,11 @@ local function onItemTileUpdated(e)
         return
     end
     tileUpdatedThisFrame = true
-end
-event.register("itemTileUpdated", onItemTileUpdated)
+end)
 
 
 ---@param e itemDroppedEventData
-local function onDrop(e)
+event.register("itemDropped", function(e)
     if not e.reference then return end
     local carryableMisc = CarryableContainer:new{
         reference = e.reference
@@ -117,54 +116,77 @@ local function onDrop(e)
         carryableMisc:replaceInWorld()
         return true
     end
-end
-event.register("itemDropped", onDrop, { priority = -200})
+end, { priority = -200})
 
---recalibrate encumbrance on load
-event.register("loaded", function()
-    CarryableContainer.recalculateEncumbrance()
+
+event.register("itemTileUpdated", function(itemTileEventData)
+    itemTileEventData.element:registerBefore("mouseClick", function(e)
+        -- Fire off an event when the tile is clicked for other modules to hook into.
+        local tileData = e.source:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile") --- @type tes3inventoryTile
+        tileData = tileData or e.source:getPropertyObject("MenuContents_Thing", "tes3inventoryTile")
+        if not tileData then return end
+
+        logger:debug("Clicked on container")
+        local container = CarryableContainer:new{ item = tileData.item, itemData = tileData.itemData }
+        if not container then
+            logger:debug("not a carryable container")
+            return
+        end
+        if util.isQuickModifierDown() then
+            local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
+            --menu click sound
+            tes3.worldController.menuClickSound:play()
+            container:openFromInventory()
+
+
+            if isEquipped then
+                logger:debug("Container is equipped, triggering equip again in case it was replaced")
+                tes3.mobilePlayer:equip{ item = container.item }
+            end
+
+            return false
+        end
+        container:setSafeInstance()
+        timer.frame.delayOneFrame(function()
+            if container:valid() then
+                container:updateStats()
+            end
+        end)
+    end)
 end)
 
-
---- Called when any MenuInventory item tile is clicked.
---- @param e tes3uiEventData
-local function onInventoryTileClicked(e)
-    -- Fire off an event when the tile is clicked for other modules to hook into.
-    local tileData = e.source:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile") --- @type tes3inventoryTile
-    tileData = tileData or e.source:getPropertyObject("MenuContents_Thing", "tes3inventoryTile")
-    if not tileData then return end
-
-    logger:debug("Clicked on container")
-    local container = CarryableContainer:new{ item = tileData.item, itemData = tileData.itemData }
-    if not container then
-        logger:debug("not a carryable container")
-        return
+local initialized
+event.register("objectCreated", function (e)
+    if not initialized then return end
+    local containerConfig = e.copiedFrom and CarryableContainer.getContainerConfig(e.copiedFrom)
+    if containerConfig then
+        logger:info("Registering cloned carryable container. Original: %s, New: %s",
+            e.copiedFrom.id, e.object.id)
+        ---@type CarryableContainer.containerConfig
+        local newConfig = table.copy(containerConfig)
+        newConfig.itemId = e.object.id
+        CarryableContainer.register(newConfig)
+        config.persistent.containerCopies[e.copiedFrom.id:lower()] = e.object.id:lower()
     end
-    if util.isQuickModifierDown() then
-        local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
-        --menu click sound
-        tes3.worldController.menuClickSound:play()
-        container:openFromInventory()
+end)
 
+event.register("initialized", function()
+    initialized = true
+end)
 
-        if isEquipped then
-            logger:debug("Container is equipped, triggering equip again in case it was replaced")
-            tes3.mobilePlayer:equip{ item = container.item }
+--recalibrate encumbrance on load
+--And register copied containers
+event.register("loaded", function()
+    CarryableContainer.recalculateEncumbrance()
+    for originalId, copiedId in pairs(config.persistent.containerCopies) do
+        logger:info("Registering copied carryable container. Original: %s, New: %s",
+        originalId, copiedId)
+        local containerConfig = CarryableContainer.getContainerConfigById(originalId)
+        if containerConfig then
+            ---@type CarryableContainer.containerConfig
+            local newConfig = table.copy(containerConfig)
+            newConfig.itemId = copiedId
+            CarryableContainer.register(newConfig)
         end
-
-        return false
     end
-    container:setSafeInstance()
-    timer.frame.delayOneFrame(function()
-        if container:valid() then
-            container:updateStats()
-        end
-    end)
-end
-
---- Claim mouse click events on item tiles.
---- @param e itemTileUpdatedEventData
-local function onInventoryTileUpdated(e)
-    e.element:registerBefore("mouseClick", onInventoryTileClicked)
-end
-event.register("itemTileUpdated", onInventoryTileUpdated)
+end)
