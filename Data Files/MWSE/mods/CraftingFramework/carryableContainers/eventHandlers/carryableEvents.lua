@@ -155,38 +155,6 @@ event.register("itemTileUpdated", function(itemTileEventData)
     end)
 end)
 
-local initialized
-event.register("objectCreated", function (e)
-    if not initialized then return end
-    local containerConfig = e.copiedFrom and CarryableContainer.getContainerConfig(e.copiedFrom)
-    if containerConfig then
-        logger:info("Registering cloned carryable container. Original: %s, New: %s",
-            e.copiedFrom.id, e.object.id)
-        ---@type CarryableContainer.containerConfig
-        local newConfig = table.copy(containerConfig)
-        newConfig.itemId = e.object.id
-        CarryableContainer.register(newConfig)
-        config.persistent.containerCopies[e.copiedFrom.id:lower()] = e.object.id:lower()
-
-        --Remap the misc copy to the new container
-        local containerId = config.persistent.miscCopyToContainerMapping[e.copiedFrom.id:lower()]
-        if containerId then
-            local containerObject = tes3.getObject(containerId)
-            if containerObject then
-                containerObject.name = e.object.name
-            end
-            local newItemId = e.object.id:lower()
-            CarryableContainer.mapItemToContainer(newItemId, containerId)
-        end
-    end
-end)
-
-event.register("initialized", function()
-    initialized = true
-end)
-
---recalibrate encumbrance on load
---And register copied containers
 event.register("loaded", function()
     CarryableContainer.recalculateEncumbrance()
     for originalId, copiedId in pairs(config.persistent.containerCopies) do
@@ -201,3 +169,4 @@ event.register("loaded", function()
         end
     end
 end)
+

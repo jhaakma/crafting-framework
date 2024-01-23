@@ -94,7 +94,7 @@ local function onTooltip(e)
         tooltipLabel.borderBottom = 10
     end
 
-    if tes3ui.menuMode() then
+    if tes3ui.menuMode() and not carryable.reference then
         --Display "Shift + click to open" tooltip
         local key = util.getQuickModifierKeyText()
         local tooltipText = string.format("%s + click to open", key)

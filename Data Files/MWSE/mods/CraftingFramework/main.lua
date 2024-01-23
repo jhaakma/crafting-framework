@@ -3,9 +3,11 @@ require("CraftingFramework.components.RecoverMaterials")
 require("CraftingFramework.components.CraftingEvents")
 require("CraftingFramework.test")
 require("CraftingFramework.carryableContainers")
+require("CraftingFramework.copiedObjects.eventHandler")
 
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("CraftingFramework")
+
 local metadata = toml.loadMetadata("The Crafting Framework") --[[@as MWSE.Metadata]]
 local config = require("CraftingFramework.config")
 local CraftingFramework = require("CraftingFramework")

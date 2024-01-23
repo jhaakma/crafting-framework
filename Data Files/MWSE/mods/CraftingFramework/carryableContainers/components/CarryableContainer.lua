@@ -1,3 +1,14 @@
+--[[
+CarryableContainer.lua
+
+This class represents a carryable container, which is a misc item that, when activated,
+will open its associated container reference.
+
+Usage:
+Call CarryableContainer.register() to register a new carryable container.
+See the CarryableContainer.containerConfig annotation for details on the config options.
+]]
+
 local config = require("CraftingFramework.carryableContainers.config")
 local util = require("CraftingFramework.util.Util")
 local logger = util.createLogger("CarryableContainer")
@@ -5,14 +16,15 @@ local ItemInstance = require("CraftingFramework.carryableContainers.components.I
 local ItemFilter = require("CraftingFramework.carryableContainers.components.ItemFilter")
 local Container = require("CraftingFramework.carryableContainers.components.Container")
 local RefStack = require("CraftingFramework.util.RefStack")
+local CopiedObjects = require("CraftingFramework.copiedObjects")
+
 local MAX_CAPACITY = 65535
 
-
-
+---Overrride function when activating from inventory
 ---@alias CarryableContainer.openFromInventory fun(self:CarryableContainer)
-
+---Callback function when a copy of this container is created
 ---@alias CarryableContainer.onCopyCreatedData { copy: tes3misc, original: tes3misc }
-
+---Container Config
 ---@class CarryableContainer.containerConfig
 ---@field itemId string The id of the item to use for the container
 ---@field filter CarryableContainers.DefaultItemFilter? The id of the filter to use for the container
@@ -20,8 +32,8 @@ local MAX_CAPACITY = 65535
 ---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
 ---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.
 ---@field scale number? The scale of the placed container
----@field openFromInventory? fun(self:CarryableContainer) Overrride function when activating from inventory
----@field onCopyCreated? fun(self:CarryableContainer, data:CarryableContainer.onCopyCreatedData) Callback function when a copy of this container is created
+---@field openFromInventory? fun(self:CarryableContainer)
+---@field onCopyCreated? fun(self:CarryableContainer, data:CarryableContainer.onCopyCreatedData)
 ---@field getWeightModifier? fun(self:CarryableContainer):number Override function to get the weight modifier for this container
 ---@field getWeightModifierText? fun(self:CarryableContainer):string Override function to get the weight modifier text for this container
 ---@field getTooltip? fun(self:CarryableContainer):string An optional callback to add an additional tooltip to the container
@@ -52,6 +64,49 @@ function CarryableContainer.register(data)
         logger:warn("CarryableContainer %s already exists, overwriting", id)
     end
     config.registeredContainers[id] = data
+    CopiedObjects.register{
+        id = id,
+        onCopied = CarryableContainer.onCopied,
+        onLoad = CarryableContainer.onLoad,
+    }
+end
+
+---@type CopiedObjects.onCopiedCallback
+function CarryableContainer.onCopied(original, copy)
+    local containerConfig = original and CarryableContainer.getContainerConfig(copy)
+    if containerConfig then
+        logger:info("Registering copied carryable container. Original: %s, New: %s",
+            original, copy)
+        ---@type CarryableContainer.containerConfig
+        local newConfig = table.copy(containerConfig)
+        newConfig.itemId = copy.id
+        CarryableContainer.register(newConfig)
+        --Remap the misc copy to the new container
+        local containerId = config.persistent.miscCopyToContainerMapping[original.id:lower()]
+        if containerId then
+            local containerObject = tes3.getObject(containerId)
+            if containerObject then
+                containerObject.name = copy.name
+            end
+            local newItemId = copy.id:lower()
+            CarryableContainer.mapItemToContainer(newItemId, containerId)
+        end
+        if containerConfig.onCopyCreated then
+            containerConfig.onCopyCreated(CarryableContainer, {copy = copy, original = original})
+        end
+    end
+end
+
+function CarryableContainer.onLoad(original, copy)
+    logger:info("Registering copied carryable container. Original: %s, New: %s",
+    original, copy)
+    local containerConfig = CarryableContainer.getContainerConfig(original)
+    if containerConfig then
+        ---@type CarryableContainer.containerConfig
+        local newConfig = table.copy(containerConfig)
+        newConfig.itemId = copy.id
+        CarryableContainer.register(newConfig)
+    end
 end
 
 ---@param item tes3item|tes3misc|tes3object The carryable object to get the container config for
@@ -116,7 +171,9 @@ end
 ---Gets the full list of items in the reference's inventory, including items in containers
 ---@param reference? tes3reference Default: tes3.player
 ---@return tes3itemStack[] #The list of items
-function CarryableContainer.getFullInventory(reference)
+function CarryableContainer.getFullInventory(reference, checkedContainers)
+    ---Cache each container we've already checked to prevent infinite recursion
+    checkedContainers = checkedContainers or {}
     --- all items in inventory and in containers
     ---@type tes3itemStack[]
     local inventory = {}
@@ -126,8 +183,9 @@ function CarryableContainer.getFullInventory(reference)
         local carryable = CarryableContainer:new{ item = stack.object }
         if carryable then
             local containerRef = carryable:getContainerRef()
-            if containerRef then
-                local containerInventory = CarryableContainer.getFullInventory(containerRef)
+            if containerRef and not checkedContainers[containerRef] then
+                checkedContainers[containerRef] = true
+                local containerInventory = CarryableContainer.getFullInventory(containerRef, checkedContainers)
                 for _, stack in pairs(containerInventory) do
                     table.insert(inventory, stack)
                 end
@@ -169,6 +227,7 @@ function CarryableContainer.getItemCount(e)
     end
     return count
 end
+
 
 ---@class CarryableContainer.removeItem.params : tes3.removeItem.params
 ---@field reference tes3reference
@@ -214,6 +273,34 @@ function CarryableContainer.removeItem(e)
         end
     end
     return count - remaining
+end
+
+---@param e tes3.transferItem.params
+function CarryableContainer.transferItem(e)
+    ---For each inventory, check item count to see if it's in that container, then do tes3.transferItem
+    local count = e.count or 1
+    local transferred = tes3.transferItem(e)
+    local remaining = count - transferred
+    if remaining > 0 then
+        for _, stack in pairs(e.from.object.inventory) do
+            local carryable = CarryableContainer:new{ item = stack.object }
+            if carryable then
+                local containerRef = carryable:getContainerRef()
+                if containerRef then
+                    ---@type tes3.transferItem.params
+                    local params = table.copy(e)
+                    params.from = containerRef
+                    params.count = remaining
+                    local transferred =  CarryableContainer.transferItem(params)
+                    remaining = remaining - transferred
+                    if remaining <= 0 then
+                        break
+                    end
+                end
+            end
+        end
+    end
+    return transferred
 end
 
 ---Checks whether a container reference is a carryable container
@@ -387,9 +474,6 @@ function CarryableContainer:createCopy()
     logger:trace("Created copy %s", copy.id)
     config.persistent.miscCopyToBaseMapping[copy.id:lower()] = self.item.id:lower()
     event.trigger("CraftingFramework:CarryableContainer_CopyCreated", {copy = copy, original = self.item})
-    if self.containerConfig.onCopyCreated then
-        self.containerConfig.onCopyCreated(self, {copy = copy, original = self.item})
-    end
     return copy
 end
 
@@ -679,6 +763,36 @@ function CarryableContainer:pickup(e)
     end)
 end
 
+---Check if the container has been placed inside itself,
+--- or in a container that is inside itself, etc.
+--- If so, send it back to the player inventory with a message
+function CarryableContainer:checkAndRemoveFromSelf()
+    local containerRef = self:getContainerRef()
+    if containerRef then
+        ---Look for this container anywhere inside the container
+        for _, stack in pairs(self.getFullInventory(containerRef)) do
+            logger:debug("Checking stack %s", stack.object.id)
+            logger:debug("Self.id: %s", self.item.id)
+
+            --Check if adding container to itself
+            local isItself = stack.object.id:lower() == self.item.id
+            if isItself then
+                self.transferItem{
+                    from = containerRef,
+                    to = tes3.player,
+                    item = stack.object,
+                    count = stack.count,
+                    playSound = false
+                }
+                tes3.messageBox("You cannot place this container inside itself")
+            end
+        end
+    end
+end
+
+---Check if the container has any items that are disallowed by the containers filter,
+--- and send them back to the player's inventory
+--- Also checks and removes any items that are containers inside themselves
 function CarryableContainer:checkAndBlockTransfer()
     --Check container inventory for item with this container as its containerID on itemData and remove
     local containerRef = self:getCreateContainerRef()
@@ -694,20 +808,14 @@ function CarryableContainer:checkAndBlockTransfer()
 
     ---@param stack tes3itemStack
     for _, stack in pairs(containerRef.object.inventory) do
-        logger:debug("Checking stack %s", stack.object.id)
-        logger:debug("Self.id: %s", self.item.id)
-
         local item = stack.object --[[@as tes3item]]
         local count = stack.count
 
-        --Check if adding container to itself
-        local isItself = item.id:lower() == self.item.id
-        if isItself then
-            table.insert(itemsToRemove, {
-                item = item,
-                count = count,
-            })
+        local innerCarryable = CarryableContainer:new{ item = item }
+        if innerCarryable then
+            innerCarryable:checkAndRemoveFromSelf()
         end
+
         local filter = self:getFilter()
         if filter then
             logger:debug("Checking filter")
@@ -757,17 +865,16 @@ function CarryableContainer:checkAndBlockTransfer()
                 item = itemToRemove.item, ---@diagnostic disable-line assign-type-mismatch
                 itemData = itemToRemove.itemData,
                 count = itemToRemove.count,
+                playSound = false
             }
         end
         tes3.messageBox(invalidMessage or ItemFilter.defaultInvalidMessage)
     end
 end
 
----@class CarryableContainer.openRenameMenu.params
----@field menuModeStaysOpen boolean? If true, the menu will stay open after the button is pressed
----@field callback fun() Callback function to run after the renaming is complete
 
----@param e? CarryableContainer.openRenameMenu.params
+---Opens the Rename menu for a container
+---@param e? { menuModeStaysOpen: boolean?, callback: fun() }
 function CarryableContainer:openRenameMenu(e)
     e = e or {}
 
@@ -823,11 +930,13 @@ function CarryableContainer:openRenameMenu(e)
     tes3ui.enterMenuMode("CarryableContainers_RenameMenu")
 end
 
+---Transfer all filtered items from player inventory to the container
+---Get all the filtered items, calculate the weight, then check if there is enough space
+---If not enough space, cancel the transfer with a message saying why
+---Otherwise, use transferItem on everything
+---
+--- TODO: Check if weight modifier should be removed here
 function CarryableContainer:transferFiltered()
-    --Transfer all filtered items from player inventory to the container
-    --Get all the filtered items, calculate the weight, then check if there is enough space
-    --If not enough space, cancel the transfer with a message saying why
-    --Otherwise, use transferItem on everything
 
     local containerRef = self:getCreateContainerRef()
     if not containerRef then
@@ -919,7 +1028,7 @@ function CarryableContainer:transferFiltered()
     end
 end
 
--- Transfer all items in the container to the player, if the player has enough space
+-- Transfer all items in the container to the player
 function CarryableContainer:takeAll()
     local containerRef = self:getCreateContainerRef()
     if not containerRef then
@@ -959,62 +1068,6 @@ function CarryableContainer:takeAll()
     else
         tes3.messageBox("Nothing to transfer.")
     end
-end
-
-function CarryableContainer:_openContainerMenu_deprecated()
-    logger:debug("Opening container menu for %s", self.item.id)
-    --options: open, pick up. use tes3ui.showMessageMenu
-    self:setSafeInstance()
-
-    tes3ui.showMessageMenu{
-        message = self:getName(),
-        buttons = {
-            {
-                text = "Open",
-                callback = function()
-                    timer.delayOneFrame(function()
-                        self = self:getSafeInstance() --[[@as CarryableContainer]]
-                        if self then
-                            self:open()
-                            self:updateStats()
-                        else
-                            logger:error("Failed to get safe instance when opening")
-                        end
-                    end)
-                end
-            },
-            {
-                text = "Rename",
-                callback = function()
-                    timer.delayOneFrame(function()
-                        self = self:getSafeInstance() --[[@as CarryableContainer]]
-                        if self then
-                            self:openRenameMenu()
-                        else
-                            logger:error("Failed to get safe instance when renaming")
-                        end
-                    end)
-                end
-            },
-            {
-                text = "Pick up",
-                callback = function ()
-                    timer.delayOneFrame(function()
-                        self = self:getSafeInstance() --[[@as CarryableContainer]]
-                        if self then
-                            self:pickup()
-                        else
-                            logger:debug("Failed to get safe instance when picking up")
-                        end
-                    end)
-                end,
-                showRequirements = function()
-                    return self.reference ~= nil
-                end
-            }
-        },
-        cancels = true
-    }
 end
 
 return CarryableContainer
