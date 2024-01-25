@@ -73,7 +73,7 @@ end
 
 ---@type CopiedObjects.onCopiedCallback
 function CarryableContainer.onCopied(original, copy)
-    local containerConfig = original and CarryableContainer.getContainerConfig(copy)
+    local containerConfig = original and CarryableContainer.getContainerConfig(original)
     if containerConfig then
         logger:info("Registering copied carryable container. Original: %s, New: %s",
             original, copy)
@@ -378,6 +378,13 @@ function CarryableContainer:getContainerId()
 end
 
 function CarryableContainer:openFromInventory()
+    local barterMenu = tes3ui.findMenu("MenuBarter")
+    local inBarterMenu = barterMenu and barterMenu.visible
+    if inBarterMenu then
+        logger:warn("Can't open containers while bartering")
+        return
+    end
+
     self:replaceInInventory()
     logger:debug("Opening container from inventory %s", (self:getContainerId() or tes3.player))
     local containerRef = self:getCreateContainerRef()
@@ -396,6 +403,7 @@ end
 
 function CarryableContainer:open()
     self.logger:debug("open")
+
     --if ref, open from world, otherwise open from inventory
     if self.reference then
         self:openFromWorld()
@@ -431,13 +439,13 @@ function CarryableContainer:calculateWeight(e)
 end
 
 function CarryableContainer:updateStats()
+    local containerRef = self:getCreateContainerRef()
     logger:debug("Updating weight of %s", self.item.id)
     local weightModifier = self:getWeightModifier() or 1.0
     logger:debug(" - Weight modifier is %s", weightModifier)
     --add up the weight off all items in the container ref and set it to this item's base weight plus the total
     local totalWeight = self:getBaseWeight()
     local totalValue = self:getBaseValue()
-    local containerRef = self:getCreateContainerRef()
     ---@param stack tes3itemStack
     for _, stack in pairs(containerRef.object.inventory) do
         totalWeight = totalWeight + (stack.object.weight * stack.count * weightModifier)
@@ -633,6 +641,7 @@ function CarryableContainer:replaceInInventory()
         logger:error("Trying to replace in inventory for reference %s", self.reference.id)
         return
     end
+    logger:debug("Replacing container in inventory %s", self.item.id)
     local reference = tes3.player
     --get contents Menu
     local contentsMenu = tes3ui.findMenu(tes3ui.registerID("MenuContents"))
@@ -651,17 +660,31 @@ function CarryableContainer:replaceInInventory()
     if not self.reference then
         itemData = self.dataHolder --[[@as tes3itemData]]
     end
-    reference.object.inventory:removeItem{
+    -- local isEquipped = tes3.player.object:hasItemEquipped(self.item)
+    tes3.removeItem{
+        reference = reference,
         item = self.item,
         itemData = itemData,
     }
-    reference.object.inventory:addItem{
+    tes3.addItem{
+        reference = reference,
         item = copy,
         itemData = itemData,
     }
+    -- if isEquipped then
+    --     reference.mobile:equip{ item = copy }
+    -- end
     --update self with new item
     self.item = copy --[[@as tes3misc]]
     self.dataHolder = itemData
+end
+
+function CarryableContainer:replace()
+    if self.reference then
+        self:replaceInWorld()
+    else
+        self:replaceInInventory()
+    end
 end
 
 ---Returns what the capacity of the container should be, based on containerConfig and current MCM setting
