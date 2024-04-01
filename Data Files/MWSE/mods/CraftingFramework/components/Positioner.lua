@@ -206,6 +206,14 @@ local function simulatePlacement()
         end
     end
 
+
+    if Positioner.doFloat then
+        local waterLevel = Positioner.active.cell.waterLevel
+        if waterLevel and targetPos.z < waterLevel then
+            targetPos.z = waterLevel + Positioner.floatOffset
+        end
+    end
+
     -- Incrementally rotate the same amount as the player, to keep relative alignment with player.
     Positioner.playerLastOri = tes3.player.orientation:copy()
     if (Positioner.rotateMode) then
@@ -218,11 +226,17 @@ local function simulatePlacement()
 
     Positioner.active.sceneNode.appCulled = false
     Positioner.active.position = targetPos
-    Positioner.active.orientation.z = wrapRadians(Positioner.active.orientation.z + d_theta)
+    Positioner.active.orientation = tes3vector3.new(0, 0, wrapRadians(Positioner.active.orientation.z + d_theta))
+
 
     local doOrient = config.persistent.placementSetting == settings.ground
     if doOrient then
-        if orienter.orientRefToGround{ref = Positioner.active, maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z)} then
+        if orienter.orientRefToGround{
+            ref = Positioner.active,
+            maxVerticalDistance = (Positioner.boundMax.z-Positioner.boundMin.z),
+            doFloat = Positioner.doFloat,
+            floatOffset = Positioner.floatOffset
+        } then
             return
         end
     end
@@ -276,9 +290,6 @@ end
 Positioner.togglePlacement = function(e)
     Positioner.maxReach = tes3.getPlayerActivationDistance() + getWidth()
     e = e or { target = nil }
-    --init settings
-    Positioner.pinToWall = e.pinToWall or false
-    Positioner.blockToggle = e.blockToggle or false
 
     config.persistent.placementSetting = config.persistent.placementSetting or "ground"
     logger:debug("togglePlacement")
@@ -288,6 +299,12 @@ Positioner.togglePlacement = function(e)
         finalPlacement()
         return
     end
+
+    --init settings
+    Positioner.pinToWall = e.pinToWall or false
+    Positioner.blockToggle = e.blockToggle or false
+    Positioner.doFloat = e.doFloat or false
+    Positioner.floatOffset = e.floatOffset or 0
 
     local target
     if not e.target then
@@ -395,7 +412,13 @@ endPlacement = function()
     logger:debug("endPlacement()")
     --if ground mode, drop to ground
     if config.persistent.placementSetting == "ground" then
-        orienter.orientRefToGround{ref = Positioner.active}
+        logger:warn("doFloat: %s, floatOffset: %s"
+            , Positioner.doFloat, Positioner.floatOffset)
+        orienter.orientRefToGround{
+            ref = Positioner.active,
+            doFloat = Positioner.doFloat,
+            floatOffset = Positioner.floatOffset
+        }
     end
 
     recreateRef(Positioner.active)
@@ -522,6 +545,8 @@ event.register("keyDown", onActiveKey, { priority = 100 })
 ---@field pinToWall? boolean
 ---@field placementSetting? CraftingFramework.Positioner.PlacementSetting
 ---@field blockToggle? boolean
+---@field doFloat? boolean
+---@field floatOffset? number
 
 ---@param e Positioner.startPositioning.params
 Positioner.startPositioning = function(e)

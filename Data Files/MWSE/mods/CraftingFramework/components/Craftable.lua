@@ -75,7 +75,8 @@ local Craftable = {
             placementSetting = { type = "string", required = false},
             blockPlacementSettingToggle = { type = "boolean", required = false},
             pinToWall = { type = "boolean", required = false},
-
+            floats = { type = "boolean", required = false},
+            floatOffset = { type = "number", required = false},
             --Deprecated
             mesh = { type = "string", required = false},
         }
@@ -387,6 +388,8 @@ function Craftable:position(reference)
                 placementSetting = self.placementSetting,
                 blockToggle = self.blockPlacementSettingToggle,
                 pinToWall = self.pinToWall,
+                doFloat = self.floats,
+                floatOffset = self.floatOffset,
             }
         end
     end)

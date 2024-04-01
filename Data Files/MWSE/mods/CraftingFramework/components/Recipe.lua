@@ -69,6 +69,8 @@ local config = require("CraftingFramework.config")
 ---@field placementSetting nil|CraftingFramework.Positioner.PlacementSetting **Default "default"** Determines the placement setting used by the positioner. This can be used to override the default placement setting for a specific recipe.
 ---@field blockPlacementSettingToggle nil|boolean **Default false** If true, the placement setting toggle will be disabled for this recipe. This is useful for recipes that have a specific placement setting.
 ---@field pinToWall nil|boolean **Default false** If true, the object will be pinned to the wall when placed. This is useful for objects that are intended to be placed on walls.
+---@field floats nil|boolean **Default false** If true, the object will float when placed. This is useful for objects that are intended to be placed in water.
+---@field floatOffset nil|number **Default 0** The offset from the water level that the object will float at. This is useful for objects that are intended to float at a specific height in water.
 
 local MaterialRequirementSchema = {
     name = "MaterialRequirement",

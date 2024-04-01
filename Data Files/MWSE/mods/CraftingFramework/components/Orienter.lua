@@ -70,6 +70,8 @@ function this.positionRef(ref, rayResult)
     ref.position = {ref.position.x, ref.position.y, newZ}
 end
 
+---@param ref tes3reference
+---@param rayResult niPickRecord}
 function this.orientRef(ref, rayResult)
     local UP = tes3vector3.new(0, 0, 1)
     local maxSteepness = math.rad(getMaxSteepness(ref))
@@ -122,30 +124,49 @@ end
 ---@class Orienter.orientRefToGround.params
 ---@field ref tes3reference
 ---@field maxVerticalDistance number?
+---@field doFloat boolean?
+---@field floatOffset number?
 
 ---@param params Orienter.orientRefToGround.params
 function this.orientRefToGround(params)
+
     local ref = params.ref
     local result = this.getGroundBelowRef{
         ref = ref,
     }
 
-    if result then
-        local tooFar = false
-        if params.maxVerticalDistance then
-            tooFar = math.abs(result.intersection.z - ref.position.z) > params.maxVerticalDistance
-        end
-        if not tooFar then
-            logger:trace("Orienting %s to ground", ref.id)
-            this.positionRef(ref, result)
-            this.orientRef(ref, result)
-            return true
-        else
-            logger:trace("Ref %s is too far from the ground", ref.id)
-            return false
+    if not result then return false end
+
+    --doFloat: get waterLevel and set ref to that if it's below it
+    local isFloating = false
+    if params.doFloat then
+        local waterLevel = ref.cell.waterLevel
+        if waterLevel ~= nil and result.intersection.z < waterLevel then
+            result.intersection.z = waterLevel + (params.floatOffset or 0)
+            isFloating = true
         end
     end
-    return false
+
+    local tooFar = false
+    if params.maxVerticalDistance then
+        tooFar = math.abs(result.intersection.z - ref.position.z) > params.maxVerticalDistance
+    end
+    if tooFar then
+        logger:debug("Ref %s is too far from the ground", ref.id)
+        return false
+    end
+
+
+
+    logger:trace("Orienting %s to ground", ref.id)
+    this.positionRef(ref, result)
+    if isFloating then
+        ref.orientation = tes3vector3.new(0, 0, ref.orientation.z)
+    else
+        this.orientRef(ref, result)
+    end
+
+    return true
 end
 
 return this
