@@ -31,7 +31,7 @@ event.register(tes3.event.initialized, function()
         }
     end
 
-    logger:info("Initialized v%s", metadata.package.version)
+    logger:info("Initialized Crafting Framework v%s", metadata.package.version)
 
 end)
 

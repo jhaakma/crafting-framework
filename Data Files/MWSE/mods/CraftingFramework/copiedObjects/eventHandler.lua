@@ -1,7 +1,6 @@
 
 local CopiedObjects = require("CraftingFramework.copiedObjects")
 local logger = CopiedObjects.logger
-
 local initialized
 
 event.register("objectCreated", function(e)
@@ -20,6 +19,7 @@ event.register("loaded", function()
     logger:debug("Running callbacks on copied objects on load")
     for originalId, copyIds in pairs(CopiedObjects.getPersistedCopies()) do
         local original = tes3.getObject(originalId)
+        --Run callbacks
         if original then
             for copyId in pairs(copyIds) do
                 local copy = tes3.getObject(copyId)

@@ -168,5 +168,13 @@ event.register("loaded", function()
             CarryableContainer.register(newConfig)
         end
     end
+
+    --remove any ids from miscCopyToContainerMapping that don't exist as keys in miscCopyToBaseMapping
+    for miscId, containerId in pairs(config.persistent.miscCopyToContainerMapping) do
+        if not config.persistent.miscCopyToBaseMapping[miscId] then
+            logger:warn("Removing invalid miscCopyToContainerMapping entry: %s", miscId)
+            config.persistent.miscCopyToContainerMapping[miscId] = nil
+        end
+    end
 end)
 
