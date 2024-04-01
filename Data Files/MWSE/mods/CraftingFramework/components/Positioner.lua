@@ -210,7 +210,7 @@ local function simulatePlacement()
     if Positioner.doFloat then
         local waterLevel = Positioner.active.cell.waterLevel
         if waterLevel and targetPos.z < waterLevel then
-            targetPos.z = waterLevel + Positioner.floatOffset
+            targetPos.z = waterLevel - Positioner.floatOffset
         end
     end
 
