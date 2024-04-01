@@ -6,7 +6,7 @@ require("CraftingFramework.carryableContainers")
 require("CraftingFramework.copiedObjects.eventHandler")
 
 local Util = require("CraftingFramework.util.Util")
-local logger = Util.createLogger("CraftingFramework")
+local logger = Util.createLogger("main")
 
 local metadata = toml.loadMetadata("The Crafting Framework") --[[@as MWSE.Metadata]]
 local config = require("CraftingFramework.config")
