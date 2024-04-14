@@ -386,9 +386,17 @@ function CarryableContainer:openFromInventory()
         return
     end
 
+    local icon = tes3ui.findHelpLayerMenu("CursorIcon")
+    local tile = icon and icon:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile")
+    if tile then
+        logger:warn("Can't open containers when holding something")
+        return
+    end
+
     self:replaceInInventory()
     logger:debug("Opening container from inventory %s", (self:getContainerId() or tes3.player))
     local containerRef = self:getCreateContainerRef()
+
     tes3.player:activate(containerRef)
     timer.delayOneFrame(function()
         self:updateStats()
