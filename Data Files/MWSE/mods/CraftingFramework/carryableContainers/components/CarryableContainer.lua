@@ -84,6 +84,7 @@ function CarryableContainer.onCopied(original, copy)
         --Remap the misc copy to the new container
         local containerId = config.persistent.miscCopyToContainerMapping[original.id:lower()]
         if containerId then
+
             local containerObject = tes3.getObject(containerId)
             if containerObject then
                 containerObject.name = copy.name
@@ -741,9 +742,24 @@ end
 
 function CarryableContainer.mapItemToContainer(itemId, containerId)
     logger:debug("Mapping container %s to misc %s", containerId, itemId)
-    config.persistent.miscCopyToContainerMapping[itemId:lower()] = containerId:lower()
-    config.persistent.containerToMiscCopyMapping[containerId:lower()] = itemId:lower()
+
+    itemId = itemId:lower()
+    containerId = containerId:lower()
+
+    --Remove existing mappings
+    local previousMiscId = config.persistent.containerToMiscCopyMapping[containerId]
+    if previousMiscId then
+        config.persistent.miscCopyToContainerMapping[previousMiscId] = nil
+    end
+    local previousContainerId = config.persistent.miscCopyToContainerMapping[itemId]
+    if previousContainerId then
+        config.persistent.containerToMiscCopyMapping[previousContainerId] = nil
+    end
+
+    config.persistent.miscCopyToContainerMapping[itemId] = containerId
+    config.persistent.containerToMiscCopyMapping[containerId] = itemId
 end
+
 
 ---@class CarryableContainer.pickup.params
 ---@field doPlaySound? boolean `default: false` Whether to play the sound when picking up the item
