@@ -17,7 +17,9 @@ local InventorySelectMenu = {}
 ---| "'retort'"
 ---| "'soulGemFilled'"
 
----@type table<inventorySelectFilter, fun(e:{ item:tes3item, itemData:tes3itemData}):boolean>
+---@alias inventorySelectFilterFunction fun(e:{item:tes3item, itemData?:tes3itemData}):boolean
+
+---@type table<inventorySelectFilter, inventorySelectFilterFunction>
 local filterMapping = {
     alembic = function(e)
         return e.item.objectType ~= tes3.objectType.apparatus
@@ -54,38 +56,37 @@ local filterMapping = {
     end,
 }
 
----@param filter inventorySelectFilter|fun(e:{item:tes3item, itemData?:tes3itemData}):boolean
-local function referenceHasItems(filter, reference)
-    if type(filter) == "string" then
-        ---@param stack tes3itemStack
-        for _, stack in pairs(reference.object.inventory) do
+---@param reference tes3reference
+---@param filter inventorySelectFilterFunction
+local function checkItemsAgainstFilter(reference, filter)
+    ---@param stack tes3itemStack
+    for _, stack in pairs(reference.object.inventory) do
+        local numVariables = stack.variables and #stack.variables or 0
+
+        --If there are any items in the stack without itemData, run the filter with just the object
+        if numVariables < stack.count then
             if filter{ item = stack.object } then
                 return true
             end
-            if stack.variables and #stack.variables then
-                for _, itemData in ipairs(stack.variables) do
-                    if filter{ item = stack.object, itemData = itemData } then
-                        return true
-                    end
-                end
-            end
         end
-    else
-        ---@param stack tes3itemStack
-        for _, stack in pairs(reference.object.inventory) do
 
-            if stack.variables and #stack.variables then
-                for _, itemData in ipairs(stack.variables) do
-                    if filter{ item = stack.object, itemData = itemData } then
-                        return true
-                    end
+        --If there are any items in the stack with itemData, run the filter with the itemData
+        if numVariables > 0 then
+            for _, itemData in ipairs(stack.variables) do
+                if filter{ item = stack.object, itemData = itemData } then
+                    return true
                 end
-            elseif filter{ item = stack.object } then
-                return true
             end
         end
     end
-    return false
+end
+
+---@param filter inventorySelectFilter|inventorySelectFilterFunction
+local function referenceHasItems(filter, reference)
+    if type(filter) == "string" then
+        filter = filterMapping[filter]
+    end
+    return checkItemsAgainstFilter(reference, filter)
 end
 
 ---@class CraftingFramework.InventorySelectMenu.containerInfo
