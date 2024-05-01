@@ -724,6 +724,7 @@ function CarryableContainer:getCreateContainerRef()
             mesh = self.containerConfig.hasCollision
                 and self.item.mesh or self.item.mesh,
         }
+        containerObject.modified = true
 
         logger:debug("Created container object %s for %s", containerObject.id, self.item.id)
         containerRef = tes3.createReference{
