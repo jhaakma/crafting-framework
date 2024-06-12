@@ -389,6 +389,8 @@ Positioner.togglePlacement = function(e)
 
     config.persistent.positioningActive = true
     event.register("simulate", simulatePlacement)
+
+    event.trigger("CraftingFramework:StartPlacement", { reference = target })
 end
 
 ---@param from tes3reference
