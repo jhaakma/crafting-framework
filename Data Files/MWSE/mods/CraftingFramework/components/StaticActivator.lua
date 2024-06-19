@@ -96,7 +96,11 @@ end
 ---@param e CraftingFramework.StaticActivator.updateIndicator.params
 function StaticActivator.updateIndicator(e)
     local result = StaticActivator.getLookingAt()
+    local reference = result and result.reference
+    local node = result and result.object
+
     if e.eventName then
+        logger:trace("Triggering event %s", e.eventName)
         ---@class CraftingFramework.StaticActivator.eventData
         local eventData = {
             rayResult = result,
@@ -104,14 +108,15 @@ function StaticActivator.updateIndicator(e)
         }
         event.trigger(e.eventName, eventData)
     end
-    if result and result.reference then
-        local indicator = Indicator:new{ reference = result.reference }
+
+    if reference then
+        local indicator = Indicator:new{ reference = reference }
         if indicator then
-            indicator:update(result.object)
+            indicator:update(node)
         else
             Indicator.disable()
         end
-        return result.reference
+        return reference
     end
     logger:trace("No reference found, disabling tooltip")
     Indicator.disable()
