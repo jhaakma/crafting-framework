@@ -819,20 +819,22 @@ function CarryableContainer:checkAndRemoveFromSelf()
     if containerRef then
         ---Look for this container anywhere inside the container
         for _, stack in pairs(self.getFullInventory(containerRef)) do
-            logger:debug("Checking stack %s", stack.object.id)
-            logger:debug("Self.id: %s", self.item.id)
+            if stack.object then
+                logger:debug("Checking stack %s", stack.object.id)
+                logger:debug("Self.id: %s", self.item.id)
 
-            --Check if adding container to itself
-            local isItself = stack.object.id:lower() == self.item.id
-            if isItself then
-                self.transferItem{
-                    from = containerRef,
-                    to = tes3.player,
-                    item = stack.object,
-                    count = stack.count,
-                    playSound = false
-                }
-                tes3.messageBox("You cannot place this container inside itself")
+                --Check if adding container to itself
+                local isItself = stack.object.id:lower() == self.item.id
+                if isItself then
+                    self.transferItem{
+                        from = containerRef,
+                        to = tes3.player,
+                        item = stack.object,
+                        count = stack.count,
+                        playSound = false
+                    }
+                    tes3.messageBox("You cannot place this container inside itself")
+                end
             end
         end
     end
