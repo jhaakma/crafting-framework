@@ -415,11 +415,14 @@ function CarryableContainer:open()
 
     --if ref, open from world, otherwise open from inventory
     if self.reference then
+        logger:debug("Has reference, opening from world")
         self:openFromWorld()
     else
         if self.containerConfig.openFromInventory then
+            logger:debug("No ref, Opening from inventory with custom function")
             self.containerConfig.openFromInventory(self)
         else
+            logger:debug("No ref, Opening from inventory")
             self:openFromInventory()
         end
     end
@@ -674,11 +677,13 @@ function CarryableContainer:replaceInInventory()
         reference = reference,
         item = self.item,
         itemData = itemData,
+        playSound = false,
     }
     tes3.addItem{
         reference = reference,
         item = copy,
         itemData = itemData,
+        playSound = false,
     }
     -- if isEquipped then
     --     reference.mobile:equip{ item = copy }
