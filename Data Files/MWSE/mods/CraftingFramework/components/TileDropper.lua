@@ -77,11 +77,11 @@ function TileDropper:onItemTileUpdate(e)
                 self.logger:trace("No held item")
                 return
             end
-            if not self.canDrop(held) then
+            if not self.canDrop{ target = target, held = held } then
                 self.logger:trace("Cannot drop %s onto %s", held.item.id, e.item.id)
                 return
             end
-            self.logger:debug("Activating mouse-over for %s", e.item.id)
+            self.logger:trace("Activating mouse-over for %s", e.item.id)
             --Set tile background color
             local rect = e.tile.element:createRect{
                 id = "CF_TileDropper_Active",
@@ -99,7 +99,7 @@ function TileDropper:onItemTileUpdate(e)
 
         --mouseLeave: find and remove rect
         e.tile.element:registerAfter("mouseLeave", function(mouseLeaveEventData)
-            self.logger:debug("Mouse leave %s", e.item.id)
+            self.logger:trace("Mouse leave %s", e.item.id)
             local rect = e.tile.element:findChild("CF_TileDropper_Active")
             if rect then
                 rect:destroy()
@@ -107,12 +107,11 @@ function TileDropper:onItemTileUpdate(e)
         end)
 
         e.tile.element:registerBefore("mouseClick", function(mouseClickEventData)
-            self.logger:debug("Mouse click on %s", e.item.id)
+            self.logger:trace("Mouse click on %s", e.item.id)
             local cursor = tes3ui.findHelpLayerMenu("CursorIcon")
             ---@type CraftingFramework.TileDropper.itemInfo
             local held = cursor and cursor:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile")
-            if not ( held and self.canDrop(held) ) then
-                --mouseClickEventData.source:forwardEvent(mouseClickEventData)
+            if not ( held and self.canDrop{ target = target, held = held }) then
                 return
             end
             self.logger:debug("Dropping %s onto %s", held.item.id, target.item.id)
