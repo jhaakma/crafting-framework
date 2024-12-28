@@ -20,6 +20,7 @@ CraftingFramework.MerchantManager = require("CraftingFramework.components.Mercha
 CraftingFramework.MaterialStorage = require("CraftingFramework.components.MaterialStorage")
 CraftingFramework.InventorySelectMenu = require("CraftingFramework.carryableContainers.components.InventorySelectMenu")
 CraftingFramework.CopiedObjects = require("CraftingFramework.copiedObjects")
+CraftingFramework.TileDropper = require("CraftingFramework.components.TileDropper")
 
 --Carryabe Containers
 CraftingFramework.CarryableContainer =require("CraftingFramework.carryableContainers.components.CarryableContainer")
