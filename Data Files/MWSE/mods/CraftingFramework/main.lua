@@ -47,7 +47,7 @@ end, { priority = 0x7FFFFFFF})
 CraftingFramework.MaterialStorage:new{
     isStorage = function (self, reference)
         local isCarryable = CraftingFramework.CarryableContainer.isCarryableContainer(reference)
-        logger:debug("%s is %sa carryable container", reference.object.name, isCarryable and "" or "NOT ")
+        logger:trace("%s is %sa carryable container", reference.object.name, isCarryable and "" or "NOT ")
         return CraftingFramework.CarryableContainer.isCarryableContainer(reference)
     end,
 }

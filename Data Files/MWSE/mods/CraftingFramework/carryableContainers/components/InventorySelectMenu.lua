@@ -131,6 +131,8 @@ function InventorySelectMenu.addButtons(e, sidebarMenu, containerInfoList, activ
         iconBorder.paddingAllSides = 10
         iconBorder.flowDirection = "left_to_right"
         iconBorder.childAlignY = 0.5
+        iconBorder:register("mouseClick", createButtonClickCallback(e, sidebarMenu, containerInfoList, activeIndex, index, containerInfo))
+
 
         local icon
         if containerInfo.icon then
@@ -187,9 +189,8 @@ function InventorySelectMenu.createSideMenu(e, containerInfoList, activeIndex)
         modal = true,
         fixedFrame = true
     }
-    sidebarMenu.minHeight = 560
     sidebarMenu.minWidth = 300
-    sidebarMenu.absolutePosAlignX = 0.315
+    sidebarMenu.absolutePosAlignX = 0.25
     sidebarMenu.absolutePosAlignY = 0.5
     sidebarMenu.flowDirection = "top_to_bottom"
 
@@ -210,7 +211,7 @@ function InventorySelectMenu.doOpenMenu(e, containerInfoList, activeIndex)
     e.reference = activeContainer.reference
     logger:debug("Opening inventory select menu for %s", e.reference.object.name)
 
-    ---@type tes3ui.showInventorySelectMenu.params
+    ---@type CraftingFramework.showInventorySelectMenu.params
     local params = table.copy(e)
     params.callback = function(callbackParams)
         callbackParams = callbackParams or {}
@@ -254,9 +255,11 @@ function InventorySelectMenu.doOpenMenu(e, containerInfoList, activeIndex)
     end)
 end
 
+---@class CraftingFramework.showInventorySelectMenu.callbackParams : tes3ui.showInventorySelectMenu.callbackParams
+---@field reference tes3reference The reference of the container or actor that was selected
 
 ---@class CraftingFramework.showInventorySelectMenu.params : tes3ui.showInventorySelectMenu.params
----@field callback? fun(e:{item:tes3item|tes3misc, itemData:tes3itemData, reference:tes3reference})
+---@field callback?  fun(e:CraftingFramework.showInventorySelectMenu.callbackParams)
 ---@field noResultsCallback? fun(e:{item:tes3item|tes3misc, itemData:tes3itemData, reference:tes3reference})
 
 ---Open an inventory select menu with a sidebar of containers
