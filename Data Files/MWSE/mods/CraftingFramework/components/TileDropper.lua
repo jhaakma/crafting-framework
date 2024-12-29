@@ -19,6 +19,7 @@ local ALPHA_HOVER = 1.0
 ---@field isValidTarget fun(params: CraftingFramework.TileDropper.isValidTarget.params): boolean # A callback to determine if the tile can be dropped onto. This is checked once when the tile is created.
 ---@field canDrop fun(params: CraftingFramework.TileDropper.canDrop.params): boolean # A callback to determine if the tile being held can be dropped.
 ---@field onDrop fun(params: CraftingFramework.TileDropper.onDrop.params) # A callback to run when the item is dropped.
+---@field highlightColor? table # The color to highlight the tile with. Defaults to {0.0, 1.0, 0.0} (green)
 ---@field logger? mwseLogger # A logger to use for this dropper.
 
 ---@class CraftingFramework.TileDropper : CraftingFramework.TileDropper.data
@@ -81,6 +82,7 @@ function TileDropper:highlightTile(target, alpha)
         highlightIcon.absolutePosAlignX = 0.5
         highlightIcon.absolutePosAlignY = 0.5
         highlightIcon.consumeMouseEvents = false
+        highlightIcon.color = self.highlightColor or {0.0, 1.0, 0.0}
     end
     highlightIcon.alpha = alpha
 end
