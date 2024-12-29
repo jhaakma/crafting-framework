@@ -1,7 +1,7 @@
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("TileDropper")
 
-local ALPHA_HIGHLIGHT = 0.5
+local ALPHA_HIGHLIGHT = 0.7
 local ALPHA_HOVER = 1.0
 
 ---@alias CraftingFramework.TileDropper.isValidTarget.params CraftingFramework.TileDropper.itemInfo
@@ -77,8 +77,8 @@ function TileDropper:highlightTile(target, alpha)
             path = "icons\\craftingFramework\\highlight.dds",
         }
         highlightIcon.scaleMode = true
-        highlightIcon.width = 34
-        highlightIcon.height = 34
+        highlightIcon.width = 42
+        highlightIcon.height = 42
         highlightIcon.absolutePosAlignX = 0.5
         highlightIcon.absolutePosAlignY = 0.5
         highlightIcon.consumeMouseEvents = false
@@ -118,7 +118,7 @@ end
 function TileDropper:tileMouseLeaveCallback(target)
     self.logger:trace("Mouse leave %s", target.item.id)
     local held = getHeldTile()
-    if held then
+    if held and self.canDrop{ target = target, held = held } then
         self:highlightTile(target, ALPHA_HIGHLIGHT)
     else
         self.removeHighlight(target.tile.element)
@@ -168,14 +168,11 @@ function TileDropper:onItemTileUpdate(e)
         self:tileMouseClickCallback(target)
     end)
 
-    timer.frame.delayOneFrame(function()    --If a valid item is being held, highlight the tile with 20% alpha
-        local held = getHeldTile()
-        if held and self.canDrop{ target = target, held = held } then
-            self:highlightTile(target, ALPHA_HIGHLIGHT)
-        else
-            self.removeHighlight(target.tile.element)
-        end
-    end)
+    --If a valid item is being held, highlight the tile with 20% alpha
+    local held = getHeldTile()
+    if held and self.canDrop{ target = target, held = held } then
+        self:highlightTile(target, ALPHA_HIGHLIGHT)
+    end
 end
 
 ---@param e itemTileUpdatedEventData
@@ -184,24 +181,49 @@ event.register("itemTileUpdated", function(e)
     for _, tileDropper in pairs(TileDropper.registeredTileDroppers) do
         tileDropper:onItemTileUpdate(e)
     end
-    local held = getHeldTile()
-    if held then
-        --When the held tile is destroyed, remove all highlights
-        if not held.tile.element:getLuaData("CF_TileDropper_Held_registered") then
-            logger:trace("Registering held tile event data")
-            held.tile.element:setLuaData("CF_TileDropper_Held_registered", true)
-            held.tile.element:registerAfter("destroy", function()
-                logger:trace("Held tile destroyed, removing highlights")
-                local inventoryMenu = tes3ui.findMenu("MenuInventory")
-                if not inventoryMenu then return end
-                local scrollPane = inventoryMenu:findChild(tes3ui.registerID("MenuInventory_scrollpane"))
-                for _, column in ipairs(scrollPane.children) do
-                    for _, element in ipairs(column.children) do
-                        TileDropper.removeHighlight(element)
+
+end)
+
+---@param e mouseButtonUpEventData
+event.register("mouseButtonUp", function(e)
+    if not tes3ui.menuMode() then return end
+    if not tes3.player then return end
+    if e.button == 0 then
+        timer.frame.delayOneFrame(function()timer.frame.delayOneFrame(function()
+            logger:trace("mouse clicked")
+            logger:trace("Highlighting valid tiles")
+            local inventoryMenu = tes3ui.findMenu("MenuInventory")
+            if not inventoryMenu then return end
+            local scrollPane = inventoryMenu:findChild(tes3ui.registerID("MenuInventory_scrollpane"))
+            for _, column in ipairs(scrollPane:getContentElement().children) do
+                for _, element in ipairs(column.children) do
+                    ---@type tes3inventoryTile
+                    local tile = element:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile")
+                    if tile then
+                        local target = {
+                            item = tile.item,
+                            itemData = tile.itemData,
+                            count = tile.count or 1,
+                            tile = tile
+                        }
+                        local highlightDropper = nil
+                        for _, tileDropper in pairs(TileDropper.registeredTileDroppers) do
+                            if tileDropper.isValidTarget(target) then
+                                highlightDropper = tileDropper
+                            end
+                        end
+                        local held = getHeldTile()
+                        if highlightDropper ~= nil and held ~= nil and highlightDropper.canDrop{ target = target, held = held } then
+                            logger:trace("Highlighting %s", target.item.id)
+                            highlightDropper:highlightTile(target, ALPHA_HIGHLIGHT)
+                        else
+                            logger:trace("Not highlighting %s", target.item.id)
+                            TileDropper.removeHighlight(element)
+                        end
                     end
                 end
-            end)
-        end
+            end
+        end)end)
     end
 end)
 
