@@ -87,15 +87,13 @@ function TileDropper:highlightTile(target, alpha)
     highlightIcon.alpha = alpha
 end
 
+---@param element tes3uiElement
 function TileDropper.removeHighlight(element)
     local highlightIcon = element:findChild("CF_TileDropper_Active")
     if highlightIcon then
-        highlightIcon:destroy()
+        highlightIcon.visible = false
     end
 end
-
-
-
 
 ---@param target CraftingFramework.TileDropper.itemInfo
 function TileDropper:tileMouseOverCallback(target)
@@ -181,7 +179,6 @@ event.register("itemTileUpdated", function(e)
     for _, tileDropper in pairs(TileDropper.registeredTileDroppers) do
         tileDropper:onItemTileUpdate(e)
     end
-
 end)
 
 ---@param e mouseButtonUpEventData
