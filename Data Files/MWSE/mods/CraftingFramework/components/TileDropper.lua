@@ -100,6 +100,7 @@ function TileDropper:highlightTile(target, alpha)
         highlightIcon.color = self.highlightColor or {0.0, 1.0, 0.0}
     end
     highlightIcon.alpha = alpha
+    highlightIcon.visible = true
 end
 
 ---@param element tes3uiElement
