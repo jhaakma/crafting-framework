@@ -39,7 +39,7 @@ local MAX_CAPACITY = 65535
 ---@field getTooltip? fun(self:CarryableContainer):string An optional callback to add an additional tooltip to the container
 
 ---@class CarryableContainer.new.params : ItemInstance.new.params
----@field containerRef tes3reference? If provided, the item will be created from the container reference
+---@field containerRef? tes3reference? If provided, the item will be created from the container reference
 
 ---A carrayable container is a misc item that, when activated
 --- or equipped, will open its associated container reference
@@ -277,7 +277,7 @@ function CarryableContainer.removeItem(e)
 end
 
 ---@param e tes3.transferItem.params
-function CarryableContainer.transferItem(e)
+function CarryableContainer.transferItem(e, skipInventoryUpdate)
     ---For each inventory, check item count to see if it's in that container, then do tes3.transferItem
     local count = e.count or 1
     local transferred = tes3.transferItem(e)
@@ -292,7 +292,7 @@ function CarryableContainer.transferItem(e)
                     local params = table.copy(e)
                     params.from = containerRef
                     params.count = remaining
-                    local transferred =  CarryableContainer.transferItem(params)
+                    local transferred =  CarryableContainer.transferItem(params, true)
                     remaining = remaining - transferred
                     if remaining <= 0 then
                         break
@@ -309,6 +309,13 @@ function CarryableContainer.isCarryableContainer(containerRef)
     return config.persistent.containerToMiscCopyMapping[containerRef.baseObject.id:lower()] ~= nil
 end
 
+---Get the carryable container instance from an item
+---@param item tes3item
+function CarryableContainer.getFromItem(item)
+    if item then
+        return CarryableContainer:new{ item = item }
+    end
+end
 
 ---Construct an instance of a carryable container
 ---@param e CarryableContainer.new.params
@@ -823,14 +830,15 @@ function CarryableContainer:checkAndRemoveFromSelf()
     local containerRef = self:getContainerRef()
     if containerRef then
         ---Look for this container anywhere inside the container
-        for _, stack in pairs(self.getFullInventory(containerRef)) do
+        for _, stack in ipairs(CarryableContainer.getFullInventory(containerRef)) do
             if stack.object then
-                logger:debug("Checking stack %s", stack.object.id)
+                logger:debug("checkAndRemoveFromSelf - Checking stack %s", stack.object.id)
                 logger:debug("Self.id: %s", self.item.id)
 
                 --Check if adding container to itself
                 local isItself = stack.object.id:lower() == self.item.id
                 if isItself then
+                    logger:debug("Removing %s from %s", self.item.id, containerRef.id)
                     self.transferItem{
                         from = containerRef,
                         to = tes3.player,
@@ -839,6 +847,7 @@ function CarryableContainer:checkAndRemoveFromSelf()
                         playSound = false
                     }
                     tes3.messageBox("You cannot place this container inside itself")
+                    return
                 end
             end
         end
@@ -864,13 +873,18 @@ function CarryableContainer:checkAndBlockTransfer()
     ---@param stack tes3itemStack
     for _, stack in pairs(containerRef.object.inventory) do
         local item = stack.object --[[@as tes3item]]
-        local count = stack.count
-
         local innerCarryable = CarryableContainer:new{ item = item }
         if innerCarryable then
+            logger:debug("Checking inner carryable %s", item.id)
             innerCarryable:checkAndRemoveFromSelf()
         end
+    end
 
+    ---@param stack tes3itemStack
+    for _, stack in pairs(containerRef.object.inventory) do
+        logger:debug("Checking stack %s", stack.object.id)
+        local item = stack.object --[[@as tes3item]]
+        local count = stack.count
         local filter = self:getFilter()
         if filter then
             logger:debug("Checking filter")
@@ -991,14 +1005,17 @@ end
 ---Otherwise, use transferItem on everything
 ---
 --- TODO: Check if weight modifier should be removed here
-function CarryableContainer:transferFiltered()
+---@param filter? CarryableContainers.ItemFilter The filter to use for transferring items. If nil, uses the filter set on the container
+function CarryableContainer:transferFiltered(filter)
 
     local containerRef = self:getCreateContainerRef()
     if not containerRef then
         logger:error("Failed to get container ref")
         return
     end
-    local filter = self:getFilter()
+    if not filter then
+        filter = self:getFilter()
+    end
     if not filter then
         logger:debug("No filter, skipping transfer")
         return
@@ -1059,7 +1076,7 @@ function CarryableContainer:transferFiltered()
         return
     end
     logger:debug("Transferring %d items filtered by '%s' to %s",
-        #itemsToTransfer, filter.name, containerRef.id)
+        #itemsToTransfer, filter.name or "custom", containerRef.id)
     --Transfer the items
     local hasItemsToTransfer = false
     for _, itemToTransfer in ipairs(itemsToTransfer) do
@@ -1123,6 +1140,25 @@ function CarryableContainer:takeAll()
     else
         tes3.messageBox("Nothing to transfer.")
     end
+end
+
+---Transfer a specific list of items from the player to the container
+---@param e { itemIds: string[] }
+function CarryableContainer:transferPlayerToContainer(e)
+    --create custom filter that returns true for items in the list
+    local filter = ItemFilter:new{
+        id = "",
+        name = "transferPlayerToContainer",
+        isValidItem = function(item)
+            for _, id in ipairs(e.itemIds) do
+                if item.id:lower() == id:lower() then
+                    return true
+                end
+            end
+            return false
+        end
+    }
+    self:transferFiltered(filter)
 end
 
 return CarryableContainer
