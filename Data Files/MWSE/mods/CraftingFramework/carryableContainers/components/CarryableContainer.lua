@@ -1159,6 +1159,7 @@ function CarryableContainer:transferPlayerToContainer(e)
         end
     }
     self:transferFiltered(filter)
+    self:updateStats()
 end
 
 return CarryableContainer
