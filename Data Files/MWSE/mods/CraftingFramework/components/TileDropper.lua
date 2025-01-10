@@ -68,19 +68,7 @@ function TileDropper:new(data)
     return data
 end
 
----@return CraftingFramework.TileDropper.itemInfo?
-local function getHeldTile()
-    local cursorIcon = tes3ui.findHelpLayerMenu("CursorIcon")
-    local tile = cursorIcon and cursorIcon:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile")
-    if tile then
-        return {
-            item = tile and tile.item,
-            itemData = tile and tile.itemData,
-            count = tile and tile.count or 1,
-            tile = tile
-        }
-    end
-end
+
 
 ---@param target CraftingFramework.TileDropper.itemInfo
 ---@param alpha number
@@ -114,7 +102,7 @@ end
 ---@param target CraftingFramework.TileDropper.itemInfo
 function TileDropper:tileMouseOverCallback(target)
     self.logger:trace("Mouse over %s", target.item.id)
-    local held = getHeldTile()
+    local held = Util.getHeldTile()
     if not held then
         self.logger:trace("No held item")
         return
@@ -131,7 +119,7 @@ end
 ---@param target CraftingFramework.TileDropper.itemInfo
 function TileDropper:tileMouseLeaveCallback(target)
     self.logger:trace("Mouse leave %s", target.item.id)
-    local held = getHeldTile()
+    local held = Util.getHeldTile()
     if held and self.canDrop{ target = target, held = held } then
         self:highlightTile(target, ALPHA_HIGHLIGHT)
     else
@@ -142,20 +130,21 @@ end
 ---@param target CraftingFramework.TileDropper.itemInfo
 function TileDropper:tileMouseClickCallback(target)
     self.logger:debug("Mouse click on %s", target.item.id)
-    local held = getHeldTile()
+    local held = Util.getHeldTile()
     if not ( held and self.canDrop{ target = target, held = held }) then
         self.logger:debug("Cannot drop onto %s", target.item.id)
         return
     end
     self.logger:debug("Dropping %s onto %s", held.item.id, target.item.id)
+
+    --get reference from tile menu source
+    local tile = target.tile
+    local reference = tes3.player
+    local menu = tile and tile.element:getTopLevelMenu()
+    if menu and menu.name == "MenuContents" then
+        reference = menu:getPropertyObject("MenuContents_ObjectRefr")
+    end
     timer.frame.delayOneFrame(function()
-        --get reference from tile menu source
-        local tile = target.tile
-        local reference = tes3.player
-        local menu = tile and tile.element:getTopLevelMenu()
-        if menu and menu.name == "MenuContents" then
-            reference = menu:getPropertyObject("MenuContents_ObjectRefr")
-        end
         self.onDrop({ target = target, held = held, reference = reference })
     end)
 end
@@ -245,7 +234,7 @@ local function resetTile(tile, element)
             highlightDropper = tileDropper
         end
     end
-    local held = getHeldTile()
+    local held = Util.getHeldTile()
 
     logger:debug("Has highlightDropper: %s", highlightDropper ~= nil)
     logger:debug("Has held: %s", held ~= nil)

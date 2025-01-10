@@ -219,4 +219,18 @@ function Util.forceInstance(reference)
     return reference --.object
 end
 
+---@return CraftingFramework.TileDropper.itemInfo?
+function Util.getHeldTile()
+    local cursorIcon = tes3ui.findHelpLayerMenu("CursorIcon")
+    local tile = cursorIcon and cursorIcon:getPropertyObject("MenuInventory_Thing", "tes3inventoryTile")
+    if tile then
+        return {
+            item = tile and tile.item,
+            itemData = tile and tile.itemData,
+            count = tile and tile.count or 1,
+            tile = tile
+        }
+    end
+end
+
 return Util

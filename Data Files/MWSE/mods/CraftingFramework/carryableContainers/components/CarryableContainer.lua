@@ -1108,15 +1108,6 @@ function CarryableContainer:takeAll()
         return
     end
     local containerInventory = containerRef.object.inventory
-    local totalWeight = containerInventory:calculateWeight()
-    local encumbrance = tes3.mobilePlayer.encumbrance
-    local remainingPlayerCapacity = encumbrance.base - encumbrance.current
-    -- if self.reference then
-    --     if remainingPlayerCapacity < totalWeight then
-    --         tes3.messageBox("Not enough space in inventory")
-    --         return
-    --     end
-    -- end
     logger:debug("Taking all items from %s", containerRef.id)
     local hasItemsToTransfer = false
     for _, stack in pairs(containerInventory) do
@@ -1159,6 +1150,58 @@ function CarryableContainer:transferPlayerToContainer(e)
         end
     }
     self:transferFiltered(filter)
+    self:updateStats()
+end
+
+---@class (exact) CarryableContainer.transferPlayerToContainerWithDetails.items
+---@field item tes3item Item to transfer
+---@field count number Item count
+---@field itemData tes3itemData? Item data
+
+---Transfer a specific list of items with counts and itemData from the player to the container
+---@param e { items: CarryableContainer.transferPlayerToContainerWithDetails.items[] }
+function CarryableContainer:transferPlayerToContainerWithDetails(e)
+    local containerRef = self:getCreateContainerRef()
+    if not containerRef then
+        logger:error("Failed to get container ref")
+        return
+    end
+
+    local itemsToTransfer = {}
+    for _, itemDetail in ipairs(e.items) do
+        if itemDetail.item then
+            table.insert(itemsToTransfer, {
+                item = itemDetail.item,
+                count = itemDetail.count,
+                itemData = itemDetail.itemData,
+            })
+        else
+            logger:warn("Item with ID %s not found", itemDetail.item.id)
+        end
+    end
+
+    local hasItemsToTransfer = false
+    for _, itemToTransfer in ipairs(itemsToTransfer) do
+        hasItemsToTransfer = true
+        tes3.transferItem{
+            from = tes3.player,
+            to = containerRef,
+            item = itemToTransfer.item,
+            itemData = itemToTransfer.itemData,
+            count = itemToTransfer.count,
+            playSound = false,
+            updateGUI = false,
+        }
+    end
+
+    if hasItemsToTransfer then
+        tes3.playSound{ sound = "Item Misc Up" }
+        tes3.updateInventoryGUI({ reference = tes3.player })
+        tes3.updateInventoryGUI({ reference = containerRef })
+    else
+        tes3.messageBox("Nothing to transfer.")
+    end
+
     self:updateStats()
 end
 

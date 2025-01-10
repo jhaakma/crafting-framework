@@ -24,8 +24,13 @@ TileDropper.register{
             itemData = e.target.itemData,
         }
         if not container then return end
-        container:transferPlayerToContainer{
-            itemIds = { e.held.item.id },
+        container:transferPlayerToContainerWithDetails{ items = {
+                {
+                    item = e.held.item,
+                    itemData = e.held.itemData,
+                    count = e.held.count,
+                }
+            }
         }
     end
 }

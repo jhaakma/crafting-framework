@@ -132,12 +132,11 @@ event.register("itemTileUpdated", function(itemTileEventData)
             logger:debug("not a carryable container")
             return
         end
-        if util.isQuickModifierDown() then
+        if util.isQuickModifierDown() and not util.getHeldTile() then
             local isEquipped = tes3.player.object:hasItemEquipped(tileData.item)
             --menu click sound
             tes3.worldController.menuClickSound:play()
             container:openFromInventory()
-
 
             if isEquipped then
                 logger:debug("Container is equipped, triggering equip again in case it was replaced")
