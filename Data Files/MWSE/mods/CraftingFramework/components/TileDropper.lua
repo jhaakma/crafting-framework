@@ -197,13 +197,13 @@ function TileDropper:tileMouseClickCallback(target)
     if menu and menu.name == "MenuContents" then
         reference = menu:getPropertyObject("MenuContents_ObjectRefr")
     end
+    Util.blockNextSound()
     timer.frame.delayOneFrame(function()
         self.onDrop({ target = target, held = held, reference = reference })
         if self.keepHeldInCursor then
             --iterate tiles, find the previously held item, trigger mouseClick
             for _, data in ipairs(TileDropper.getInventoryTiles()) do
                 if data.tile.item == held.item and data.tile.itemData == held.itemData then
-                    Util.blockNextSound()
                     data.element:triggerEvent("mouseClick")
                     TileDropper.resetTiles()
                     break

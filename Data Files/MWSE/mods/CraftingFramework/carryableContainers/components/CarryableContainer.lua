@@ -166,7 +166,8 @@ function CarryableContainer.getCarryableContainersInInventory(reference)
 end
 
 ---@class CarryableContainer.getItemCount.params : tes3.getItemCount.params
----@field reference tes3reference Default: tes3.player
+---@field itemData? tes3itemData
+---@field reference tes3reference? Default: tes3.player
 
 
 ---Gets the full list of items in the reference's inventory, including items in containers
@@ -178,18 +179,22 @@ function CarryableContainer.getFullInventory(reference, checkedContainers)
     --- all items in inventory and in containers
     ---@type tes3itemStack[]
     local inventory = {}
+    local containers = {}
     reference = reference or tes3.player
     for _, stack in pairs(reference.object.inventory) do
         table.insert(inventory, stack)
         local carryable = CarryableContainer:new{ item = stack.object }
         if carryable then
-            local containerRef = carryable:getContainerRef()
-            if containerRef and not checkedContainers[containerRef] then
-                checkedContainers[containerRef] = true
-                local containerInventory = CarryableContainer.getFullInventory(containerRef, checkedContainers)
-                for _, stack in pairs(containerInventory) do
-                    table.insert(inventory, stack)
-                end
+            table.insert(containers, carryable)
+        end
+    end
+    for _, carryable in pairs(containers) do
+        local containerRef = carryable:getContainerRef()
+        if containerRef and not checkedContainers[containerRef] then
+            checkedContainers[containerRef] = true
+            local containerInventory = CarryableContainer.getFullInventory(containerRef, checkedContainers)
+            for _, stack in pairs(containerInventory) do
+                table.insert(inventory, stack)
             end
         end
     end
@@ -201,7 +206,7 @@ end
 ---@param e CarryableContainer.getItemCount.params
 ---@return number The number of items in the reference's inventory
 function CarryableContainer.getItemCount(e)
-    local reference = e.reference or tes3.player
+    e.reference = e.reference or tes3.player
     ---@type tes3item
     local item
     if type(e.item) == "string" then
@@ -214,20 +219,47 @@ function CarryableContainer.getItemCount(e)
         return 0
     end
     local count = tes3.getItemCount(e)
-    for _, stack in pairs(reference.object.inventory) do
-        local carryable = CarryableContainer:new{ item = stack.object }
-        if carryable then
-            local containerRef = carryable:getContainerRef()
-            if containerRef then
-                count = count + CarryableContainer.getItemCount{
-                    reference = carryable:getContainerRef(),
-                    item = item,
-                }
-            end
+    for _, stack in pairs(CarryableContainer.getFullInventory()) do
+        if stack.object == item then
+            count = count + stack.count
         end
     end
     return count
 end
+
+
+---Find and return an item stack in the reference's inventory,
+---@param e { item: string|tes3item, itemData?: tes3itemData, reference: tes3reference? }
+---@return tes3itemStack|nil
+function CarryableContainer.findItemStack(e)
+    e.reference = e.reference or tes3.player
+    ---@type tes3item
+    local item
+    if type(e.item) == "string" then
+        item = tes3.getObject(e.item--[[@as string]])
+    else
+        item = e.item
+    end
+    if not item then
+        --getObject failed
+        return
+    end
+    for _, stack in pairs(CarryableContainer.getFullInventory(e.reference)) do
+        if stack.object == item then
+            if not e.itemData then
+                return stack
+            end
+            if not stack.variables then return end
+            for _, itemData in pairs(stack.variables) do
+                if itemData == e.itemData then
+                    return stack
+                end
+            end
+        end
+    end
+end
+
+
 
 
 ---@class CarryableContainer.removeItem.params : tes3.removeItem.params

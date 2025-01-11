@@ -249,7 +249,7 @@ end
 function MaterialStorage:removeItem(params)
     logger:assert(params.reference.object.inventory ~= nil, "MaterialStorage %s has no inventory", params.reference.object.id)
 
-    logger:trace("Removing %s %s", params.count, params.item.name)
+    logger:trace("Removing %s %s", params.count, params.item.name or "")
     local numRemoved = tes3.removeItem{
         reference = params.reference,
         item = params.item,
