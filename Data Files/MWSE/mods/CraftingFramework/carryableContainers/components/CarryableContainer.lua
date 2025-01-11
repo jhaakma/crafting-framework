@@ -545,6 +545,7 @@ function CarryableContainer:getWeightModifier()
 end
 
 function CarryableContainer:replaceInWorld()
+    if not self.containerConfig.hasCollision then return end
     if not self.reference then
         logger:error("Trying to replace in world for item %s", self.item.id)
         return self
