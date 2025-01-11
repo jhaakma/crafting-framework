@@ -9,7 +9,7 @@ local ALPHA_HOVER = 1.0
 ---@alias CraftingFramework.TileDropper.onDrop.params { reference: tes3reference, target: CraftingFramework.TileDropper.itemInfo, held: CraftingFramework.TileDropper.itemInfo }
 
 ---@class (exact) CraftingFramework.TileDropper.itemInfo
----@field item tes3item
+---@field item tes3item|tes3misc|tes3weapon
 ---@field itemData? tes3itemData
 ---@field count number
 ---@field tile? tes3inventoryTile
@@ -20,6 +20,7 @@ local ALPHA_HOVER = 1.0
 ---@field canDrop fun(params: CraftingFramework.TileDropper.canDrop.params): boolean # A callback to determine if the tile being held can be dropped.
 ---@field onDrop fun(params: CraftingFramework.TileDropper.onDrop.params) # A callback to run when the item is dropped.
 ---@field highlightColor? table # The color to highlight the tile with. Defaults to {0.0, 1.0, 0.0} (green)
+---@field keepHeldInCursor? boolean # If true, the held item will not be dropped when the tile is clicked.
 ---@field logger? mwseLogger # A logger to use for this dropper.
 
 ---@class CraftingFramework.TileDropper : CraftingFramework.TileDropper.data
@@ -68,6 +69,56 @@ function TileDropper:new(data)
     return data
 end
 
+function TileDropper.resetTile(tile, element)
+    local target = {
+        item = tile.item,
+        itemData = tile.itemData,
+        count = tile.count or 1,
+        tile = tile
+    }
+    local highlightDropper = nil
+    for _, tileDropper in pairs(TileDropper.registeredTileDroppers) do
+        if tileDropper.isValidTarget(target) then
+            highlightDropper = tileDropper
+        end
+    end
+    local held = Util.getHeldTile()
+
+    logger:debug("Has highlightDropper: %s", highlightDropper ~= nil)
+    logger:debug("Has held: %s", held ~= nil)
+
+    if highlightDropper ~= nil and held ~= nil and highlightDropper.canDrop{ target = target, held = held } then
+        logger:debug("Highlighting %s", target.item.id)
+        highlightDropper:highlightTile(target, ALPHA_HIGHLIGHT)
+    else
+        logger:debug("Not highlighting %s", target.item.id)
+        TileDropper.removeHighlight(element)
+    end
+end
+
+function TileDropper.resetTiles()
+    for menuId, ids in pairs(menuElements) do
+        local menu = tes3ui.findMenu(menuId)
+        if menu and menu.visible then
+            logger:debug("Resetting tiles in %s", menuId)
+            local scrollPane = menu:findChild(ids.scrollPane)
+            logger:debug("Found scroll pane %s", scrollPane.id)
+            for _, column in ipairs(scrollPane:getContentElement().children) do
+                for _, element in ipairs(column.children) do
+                    ---@type tes3inventoryTile
+                    local tile = element:getPropertyObject(ids.propertyObject, "tes3inventoryTile")
+                    if tile then
+                        logger:debug("Resetting tile %s", tile.item.id)
+                        TileDropper.resetTile(tile, element)
+                    end
+                end
+            end
+            menu:updateLayout()
+        else
+            logger:debug("Menu %s not found or not visible", menuId)
+        end
+    end
+end
 
 
 ---@param target CraftingFramework.TileDropper.itemInfo
@@ -127,13 +178,15 @@ function TileDropper:tileMouseLeaveCallback(target)
     end
 end
 
+
 ---@param target CraftingFramework.TileDropper.itemInfo
+---@return boolean success
 function TileDropper:tileMouseClickCallback(target)
     self.logger:debug("Mouse click on %s", target.item.id)
     local held = Util.getHeldTile()
     if not ( held and self.canDrop{ target = target, held = held }) then
         self.logger:debug("Cannot drop onto %s", target.item.id)
-        return
+        return false
     end
     self.logger:debug("Dropping %s onto %s", held.item.id, target.item.id)
 
@@ -146,7 +199,19 @@ function TileDropper:tileMouseClickCallback(target)
     end
     timer.frame.delayOneFrame(function()
         self.onDrop({ target = target, held = held, reference = reference })
+        if self.keepHeldInCursor then
+            --iterate tiles, find the previously held item, trigger mouseClick
+            for _, data in ipairs(TileDropper.getInventoryTiles()) do
+                if data.tile.item == held.item and data.tile.itemData == held.itemData then
+                    Util.blockNextSound()
+                    data.element:triggerEvent("mouseClick")
+                    TileDropper.resetTiles()
+                    break
+                end
+            end
+        end
     end)
+    return true
 end
 
 
@@ -170,7 +235,7 @@ function TileDropper:onItemTileUpdate(target)
     end)
 
     --mouseClick: call the onDrop callback
-    target.tile.element:registerBefore("mouseClick", function()
+    target.tile.element:registerBefore("mouseClick", function(e)
         self:tileMouseClickCallback(target)
     end)
 end
@@ -188,89 +253,31 @@ event.register("itemTileUpdated", function(e)
     end
 end)
 
--- ---@param e uiActivatedEventData
--- event.register("uiActivated", function(e)
---     logger:debug("Menu entered %s", e.element.name)
---     local elements = menuElements[e.element.name]
---     if not elements then return end
---     logger:debug("Menu has elements")
---     local scrollPane = e.element:findChild(elements.scrollPane)
---     if not scrollPane then
---         logger:warn("No scroll pane (%s) found in %s", elements.scrollPane, e.element.name)
---         return
---     end
---     for _, tileDropper in pairs(TileDropper.registeredTileDroppers) do
---         logger:debug("Checking for %s", tileDropper.name)
---         for _, column in ipairs(scrollPane:getContentElement().children) do
---             for _, element in ipairs(column.children) do
---                 ---@type tes3inventoryTile
---                 local tile = element:getPropertyObject(elements.propertyObject, "tes3inventoryTile")
---                 if tile then
---                     logger:debug("Found tile %s", tile.item.id)
---                     tileDropper:onItemTileUpdate{
---                         item = tile.item,
---                         itemData = tile.itemData,
---                         tile = tile,
---                         count = tile.count or 1,
---                     }
---                 else
---                     logger:warn("No tile found in %s", element.id)
---                 end
---             end
---         end
---     end
--- end)
-
-local function resetTile(tile, element)
-    local target = {
-        item = tile.item,
-        itemData = tile.itemData,
-        count = tile.count or 1,
-        tile = tile
-    }
-    local highlightDropper = nil
-    for _, tileDropper in pairs(TileDropper.registeredTileDroppers) do
-        if tileDropper.isValidTarget(target) then
-            highlightDropper = tileDropper
-        end
-    end
-    local held = Util.getHeldTile()
-
-    logger:debug("Has highlightDropper: %s", highlightDropper ~= nil)
-    logger:debug("Has held: %s", held ~= nil)
-
-    if highlightDropper ~= nil and held ~= nil and highlightDropper.canDrop{ target = target, held = held } then
-        logger:debug("Highlighting %s", target.item.id)
-        highlightDropper:highlightTile(target, ALPHA_HIGHLIGHT)
-    else
-        logger:debug("Not highlighting %s", target.item.id)
-        TileDropper.removeHighlight(element)
-    end
-end
-
-local function resetTiles()
+---@param actor tes3reference?
+---@return { tile: tes3inventoryTile, element: tes3uiElement }[]
+function TileDropper.getInventoryTiles(actor)
+    actor = actor or tes3.player
+    local tiles = {}
     for menuId, ids in pairs(menuElements) do
         local menu = tes3ui.findMenu(menuId)
         if menu and menu.visible then
-            logger:debug("Resetting tiles in %s", menuId)
-            local scrollPane = menu:findChild(tes3ui.registerID(ids.scrollPane))
-            logger:debug("Found scroll pane %s", scrollPane.id)
+            local scrollPane = menu:findChild(ids.scrollPane)
             for _, column in ipairs(scrollPane:getContentElement().children) do
                 for _, element in ipairs(column.children) do
-                    ---@type tes3inventoryTile
                     local tile = element:getPropertyObject(ids.propertyObject, "tes3inventoryTile")
                     if tile then
-                        logger:debug("Resetting tile %s", tile.item.id)
-                        resetTile(tile, element)
+                        table.insert(tiles, { tile = tile, element = element })
                     end
                 end
             end
-            menu:updateLayout()
-        else
-            logger:debug("Menu %s not found or not visible", menuId)
         end
     end
+    return tiles
 end
+
+
+
+
 
 ---@param e mouseButtonUpEventData
 event.register("mouseButtonUp", function(e)
@@ -279,7 +286,7 @@ event.register("mouseButtonUp", function(e)
     if e.button == 0 then
         timer.frame.delayOneFrame(function()timer.frame.delayOneFrame(function()
             logger:debug("Highlighting valid tiles")
-            resetTiles()
+            TileDropper.resetTiles()
         end)end)
     end
 end)

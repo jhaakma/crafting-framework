@@ -233,4 +233,12 @@ function Util.getHeldTile()
     end
 end
 
+function Util.blockNextSound()
+    local function blockSound()
+        event.unregister("addSound", blockSound)
+        return false
+    end
+    event.register("addSound", blockSound, {priority = 100000 })
+end
+
 return Util

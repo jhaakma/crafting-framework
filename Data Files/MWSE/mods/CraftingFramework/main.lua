@@ -4,6 +4,8 @@ require("CraftingFramework.components.CraftingEvents")
 require("CraftingFramework.test")
 require("CraftingFramework.carryableContainers")
 require("CraftingFramework.copiedObjects.eventHandler")
+require("CraftingFramework.components.TileDropper")
+require("CraftingFramework.tileDrops.recharge")
 
 local Util = require("CraftingFramework.util.Util")
 local logger = Util.createLogger("main")
