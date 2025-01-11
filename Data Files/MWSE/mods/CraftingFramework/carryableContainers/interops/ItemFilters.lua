@@ -15,6 +15,9 @@ local ItemFilter = require("CraftingFramework.carryableContainers.components.Ite
 ---| '"attire"'
 ---| '"equipment"'
 ---| '"jewelry"'
+---| '"magicScrolls"'
+---| '"nonMagicScrolls"'
+---| '"allScrolls"'
 
 ---@type CarryableContainers.ItemFilter.new.data[]
 local itemFilters = {
@@ -39,6 +42,36 @@ local itemFilters = {
         objectTypes = {
             [tes3.objectType.book] = true
         }
+    },
+    {
+        id = "magicScrolls",
+        name = "Scrolls (Magic)",
+
+        isValidItem = function(item, itemData)
+            item = item --[[@as tes3book]]
+            return item.objectType == tes3.objectType.book
+                and item.type == tes3.bookType.scroll
+                and item.enchantment ~= nil
+        end
+    },
+    {
+        id = "nonMagicScrolls",
+        name = "Scrolls (Non-Magic)",
+        isValidItem = function(item, itemData)
+            item = item --[[@as tes3book]]
+            return item.objectType == tes3.objectType.book
+                and item.type == tes3.bookType.scroll
+                and item.enchantment == nil
+        end
+    },
+    {
+        id = "allScrolls",
+        name = "Scrolls (All)",
+        isValidItem = function(item, itemData)
+            item = item --[[@as tes3book]]
+            return item.objectType == tes3.objectType.book
+                and item.type == tes3.bookType.scroll
+        end
     },
     {
         id = "clothing",
