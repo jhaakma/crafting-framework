@@ -27,7 +27,7 @@ local MAX_CAPACITY = 65535
 ---Container Config
 ---@class CarryableContainer.containerConfig
 ---@field itemId string The id of the item to use for the container
----@field filter CarryableContainers.DefaultItemFilter? The id of the filter to use for the container
+---@field filter CarryableContainers.DefaultItemFilter|string|nil The id of the filter to use for the container
 ---@field capacity number The capacity of the container
 ---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
 ---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.

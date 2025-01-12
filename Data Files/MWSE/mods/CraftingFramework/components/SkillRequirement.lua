@@ -16,13 +16,13 @@ local skilRequirementDataMeta = {
 
     --- The amount of experience the player gets, when crafting an item that has this `skillRequirement`.
     --- Requires v2 of Skills Module.
-    ---@type number
+    ---@type number?
     progress = nil,
 
     --- *Default*: `30`. The maximal amount of experience the player can get, when crafting an item that has this `skillRequirement`.
     --- Only use if your mod still uses v1 of Skills Module
     ---@deprecated
-    ---@type number
+    ---@type number?
     maxProgress = nil,
 }
 
