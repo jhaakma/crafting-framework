@@ -40,6 +40,10 @@ local function onActivateContainer(e)
     --If activating a misc item, pick up if shift down, otherwise open
     local miscCarryable = CarryableContainer:new{ reference = e.target }
     if miscCarryable then
+        if miscCarryable.containerConfig.blockWorldActivate then
+            logger:debug("Blocking world activate")
+            return
+        end
         logger:debug("Activating misc item")
         if not util.isQuickModifierDown() then
             logger:debug("Opening misc item")
@@ -51,6 +55,10 @@ local function onActivateContainer(e)
 
     local containerCarryable = CarryableContainer:new{ containerRef = e.target }
     if containerCarryable then
+        if containerCarryable.containerConfig.blockWorldActivate then
+            logger:debug("Blocking world activate")
+            return
+        end
         logger:debug("Activating container")
         if util.isQuickModifierDown() then
             logger:debug("Quick modifier is down, picking up")

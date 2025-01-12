@@ -276,7 +276,7 @@ function InventorySelectMenu.open(e)
         })
     end
 
-    local containers = CarryableContainer.getCarryableContainersInInventory(tes3.player)
+    local containers = CarryableContainer.getCarryableContainersInInventory(e.reference)
     if containers and #containers > 0 then
         for _, container in ipairs(containers) do
             local containerRef = container:getContainerRef()

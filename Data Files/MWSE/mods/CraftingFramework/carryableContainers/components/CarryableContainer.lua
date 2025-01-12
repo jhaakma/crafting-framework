@@ -37,6 +37,8 @@ local MAX_CAPACITY = 65535
 ---@field getWeightModifier? fun(self:CarryableContainer):number Override function to get the weight modifier for this container
 ---@field getWeightModifierText? fun(self:CarryableContainer):string Override function to get the weight modifier text for this container
 ---@field getTooltip? fun(self:CarryableContainer):string An optional callback to add an additional tooltip to the container
+---@field blockWorldActivate? boolean If set, the container will not be opened when activated in the world.
+---@field allowUnfiltered? boolean If set, the filter button will be shown, but otherwise any item can be added to the container
 
 ---@class CarryableContainer.new.params : ItemInstance.new.params
 ---@field containerRef? tes3reference? If provided, the item will be created from the container reference
@@ -919,7 +921,7 @@ function CarryableContainer:checkAndBlockTransfer()
         local item = stack.object --[[@as tes3item]]
         local count = stack.count
         local filter = self:getFilter()
-        if filter then
+        if filter and not self.containerConfig.allowUnfiltered then
             logger:debug("Checking filter")
             --Check itemData
             local numVariables = stack.variables and #stack.variables or 0
