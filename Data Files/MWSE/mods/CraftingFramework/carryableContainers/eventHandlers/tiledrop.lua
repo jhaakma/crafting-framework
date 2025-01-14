@@ -13,6 +13,7 @@ TileDropper.register{
             itemData = e.target.itemData,
         }
         if not container then return false end
+        if container.containerConfig.allowUnfiltered then return true end
         local filter = container:getFilter()
         if not filter then return true end
         return filter:isValid(e.held.item, e.held.itemData)

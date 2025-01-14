@@ -175,6 +175,7 @@ end
 ---Gets the full list of items in the reference's inventory, including items in containers
 ---@param reference? tes3reference Default: tes3.player
 ---@return tes3itemStack[] #The list of items
+---@deprecated Use getInventory to get the ownerRef of each stack
 function CarryableContainer.getFullInventory(reference, checkedContainers)
     ---Cache each container we've already checked to prevent infinite recursion
     checkedContainers = checkedContainers or {}
@@ -194,9 +195,46 @@ function CarryableContainer.getFullInventory(reference, checkedContainers)
         local containerRef = carryable:getContainerRef()
         if containerRef and not checkedContainers[containerRef] then
             checkedContainers[containerRef] = true
+            ---@diagnostic disable-next-line: deprecated
             local containerInventory = CarryableContainer.getFullInventory(containerRef, checkedContainers)
             for _, stack in pairs(containerInventory) do
                 table.insert(inventory, stack)
+            end
+        end
+    end
+    return inventory
+end
+
+---@class CarryableContainer.getInventory.result
+---@field stack tes3itemStack
+---@field ownerRef tes3reference
+
+---Gets the full list of item stacks in the reference's inventory, including items in containers
+---Returns a list of stacks along with the ownerRef of each stack
+---@param reference? tes3reference Default: tes3.player
+---@return CarryableContainer.getInventory.result[] #The list of items
+function CarryableContainer.getInventory(reference, checkedContainers)
+    ---Cache each container we've already checked to prevent infinite recursion
+    checkedContainers = checkedContainers or {}
+    --- all items in inventory and in containers
+    ---@type CarryableContainer.getInventory.result[]
+    local inventory = {}
+    local containers = {}
+    reference = reference or tes3.player
+    for _, stack in pairs(reference.object.inventory) do
+        table.insert(inventory, { stack = stack, ownerRef = reference })
+        local carryable = CarryableContainer:new{ item = stack.object }
+        if carryable then
+            table.insert(containers, carryable)
+        end
+    end
+    for _, carryable in pairs(containers) do
+        local containerRef = carryable:getContainerRef()
+        if containerRef and not checkedContainers[containerRef] then
+            checkedContainers[containerRef] = true
+            local containerInventory = CarryableContainer.getInventory(containerRef, checkedContainers)
+            for _, stack in pairs(containerInventory) do
+                table.insert(inventory, { stack = stack.stack, ownerRef = containerRef })
             end
         end
     end
@@ -221,9 +259,9 @@ function CarryableContainer.getItemCount(e)
         return 0
     end
     local count = tes3.getItemCount(e)
-    for _, stack in pairs(CarryableContainer.getFullInventory()) do
-        if stack.object == item then
-            count = count + stack.count
+    for _, result in pairs(CarryableContainer.getInventory()) do
+        if result.stack.object == item then
+            count = count + result.stack.count
         end
     end
     return count
@@ -232,7 +270,7 @@ end
 
 ---Find and return an item stack in the reference's inventory,
 ---@param e { item: string|tes3item, itemData?: tes3itemData, reference: tes3reference? }
----@return tes3itemStack|nil
+---@return tes3itemStack|nil stack, tes3reference|nil ownerRef
 function CarryableContainer.findItemStack(e)
     e.reference = e.reference or tes3.player
     ---@type tes3item
@@ -246,15 +284,17 @@ function CarryableContainer.findItemStack(e)
         --getObject failed
         return
     end
-    for _, stack in pairs(CarryableContainer.getFullInventory(e.reference)) do
+    for _, result in pairs(CarryableContainer.getInventory(e.reference)) do
+        local stack = result.stack
+        local ownerRef = result.ownerRef
         if stack.object == item then
             if not e.itemData then
-                return stack
+                return stack, ownerRef
             end
             if not stack.variables then return end
             for _, itemData in pairs(stack.variables) do
                 if itemData == e.itemData then
-                    return stack
+                    return stack, ownerRef
                 end
             end
         end
@@ -579,11 +619,7 @@ function CarryableContainer:getWeightModifier()
 end
 
 function CarryableContainer:replaceInWorld()
-    if not self.containerConfig.hasCollision then return end
-    if not self.reference then
-        logger:error("Trying to replace in world for item %s", self.item.id)
-        return self
-    end
+    logger:assert(self.reference ~= nil, "Trying to replace in world for item %s", self.item.id)
     logger:debug("Replacing container in world %s", self.item.id)
 
     local refStack = RefStack:new{
@@ -679,6 +715,7 @@ function CarryableContainer:replaceInWorld()
                     cell = self.reference.cell,
                     forceCellChange = true
                 }
+                Container.hide(containerRef)
             end
         end)
     end
@@ -865,7 +902,8 @@ function CarryableContainer:checkAndRemoveFromSelf()
     local containerRef = self:getContainerRef()
     if containerRef then
         ---Look for this container anywhere inside the container
-        for _, stack in ipairs(CarryableContainer.getFullInventory(containerRef)) do
+        for _, result in ipairs(CarryableContainer.getInventory(containerRef)) do
+            local stack = result.stack
             if stack.object then
                 logger:debug("checkAndRemoveFromSelf - Checking stack %s", stack.object.id)
                 logger:debug("Self.id: %s", self.item.id)
@@ -1061,41 +1099,47 @@ function CarryableContainer:transferFiltered(filter)
     local playerInventory = tes3.player.object.inventory
     local weightModifier = self:getWeightModifier() or 1.0
     for _, stack in pairs(playerInventory) do
+
+
         local item = stack.object --[[@as tes3item]]
         local count = stack.count
         local numVariables = stack.variables and #stack.variables or 0
-        if numVariables > 0 then
-            ---@param itemData tes3itemData
-            for _, itemData in ipairs(stack.variables) do
-                --check filtered
-                if filter:isValid(item, itemData) then
-                    ---@cast item tes3item|tes3weapon|tes3armor|tes3clothing
-                    local isEquipped =  tes3.getEquippedItem{
-                        type = item.type,
-                        actor = tes3.player,
-                        objectType = item.objectType,
-                        slot = item.slot
-                    }
-                    if not isEquipped then
-                        totalWeight = totalWeight + (stack.object.weight * weightModifier)
-                        table.insert(itemsToTransfer, {
-                            item = item,
-                            itemData = itemData,
-                            count = 1,
-                        })
+
+        if item ~= self.item then
+
+            if numVariables > 0 then
+                ---@param itemData tes3itemData
+                for _, itemData in ipairs(stack.variables) do
+                    --check filtered
+                    if filter:isValid(item, itemData) then
+                        ---@cast item tes3item|tes3weapon|tes3armor|tes3clothing
+                        local isEquipped =  tes3.getEquippedItem{
+                            type = item.type,
+                            actor = tes3.player,
+                            objectType = item.objectType,
+                            slot = item.slot
+                        }
+                        if not isEquipped then
+                            totalWeight = totalWeight + (stack.object.weight * weightModifier)
+                            table.insert(itemsToTransfer, {
+                                item = item,
+                                itemData = itemData,
+                                count = 1,
+                            })
+                        end
                     end
                 end
             end
-        end
-        ---If there are any without item data, check those too
-        if count > numVariables then
-            if filter:isValid(item) then
-                local remainingCount = count - numVariables
-                totalWeight = totalWeight + (stack.object.weight * weightModifier * remainingCount)
-                table.insert(itemsToTransfer, {
-                    item = item,
-                    count = remainingCount,
-                })
+            ---If there are any without item data, check those too
+            if count > numVariables then
+                if filter:isValid(item) then
+                    local remainingCount = count - numVariables
+                    totalWeight = totalWeight + (stack.object.weight * weightModifier * remainingCount)
+                    table.insert(itemsToTransfer, {
+                        item = item,
+                        count = remainingCount,
+                    })
+                end
             end
         end
     end

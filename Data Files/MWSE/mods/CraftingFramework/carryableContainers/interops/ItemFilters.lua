@@ -157,6 +157,14 @@ local itemFilters = {
             local isAmulet = item.slot == tes3.clothingSlot.amulet
             return isClothing and (isRing or isAmulet)
         end,
+    },
+    {
+        id = "soulGems",
+        name = "Soul Gems",
+        isValidItem = function(item, itemData)
+            item = item --[[@as tes3misc]]
+            return item.isSoulGem == true
+        end
     }
 }
 

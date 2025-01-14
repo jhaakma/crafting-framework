@@ -1,11 +1,11 @@
----@class Merlord.initializer.params : Merlord.Initializer
-
----@class Merlord.Initializer
+---@class Merlord.Initializer.params
 ---@field logger mwseLogger
 ---@field modPath string
+
+---@class Merlord.Initializer : Merlord.Initializer.params
 local Initializer = {}
 
----@param params Merlord.initializer.params
+---@param params Merlord.Initializer.params
 ---@return Merlord.Initializer
 function Initializer:new(params)
     local o = table.copy(params)

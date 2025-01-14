@@ -38,7 +38,6 @@ function ReferenceManager:new(params)
         end
     end
 
-    ---@type CraftingFramework.ReferenceManager
     local referenceManager = {
         id = params.id,
         requirements = params.requirements,
