@@ -823,6 +823,7 @@ function CarryableContainer:getCreateContainerRef()
             cell = tes3.player.cell,
             scale = self.containerConfig.scale or 1.0
         }
+
         Container.hide(containerRef)
 
         --Map the container to the misc item
@@ -830,6 +831,7 @@ function CarryableContainer:getCreateContainerRef()
 
         logger:debug("Created container reference %s for %s", containerRef.id, self.item.id)
     end
+    containerRef.persistent = true
     return containerRef
 end
 

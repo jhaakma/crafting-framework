@@ -258,9 +258,11 @@ end
 ---@class CraftingFramework.showInventorySelectMenu.callbackParams : tes3ui.showInventorySelectMenu.callbackParams
 ---@field reference tes3reference The reference of the container or actor that was selected
 
+
 ---@class CraftingFramework.showInventorySelectMenu.params : tes3ui.showInventorySelectMenu.params
 ---@field callback?  fun(e:CraftingFramework.showInventorySelectMenu.callbackParams)
 ---@field noResultsCallback? fun(e:{item:tes3item|tes3misc, itemData:tes3itemData, reference:tes3reference})
+---@field additionalContainers CarryableContainer[]
 
 ---Open an inventory select menu with a sidebar of containers
 ---@param e CraftingFramework.showInventorySelectMenu.params
@@ -277,6 +279,11 @@ function InventorySelectMenu.open(e)
     end
 
     local containers = CarryableContainer.getCarryableContainersInInventory(e.reference)
+    if e.additionalContainers and #e.additionalContainers > 0 then
+        for _, container in ipairs(e.additionalContainers) do
+            table.insert(containers, container)
+        end
+    end
     if containers and #containers > 0 then
         for _, container in ipairs(containers) do
             local containerRef = container:getContainerRef()
