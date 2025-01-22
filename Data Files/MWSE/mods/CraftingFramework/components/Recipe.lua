@@ -145,7 +145,7 @@ function Recipe:new(data)
         ---@type CarryableContainer.containerConfig
         local carryableContainerConfig = table.copy(recipe.containerConfig)
         carryableContainerConfig.itemId = recipe.craftable.id
-        carryableContainerConfig.scale = recipe.scale
+        carryableContainerConfig.scale = recipe.containerConfig.scale or recipe.scale
         CarryableContainer.register(carryableContainerConfig)
     end
 
