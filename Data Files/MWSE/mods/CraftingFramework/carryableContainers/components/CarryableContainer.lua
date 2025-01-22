@@ -654,6 +654,7 @@ function CarryableContainer:replaceInWorld()
         self.dataHolder = newMisc
     else
         logger:debug("Item %s is already a copy", self.item.id)
+
     end
 
     if self.containerConfig.hasCollision then
@@ -697,6 +698,7 @@ function CarryableContainer:replaceInWorld()
             tes3.dataHandler:updateCollisionGroupsForActiveCells{}
         end)
     else
+        self.reference.scale = self.containerConfig.scale or self.reference.scale
         self:setSafeInstance()
         timer.frame.delayOneFrame(function()
             self = self:getSafeInstance() --[[@as CarryableContainer]]
