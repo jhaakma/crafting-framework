@@ -53,3 +53,9 @@ CraftingFramework.MaterialStorage:new{
         return CraftingFramework.CarryableContainer.isCarryableContainer(reference)
     end,
 }
+
+local Initializer = require("CraftingFramework.util.initializer"):new{
+    modPath = "mods/CraftingFramework",
+    logger = logger
+}
+Initializer:initAll("integrations")

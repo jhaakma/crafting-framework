@@ -1,12 +1,16 @@
+
+local TagManager = require("CraftingFramework.components.TagManager")
+
 ---@alias MerchantManager.contents table<string, number> Key: item ID, Value: count
 
 ---Holds container data for a merchant
----@class MerchantManager.ContainerData
----@field merchantId string id of the merchant to add the container to
+---@class (exact) MerchantManager.ContainerData
+---@field merchantId? string id of the merchant to add the container to
+---@field merchantTag? string The tag that the merchant must have to add the container
 ---@field contents MerchantManager.contents list of items to add to the merchant container
 ---@field enabled fun(merchant: tes3reference):boolean (optional) whether the merchant container is enabled by default. Defaults to true
 
----@class MerchantManager.new.params
+---@class (exact) MerchantManager.new.params
 ---@field modName string name of the mod registering the merchant manager, used as a unique identifier
 ---@field logger mwseLogger logger to use for logging
 ---@field containers MerchantManager.ContainerData[] list of containers to register
@@ -15,9 +19,12 @@
 ---@field modName string name of the mod registering the merchant manager, used as a unique identifier
 ---@field logger mwseLogger MWSELogger to use for logging
 ---@field registeredContainers table<string, MerchantManager.ContainerData>
+---@field registeredTaggedContainers table<string, MerchantManager.ContainerData>
 --- A class for managing custom inventories for merchants.
 local MerchantManager = {
+    ---@type table<string, MerchantManager.ContainerData>
     registeredMerchantManagers = {}
+
 }
 
 ---@param e MerchantManager.new.params
@@ -45,6 +52,7 @@ function MerchantManager.new(e)
 
     self.modName = e.modName
     self.registeredContainers = {}
+    self.registeredTaggedContainers = {}
     for _, container in ipairs(e.containers) do
         self:registerMerchantContainer(container)
     end
@@ -62,12 +70,16 @@ end
 ---
 --- `enabled` (optional) whether the merchant conateiner is enabled by default. Defaults to true
 function MerchantManager:registerMerchantContainer(e)
-    self.logger:assert(type(e.merchantId) == "string", "merchantId must be a string")
+    self.logger:assert(type(e.merchantId) == "string" or type(e.merchantTag) == "string", "Must provide a merchantId or merchantTag")
     self.logger:assert(type(e.contents) == "table", "contents must be a table")
-    if self.registeredMerchantManagers[e.merchantId:lower()] then
-        self.logger:warn("Merchant %s already registered, overwriting", e.merchantId)
+
+
+    local merchantId = e.merchantId and e.merchantId:lower()
+
+    if merchantId and self.registeredMerchantManagers[merchantId] then
+        self.logger:warn("Merchant %s already registered, overwriting", merchantId)
     end
-    self.logger:debug("Registering merchant container for %s", e.merchantId)
+    self.logger:debug("Registering merchant container for %s", e.merchantId or e.merchantTag)
     local contents = {}
     for id, count in pairs(e.contents) do
         self.logger:assert(type(id) == "string", "id must be a string")
@@ -75,12 +87,20 @@ function MerchantManager:registerMerchantContainer(e)
         self.logger:debug("- %s: %d", id, count)
         contents[id:lower()] = count
     end
-    local merchantId = e.merchantId:lower()
-    self.registeredContainers[merchantId] = {
-        merchantId = merchantId,
-        contents = contents,
-        enabled = e.enabled or function() return true end
-    }
+    if merchantId then
+        self.registeredContainers[merchantId] = {
+            merchantId = merchantId,
+            contents = contents,
+            enabled = e.enabled or function() return true end
+        }
+    end
+    if e.merchantTag then
+        self.registeredTaggedContainers[e.merchantTag] = {
+            merchantTag = e.merchantTag,
+            contents = contents,
+            enabled = e.enabled or function() return true end
+        }
+    end
 end
 
 ---@param e? { enabledEvent: string }
@@ -104,8 +124,18 @@ end
 
 --- Get the container data for a given merchant reference
 ---@param merchantRef tes3reference
+---@return MerchantManager.ContainerData?
 function MerchantManager:getContainerData(merchantRef)
-    return self.registeredContainers[merchantRef.baseObject.id:lower()]
+    local registeredContainer = self.registeredContainers[merchantRef.baseObject.id:lower()]
+    if registeredContainer then
+        return registeredContainer
+    end
+
+    for tag, containerData in pairs(self.registeredTaggedContainers) do
+        if TagManager.hasId { tag = tag, id = merchantRef.baseObject.id } then
+            return containerData
+        end
+    end
 end
 
 --- Get the data field name for the container id, based on the mod name
