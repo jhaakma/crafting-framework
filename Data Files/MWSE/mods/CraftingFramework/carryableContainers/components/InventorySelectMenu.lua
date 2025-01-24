@@ -262,7 +262,7 @@ end
 ---@class CraftingFramework.showInventorySelectMenu.params : tes3ui.showInventorySelectMenu.params
 ---@field callback?  fun(e:CraftingFramework.showInventorySelectMenu.callbackParams)
 ---@field noResultsCallback? fun(e:{item:tes3item|tes3misc, itemData:tes3itemData, reference:tes3reference})
----@field additionalContainers CarryableContainer[]
+---@field additionalContainers CarryableContainer[]?
 
 ---Open an inventory select menu with a sidebar of containers
 ---@param e CraftingFramework.showInventorySelectMenu.params

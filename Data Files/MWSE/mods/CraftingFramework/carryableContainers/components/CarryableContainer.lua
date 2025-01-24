@@ -258,7 +258,7 @@ function CarryableContainer.getItemCount(e)
         --getObject failed
         return 0
     end
-    local count = tes3.getItemCount(e)
+    local count = 0
     for _, result in pairs(CarryableContainer.getInventory()) do
         if result.stack.object == item then
             count = count + result.stack.count
