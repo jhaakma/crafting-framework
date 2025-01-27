@@ -259,7 +259,7 @@ function CarryableContainer.getItemCount(e)
         return 0
     end
     local count = 0
-    for _, result in pairs(CarryableContainer.getInventory()) do
+    for _, result in pairs(CarryableContainer.getInventory(e.reference)) do
         if result.stack.object == item then
             count = count + result.stack.count
         end
