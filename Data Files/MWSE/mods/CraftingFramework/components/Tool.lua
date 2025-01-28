@@ -70,7 +70,7 @@ function Tool:hasInInventory(checkEquipped)
             if itemStack then
                 if checkEquipped then
                     local equippedObject = tes3.mobilePlayer.readiedWeapon and tes3.mobilePlayer.readiedWeapon.object
-                    return itemStack.object == equippedObject
+                    if itemStack.object == equippedObject then return true end
                 else
                     return true
                 end

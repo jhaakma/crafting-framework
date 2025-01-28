@@ -17,6 +17,7 @@ end
 ---@param reference tes3reference
 function Container.hide(reference)
     logger:debug("Hiding container %s", reference)
+    reference:enable()
     reference:disable()
     reference.hasNoCollision = true
 end

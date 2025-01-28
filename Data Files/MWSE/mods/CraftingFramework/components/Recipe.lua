@@ -22,7 +22,7 @@ local config = require("CraftingFramework.config")
 
 
 ---@class CraftingFramework.Recipe.containerConfig : CarryableContainer.containerConfig
----@field id? string This is provided by the recipe and should not be set manually
+---@field itemId? string This is provided by the recipe and should not be set manually
 
 ---@class CraftingFramework.Recipe.data
 ---@field id string **Required** This is the unique identifier used to identify this `recipe`. This id is used when fetching an existing Recipe from the `Recipe` API.
@@ -118,7 +118,7 @@ end
 function Recipe:new(data)
     ---@type CraftingFramework.Recipe
     Util.validate(data, Recipe.schema)
-    local recipe = table.copy(data)
+    local recipe = table.copy(data) --[[@as CraftingFramework.Recipe]]
     --Flatten the API so craftable is just part of the recipe
     local craftableFields = Craftable.schema.fields
 
@@ -145,7 +145,7 @@ function Recipe:new(data)
         ---@type CarryableContainer.containerConfig
         local carryableContainerConfig = table.copy(recipe.containerConfig)
         carryableContainerConfig.itemId = recipe.craftable.id
-        carryableContainerConfig.scale = recipe.scale
+        carryableContainerConfig.scale = recipe.containerConfig.scale or recipe.scale
         CarryableContainer.register(carryableContainerConfig)
     end
 

@@ -123,8 +123,8 @@ function StaticActivator.updateIndicator(e)
 end
 
 function StaticActivator.getLookingAt()
-    local eyePos = tes3.getPlayerEyePosition()
-    local eyeDirection = tes3.getPlayerEyeVector()
+    local eyePos
+    local eyeDirection
     --If in menu, use cursor position
     if tes3ui.menuMode() then
         local inventory = tes3ui.findMenu("MenuInventory")
@@ -135,6 +135,9 @@ function StaticActivator.getLookingAt()
             local camera = tes3.worldController.worldCamera.camera
             eyePos, eyeDirection = camera:windowPointToRay{cursor.x, cursor.y}
         end
+    else
+        eyePos = tes3.getPlayerEyePosition()
+        eyeDirection = tes3.getPlayerEyeVector()
     end
     if not (eyeDirection or eyeDirection) then return end
     local activationDistance = tes3.getPlayerActivationDistance()

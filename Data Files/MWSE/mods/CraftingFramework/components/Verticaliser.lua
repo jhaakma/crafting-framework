@@ -24,6 +24,10 @@ local Verticaliser = {
         ALIGN_VERTICAL = true,
         COLLISION_VERTICAL = true,
     },
+    registeredObjects = {},
+    registeredPlugins = {
+        ['ashfall.esp'] = true,
+    },
 }
 
 ---@class Verticalise.nodeData
@@ -36,9 +40,13 @@ local Verticaliser = {
 Verticaliser.referenceManager = ReferenceManager:new{
     id = "Verticalised Refs",
     requirements = function(self, reference)
-        if not reference.sceneNode then return false end
-        local verticalNodes = Verticaliser.getVerticalNodes(reference.sceneNode)
-        return verticalNodes ~= nil
+        local objectRegistered = Verticaliser.registeredObjects[reference.baseObject.id:lower()]
+        local sourceMod = reference.baseObject.sourceMod
+        local pluginRegistered = sourceMod and Verticaliser.registeredPlugins[sourceMod:lower()]
+        if not (objectRegistered or pluginRegistered) then
+            return false
+        end
+        return Verticaliser.hasVerticalNode(reference.sceneNode)
     end,
     onActivated = function(self, reference)
         Verticaliser.registerReferenceForVerticalisation(reference)
@@ -100,6 +108,16 @@ function Verticaliser.getVerticalNodes(sceneNode)
     return verticalNodes
 end
 
+function Verticaliser.hasVerticalNode(sceneNode)
+    for child in table.traverse{ sceneNode } do
+        if Verticaliser.VERTICAL_NODE_NAMES[child.name] then
+            return true
+        end
+    end
+    return false
+end
+
+
 --[[
     Searches sceneNode for vertical nodes and
     registers a function that periodically checks if the node has moved,
@@ -112,12 +130,21 @@ function Verticaliser.registerReferenceForVerticalisation(reference)
         logger:error("Tried to verticalise ref %s before sceneNode was available", reference.id)
         return
     end
-    local verticalNodes = Verticaliser.getVerticalNodes(sceneNode)
+    local hasVerticalNode = Verticaliser.hasVerticalNode(sceneNode)
     --Exit if no vertical nodes found
-    if not verticalNodes then return end
+    if not hasVerticalNode then return end
+    local verticalNodes = Verticaliser.getVerticalNodes(sceneNode)
     logger:debug("Found %s vertical nodes for ref %s", #verticalNodes, reference.id)
     Verticaliser.referenceManager.references[reference] = verticalNodes
     Verticaliser.verticaliseNodes(verticalNodes)
+end
+
+function Verticaliser.registerObject(objectId)
+    Verticaliser.registeredObjects[objectId:lower()] = true
+end
+
+function Verticaliser.registerPlugin(pluginId)
+    Verticaliser.registeredPlugins[pluginId:lower()] = true
 end
 
 return Verticaliser

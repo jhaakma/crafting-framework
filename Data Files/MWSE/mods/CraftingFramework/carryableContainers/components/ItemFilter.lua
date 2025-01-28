@@ -10,12 +10,13 @@ local logger = util.createLogger("ItemFilter")
 ---@field isValidItem? fun(item: tes3item, itemData: tes3itemData?): boolean A function that returns true if the item is allowed through this filter
 ---@field getInvalidMessage? fun(self: CarryableContainers.ItemFilter, item: tes3item, itemData: tes3itemData?): string A function that returns a message to display if the item is not allowed through this filter
 
----@class CarryableContainers.ItemFilter : CarryableContainers.ItemFilter.new.data
+
 ---Defines a filter for which items are allowed in a container.
 ---
 --- - If objectTypes is defined, then only items of those types are allowed.
 ---
 --- - Otherwise, isValidItem is called to determine if the item is allowed.
+---@class CarryableContainers.ItemFilter : CarryableContainers.ItemFilter.new.data
 local ItemFilter = {
     defaultInvalidMessage = "This item is not allowed in this container.",
 }

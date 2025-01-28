@@ -28,7 +28,7 @@ end)
 local function startIndicatorTimer()
     logger:debug("Starting activation indicator timer")
     timer.start{
-        duration = 0.1,
+        duration = 0.15,
         type = timer.real,
         iterations = -1,
         callback = function()

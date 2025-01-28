@@ -27,7 +27,7 @@ local MAX_CAPACITY = 65535
 ---Container Config
 ---@class CarryableContainer.containerConfig
 ---@field itemId string The id of the item to use for the container
----@field filter CarryableContainers.DefaultItemFilter? The id of the filter to use for the container
+---@field filter CarryableContainers.DefaultItemFilter|string|nil The id of the filter to use for the container
 ---@field capacity number The capacity of the container
 ---@field hasCollision boolean? If set to true, the in-world reference will be an actual container, rather than the placed misc item. This will give it collision, but also means it can't be as easily moved
 ---@field weightModifier number? The weight of the contents of this container will be multiplied by this value.
@@ -37,9 +37,11 @@ local MAX_CAPACITY = 65535
 ---@field getWeightModifier? fun(self:CarryableContainer):number Override function to get the weight modifier for this container
 ---@field getWeightModifierText? fun(self:CarryableContainer):string Override function to get the weight modifier text for this container
 ---@field getTooltip? fun(self:CarryableContainer):string An optional callback to add an additional tooltip to the container
+---@field blockWorldActivate? boolean If set, the container will not be opened when activated in the world.
+---@field allowUnfiltered? boolean If set, the filter button will be shown, but otherwise any item can be added to the container
 
 ---@class CarryableContainer.new.params : ItemInstance.new.params
----@field containerRef tes3reference? If provided, the item will be created from the container reference
+---@field containerRef? tes3reference? If provided, the item will be created from the container reference
 
 ---A carrayable container is a misc item that, when activated
 --- or equipped, will open its associated container reference
@@ -166,30 +168,73 @@ function CarryableContainer.getCarryableContainersInInventory(reference)
 end
 
 ---@class CarryableContainer.getItemCount.params : tes3.getItemCount.params
----@field reference tes3reference Default: tes3.player
+---@field itemData? tes3itemData
+---@field reference tes3reference? Default: tes3.player
 
 
 ---Gets the full list of items in the reference's inventory, including items in containers
 ---@param reference? tes3reference Default: tes3.player
 ---@return tes3itemStack[] #The list of items
+---@deprecated Use getInventory to get the ownerRef of each stack
 function CarryableContainer.getFullInventory(reference, checkedContainers)
     ---Cache each container we've already checked to prevent infinite recursion
     checkedContainers = checkedContainers or {}
     --- all items in inventory and in containers
     ---@type tes3itemStack[]
     local inventory = {}
+    local containers = {}
     reference = reference or tes3.player
     for _, stack in pairs(reference.object.inventory) do
         table.insert(inventory, stack)
         local carryable = CarryableContainer:new{ item = stack.object }
         if carryable then
-            local containerRef = carryable:getContainerRef()
-            if containerRef and not checkedContainers[containerRef] then
-                checkedContainers[containerRef] = true
-                local containerInventory = CarryableContainer.getFullInventory(containerRef, checkedContainers)
-                for _, stack in pairs(containerInventory) do
-                    table.insert(inventory, stack)
-                end
+            table.insert(containers, carryable)
+        end
+    end
+    for _, carryable in pairs(containers) do
+        local containerRef = carryable:getContainerRef()
+        if containerRef and not checkedContainers[containerRef] then
+            checkedContainers[containerRef] = true
+            ---@diagnostic disable-next-line: deprecated
+            local containerInventory = CarryableContainer.getFullInventory(containerRef, checkedContainers)
+            for _, stack in pairs(containerInventory) do
+                table.insert(inventory, stack)
+            end
+        end
+    end
+    return inventory
+end
+
+---@class CarryableContainer.getInventory.result
+---@field stack tes3itemStack
+---@field ownerRef tes3reference
+
+---Gets the full list of item stacks in the reference's inventory, including items in containers
+---Returns a list of stacks along with the ownerRef of each stack
+---@param reference? tes3reference Default: tes3.player
+---@return CarryableContainer.getInventory.result[] #The list of items
+function CarryableContainer.getInventory(reference, checkedContainers)
+    ---Cache each container we've already checked to prevent infinite recursion
+    checkedContainers = checkedContainers or {}
+    --- all items in inventory and in containers
+    ---@type CarryableContainer.getInventory.result[]
+    local inventory = {}
+    local containers = {}
+    reference = reference or tes3.player
+    for _, stack in pairs(reference.object.inventory) do
+        table.insert(inventory, { stack = stack, ownerRef = reference })
+        local carryable = CarryableContainer:new{ item = stack.object }
+        if carryable then
+            table.insert(containers, carryable)
+        end
+    end
+    for _, carryable in pairs(containers) do
+        local containerRef = carryable:getContainerRef()
+        if containerRef and not checkedContainers[containerRef] then
+            checkedContainers[containerRef] = true
+            local containerInventory = CarryableContainer.getInventory(containerRef, checkedContainers)
+            for _, stack in pairs(containerInventory) do
+                table.insert(inventory, { stack = stack.stack, ownerRef = containerRef })
             end
         end
     end
@@ -201,7 +246,7 @@ end
 ---@param e CarryableContainer.getItemCount.params
 ---@return number The number of items in the reference's inventory
 function CarryableContainer.getItemCount(e)
-    local reference = e.reference or tes3.player
+    e.reference = e.reference or tes3.player
     ---@type tes3item
     local item
     if type(e.item) == "string" then
@@ -213,21 +258,50 @@ function CarryableContainer.getItemCount(e)
         --getObject failed
         return 0
     end
-    local count = tes3.getItemCount(e)
-    for _, stack in pairs(reference.object.inventory) do
-        local carryable = CarryableContainer:new{ item = stack.object }
-        if carryable then
-            local containerRef = carryable:getContainerRef()
-            if containerRef then
-                count = count + CarryableContainer.getItemCount{
-                    reference = carryable:getContainerRef(),
-                    item = item,
-                }
-            end
+    local count = 0
+    for _, result in pairs(CarryableContainer.getInventory(e.reference)) do
+        if result.stack.object == item then
+            count = count + result.stack.count
         end
     end
     return count
 end
+
+
+---Find and return an item stack in the reference's inventory,
+---@param e { item: string|tes3item, itemData?: tes3itemData, reference: tes3reference? }
+---@return tes3itemStack|nil stack, tes3reference|nil ownerRef
+function CarryableContainer.findItemStack(e)
+    e.reference = e.reference or tes3.player
+    ---@type tes3item
+    local item
+    if type(e.item) == "string" then
+        item = tes3.getObject(e.item--[[@as string]])
+    else
+        item = e.item
+    end
+    if not item then
+        --getObject failed
+        return
+    end
+    for _, result in pairs(CarryableContainer.getInventory(e.reference)) do
+        local stack = result.stack
+        local ownerRef = result.ownerRef
+        if stack.object == item then
+            if not e.itemData then
+                return stack, ownerRef
+            end
+            if not stack.variables then return end
+            for _, itemData in pairs(stack.variables) do
+                if itemData == e.itemData then
+                    return stack, ownerRef
+                end
+            end
+        end
+    end
+end
+
+
 
 
 ---@class CarryableContainer.removeItem.params : tes3.removeItem.params
@@ -277,7 +351,7 @@ function CarryableContainer.removeItem(e)
 end
 
 ---@param e tes3.transferItem.params
-function CarryableContainer.transferItem(e)
+function CarryableContainer.transferItem(e, skipInventoryUpdate)
     ---For each inventory, check item count to see if it's in that container, then do tes3.transferItem
     local count = e.count or 1
     local transferred = tes3.transferItem(e)
@@ -292,7 +366,7 @@ function CarryableContainer.transferItem(e)
                     local params = table.copy(e)
                     params.from = containerRef
                     params.count = remaining
-                    local transferred =  CarryableContainer.transferItem(params)
+                    local transferred =  CarryableContainer.transferItem(params, true)
                     remaining = remaining - transferred
                     if remaining <= 0 then
                         break
@@ -309,6 +383,13 @@ function CarryableContainer.isCarryableContainer(containerRef)
     return config.persistent.containerToMiscCopyMapping[containerRef.baseObject.id:lower()] ~= nil
 end
 
+---Get the carryable container instance from an item
+---@param item tes3item
+function CarryableContainer.getFromItem(item)
+    if item then
+        return CarryableContainer:new{ item = item }
+    end
+end
 
 ---Construct an instance of a carryable container
 ---@param e CarryableContainer.new.params
@@ -538,10 +619,7 @@ function CarryableContainer:getWeightModifier()
 end
 
 function CarryableContainer:replaceInWorld()
-    if not self.reference then
-        logger:error("Trying to replace in world for item %s", self.item.id)
-        return self
-    end
+    logger:assert(self.reference ~= nil, "Trying to replace in world for item %s", self.item.id)
     logger:debug("Replacing container in world %s", self.item.id)
 
     local refStack = RefStack:new{
@@ -576,6 +654,7 @@ function CarryableContainer:replaceInWorld()
         self.dataHolder = newMisc
     else
         logger:debug("Item %s is already a copy", self.item.id)
+
     end
 
     if self.containerConfig.hasCollision then
@@ -619,6 +698,7 @@ function CarryableContainer:replaceInWorld()
             tes3.dataHandler:updateCollisionGroupsForActiveCells{}
         end)
     else
+        self.reference.scale = self.containerConfig.scale or self.reference.scale
         self:setSafeInstance()
         timer.frame.delayOneFrame(function()
             self = self:getSafeInstance() --[[@as CarryableContainer]]
@@ -637,6 +717,7 @@ function CarryableContainer:replaceInWorld()
                     cell = self.reference.cell,
                     forceCellChange = true
                 }
+                Container.hide(containerRef)
             end
         end)
     end
@@ -744,6 +825,7 @@ function CarryableContainer:getCreateContainerRef()
             cell = tes3.player.cell,
             scale = self.containerConfig.scale or 1.0
         }
+
         Container.hide(containerRef)
 
         --Map the container to the misc item
@@ -751,6 +833,7 @@ function CarryableContainer:getCreateContainerRef()
 
         logger:debug("Created container reference %s for %s", containerRef.id, self.item.id)
     end
+    containerRef.persistent = true
     return containerRef
 end
 
@@ -823,14 +906,16 @@ function CarryableContainer:checkAndRemoveFromSelf()
     local containerRef = self:getContainerRef()
     if containerRef then
         ---Look for this container anywhere inside the container
-        for _, stack in pairs(self.getFullInventory(containerRef)) do
+        for _, result in ipairs(CarryableContainer.getInventory(containerRef)) do
+            local stack = result.stack
             if stack.object then
-                logger:debug("Checking stack %s", stack.object.id)
+                logger:debug("checkAndRemoveFromSelf - Checking stack %s", stack.object.id)
                 logger:debug("Self.id: %s", self.item.id)
 
                 --Check if adding container to itself
                 local isItself = stack.object.id:lower() == self.item.id
                 if isItself then
+                    logger:debug("Removing %s from %s", self.item.id, containerRef.id)
                     self.transferItem{
                         from = containerRef,
                         to = tes3.player,
@@ -839,6 +924,7 @@ function CarryableContainer:checkAndRemoveFromSelf()
                         playSound = false
                     }
                     tes3.messageBox("You cannot place this container inside itself")
+                    return
                 end
             end
         end
@@ -864,15 +950,20 @@ function CarryableContainer:checkAndBlockTransfer()
     ---@param stack tes3itemStack
     for _, stack in pairs(containerRef.object.inventory) do
         local item = stack.object --[[@as tes3item]]
-        local count = stack.count
-
         local innerCarryable = CarryableContainer:new{ item = item }
         if innerCarryable then
+            logger:debug("Checking inner carryable %s", item.id)
             innerCarryable:checkAndRemoveFromSelf()
         end
+    end
 
+    ---@param stack tes3itemStack
+    for _, stack in pairs(containerRef.object.inventory) do
+        logger:debug("Checking stack %s", stack.object.id)
+        local item = stack.object --[[@as tes3item]]
+        local count = stack.count
         local filter = self:getFilter()
-        if filter then
+        if filter and not self.containerConfig.allowUnfiltered then
             logger:debug("Checking filter")
             --Check itemData
             local numVariables = stack.variables and #stack.variables or 0
@@ -991,14 +1082,17 @@ end
 ---Otherwise, use transferItem on everything
 ---
 --- TODO: Check if weight modifier should be removed here
-function CarryableContainer:transferFiltered()
+---@param filter? CarryableContainers.ItemFilter The filter to use for transferring items. If nil, uses the filter set on the container
+function CarryableContainer:transferFiltered(filter)
 
     local containerRef = self:getCreateContainerRef()
     if not containerRef then
         logger:error("Failed to get container ref")
         return
     end
-    local filter = self:getFilter()
+    if not filter then
+        filter = self:getFilter()
+    end
     if not filter then
         logger:debug("No filter, skipping transfer")
         return
@@ -1009,41 +1103,47 @@ function CarryableContainer:transferFiltered()
     local playerInventory = tes3.player.object.inventory
     local weightModifier = self:getWeightModifier() or 1.0
     for _, stack in pairs(playerInventory) do
+
+
         local item = stack.object --[[@as tes3item]]
         local count = stack.count
         local numVariables = stack.variables and #stack.variables or 0
-        if numVariables > 0 then
-            ---@param itemData tes3itemData
-            for _, itemData in ipairs(stack.variables) do
-                --check filtered
-                if filter:isValid(item, itemData) then
-                    ---@cast item tes3item|tes3weapon|tes3armor|tes3clothing
-                    local isEquipped =  tes3.getEquippedItem{
-                        type = item.type,
-                        actor = tes3.player,
-                        objectType = item.objectType,
-                        slot = item.slot
-                    }
-                    if not isEquipped then
-                        totalWeight = totalWeight + (stack.object.weight * weightModifier)
-                        table.insert(itemsToTransfer, {
-                            item = item,
-                            itemData = itemData,
-                            count = 1,
-                        })
+
+        if item ~= self.item then
+
+            if numVariables > 0 then
+                ---@param itemData tes3itemData
+                for _, itemData in ipairs(stack.variables) do
+                    --check filtered
+                    if filter:isValid(item, itemData) then
+                        ---@cast item tes3item|tes3weapon|tes3armor|tes3clothing
+                        local isEquipped =  tes3.getEquippedItem{
+                            type = item.type,
+                            actor = tes3.player,
+                            objectType = item.objectType,
+                            slot = item.slot
+                        }
+                        if not isEquipped then
+                            totalWeight = totalWeight + (stack.object.weight * weightModifier)
+                            table.insert(itemsToTransfer, {
+                                item = item,
+                                itemData = itemData,
+                                count = 1,
+                            })
+                        end
                     end
                 end
             end
-        end
-        ---If there are any without item data, check those too
-        if count > numVariables then
-            if filter:isValid(item) then
-                local remainingCount = count - numVariables
-                totalWeight = totalWeight + (stack.object.weight * weightModifier * remainingCount)
-                table.insert(itemsToTransfer, {
-                    item = item,
-                    count = remainingCount,
-                })
+            ---If there are any without item data, check those too
+            if count > numVariables then
+                if filter:isValid(item) then
+                    local remainingCount = count - numVariables
+                    totalWeight = totalWeight + (stack.object.weight * weightModifier * remainingCount)
+                    table.insert(itemsToTransfer, {
+                        item = item,
+                        count = remainingCount,
+                    })
+                end
             end
         end
     end
@@ -1059,7 +1159,7 @@ function CarryableContainer:transferFiltered()
         return
     end
     logger:debug("Transferring %d items filtered by '%s' to %s",
-        #itemsToTransfer, filter.name, containerRef.id)
+        #itemsToTransfer, filter.name or "custom", containerRef.id)
     --Transfer the items
     local hasItemsToTransfer = false
     for _, itemToTransfer in ipairs(itemsToTransfer) do
@@ -1091,15 +1191,6 @@ function CarryableContainer:takeAll()
         return
     end
     local containerInventory = containerRef.object.inventory
-    local totalWeight = containerInventory:calculateWeight()
-    local encumbrance = tes3.mobilePlayer.encumbrance
-    local remainingPlayerCapacity = encumbrance.base - encumbrance.current
-    -- if self.reference then
-    --     if remainingPlayerCapacity < totalWeight then
-    --         tes3.messageBox("Not enough space in inventory")
-    --         return
-    --     end
-    -- end
     logger:debug("Taking all items from %s", containerRef.id)
     local hasItemsToTransfer = false
     for _, stack in pairs(containerInventory) do
@@ -1123,6 +1214,78 @@ function CarryableContainer:takeAll()
     else
         tes3.messageBox("Nothing to transfer.")
     end
+end
+
+---Transfer a specific list of items from the player to the container
+---@param e { itemIds: string[] }
+function CarryableContainer:transferPlayerToContainer(e)
+    --create custom filter that returns true for items in the list
+    local filter = ItemFilter:new{
+        id = "",
+        name = "transferPlayerToContainer",
+        isValidItem = function(item)
+            for _, id in ipairs(e.itemIds) do
+                if item.id:lower() == id:lower() then
+                    return true
+                end
+            end
+            return false
+        end
+    }
+    self:transferFiltered(filter)
+    self:updateStats()
+end
+
+---@class (exact) CarryableContainer.transferPlayerToContainerWithDetails.items
+---@field item tes3item Item to transfer
+---@field count number Item count
+---@field itemData tes3itemData? Item data
+
+---Transfer a specific list of items with counts and itemData from the player to the container
+---@param e { items: CarryableContainer.transferPlayerToContainerWithDetails.items[] }
+function CarryableContainer:transferPlayerToContainerWithDetails(e)
+    local containerRef = self:getCreateContainerRef()
+    if not containerRef then
+        logger:error("Failed to get container ref")
+        return
+    end
+
+    local itemsToTransfer = {}
+    for _, itemDetail in ipairs(e.items) do
+        if itemDetail.item then
+            table.insert(itemsToTransfer, {
+                item = itemDetail.item,
+                count = itemDetail.count,
+                itemData = itemDetail.itemData,
+            })
+        else
+            logger:warn("Item with ID %s not found", itemDetail.item.id)
+        end
+    end
+
+    local hasItemsToTransfer = false
+    for _, itemToTransfer in ipairs(itemsToTransfer) do
+        hasItemsToTransfer = true
+        tes3.transferItem{
+            from = tes3.player,
+            to = containerRef,
+            item = itemToTransfer.item,
+            itemData = itemToTransfer.itemData,
+            count = itemToTransfer.count,
+            playSound = false,
+            updateGUI = false,
+        }
+    end
+
+    if hasItemsToTransfer then
+        tes3.playSound{ sound = "Item Misc Up" }
+        tes3.updateInventoryGUI({ reference = tes3.player })
+        tes3.updateInventoryGUI({ reference = containerRef })
+    else
+        tes3.messageBox("Nothing to transfer.")
+    end
+
+    self:updateStats()
 end
 
 return CarryableContainer

@@ -38,7 +38,6 @@ function ReferenceManager:new(params)
         end
     end
 
-    ---@type CraftingFramework.ReferenceManager
     local referenceManager = {
         id = params.id,
         requirements = params.requirements,
@@ -52,6 +51,9 @@ function ReferenceManager:new(params)
     if referenceManager.id then
         referenceManager.logger:debug("Registering reference manager %s", referenceManager.id)
         ReferenceManager.registeredManagers[referenceManager.id] = referenceManager
+    else
+        referenceManager.logger:debug("Created reference manager without id")
+        ReferenceManager.registeredManagers[referenceManager] = referenceManager
     end
     return referenceManager
 end

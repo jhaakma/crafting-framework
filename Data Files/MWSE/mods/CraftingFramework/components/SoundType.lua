@@ -6,11 +6,13 @@ local logger = Util.createLogger("SoundType")
 ---@field soundPaths string[] list of sound paths, relative to `Data Files\\Sound`
 
 
----@class CraftingFramework.SoundType
+---@class CraftingFramework.RegisteredSoundType
 ---@field id string The id of the sound type
 ---@field soundPaths table<string, boolean> A dictionary of registered sound paths
+
+---@class CraftingFramework.SoundType
 local SoundType = {
-    ---@type table<string, CraftingFramework.SoundType>
+    ---@type table<string, CraftingFramework.RegisteredSoundType>
     registeredSoundTypes = {}
 }
 

@@ -13,7 +13,7 @@ inside an inventory.
 local ItemInstance = {}
 
 ---@class ItemInstance.new.params
----@field dataKey string The key where custom data is stored on reference.data
+---@field dataKey string? The key where custom data is stored on reference.data
 ---@field reference tes3reference?
 ---@field item tes3item|tes3object?
 ---@field itemData tes3itemData?

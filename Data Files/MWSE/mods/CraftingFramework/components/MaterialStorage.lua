@@ -224,8 +224,9 @@ end
 
 ---Can be overridden by implementations of MaterialStorage
 ---@param reference tes3reference
+---@return CraftingFramework.MaterialStorage.storedMaterial[]
 function MaterialStorage:getMaterials(reference)
-    logger:assert(reference.object.inventory ~= nil, "MaterialStorage %s has no inventory", reference.object.id)
+    if not reference.object.inventory then return {} end
     ---@type CraftingFramework.MaterialStorage.storedMaterial[]
     local materials = {}
     for _, itemStack in pairs(reference.object.inventory) do
@@ -249,7 +250,7 @@ end
 function MaterialStorage:removeItem(params)
     logger:assert(params.reference.object.inventory ~= nil, "MaterialStorage %s has no inventory", params.reference.object.id)
 
-    logger:trace("Removing %s %s", params.count, params.item.name)
+    logger:trace("Removing %s %s", params.count, params.item.name or "")
     local numRemoved = tes3.removeItem{
         reference = params.reference,
         item = params.item,
