@@ -491,6 +491,7 @@ function CarryableContainer:openFromWorld()
     tes3.player:activate(containerRef)
 end
 
+---Open the container
 function CarryableContainer:open()
     self.logger:debug("open")
 
@@ -791,9 +792,10 @@ end
 
 --Get the associated container reference, if it exists
 function CarryableContainer:getContainerRef()
-    if self:getContainerId() then
-        local containerRef = tes3.getReference(self:getContainerId())
-        logger:assert(containerRef ~= nil, "Has container id %s, but no reference exists", self:getContainerId())
+    local containerId = self:getContainerId()
+    if containerId then
+        local containerRef = tes3.getReference(containerId)
+        logger:assert(containerRef ~= nil, "Has container id %s, but no reference exists", containerId)
         return containerRef
     end
 end

@@ -74,7 +74,7 @@ config.mcmDefault = {
     quickModifierHotkey = {
         keyCode = tes3.scanCode.lShift
     },
-    defaultMaterialRecovery = 75
+    defaultMaterialRecovery = 75,
 }
 config.save = function(newConfig)
     inMemConfig = newConfig

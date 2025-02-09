@@ -1110,6 +1110,7 @@ function CraftingMenu:resourceSorter(a, b)
 end
 
 
+---@param parent tes3uiElement
 function CraftingMenu:createSearchBar(parent)
 	local searchBlock = parent:createBlock()
 	searchBlock.flowDirection = "left_to_right"
@@ -1120,10 +1121,8 @@ function CraftingMenu:createSearchBar(parent)
     searchBar.widthProportional= 1
     searchBar.autoHeight = true
     -- Create the search input itself.
-    local placeholderText = "Search..."
-	local input = searchBar:createTextInput{ id = "ExclusionsSearchInput"}
-	input.color = self.searchText and tes3ui.getPalette("normal_color") or tes3ui.getPalette("disabled_color")
-	input.text = self.searchText or placeholderText
+	local input = searchBar:createTextInput{ id = "ExclusionsSearchInput", placeholderText = "Search... "}
+
 	input.borderLeft = 5
 	input.borderRight = 5
 	input.borderTop = 2
@@ -1131,30 +1130,8 @@ function CraftingMenu:createSearchBar(parent)
 	input.widget.eraseOnFirstKey = true
 	input.consumeMouseEvents = false
     -- Set up the events to control text input control.
-	input:register("keyPress", function(e)
-		local inputController = tes3.worldController.inputController
-		local pressedTab = (inputController:isKeyDown(tes3.scanCode.tab))
-		local backspacedNothing = ((inputController:isKeyDown(tes3.scanCode.delete) or
-		                    inputController:isKeyDown(tes3.scanCode.backspace)) and input.text == placeholderText)
-
-		if pressedTab then
-			-- Prevent alt-tabbing from creating spacing.
-			return
-		elseif backspacedNothing then
-			-- Prevent backspacing into nothing.
-			return
-		end
-
-		input:forwardEvent(e)
-
-		input.color = tes3ui.getPalette("normal_color")
+	input:registerAfter("keyPress", function(e)
         self.searchText = input.text
-
-		input:updateLayout()
-		if input.text == "" then
-			input.text = placeholderText
-			input.color = tes3ui.getPalette("disabled_color")
-		end
 	end)
     input:register("keyEnter", function(e)
         self:populateRecipeList()
