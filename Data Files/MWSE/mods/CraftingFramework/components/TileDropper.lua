@@ -102,6 +102,10 @@ function TileDropper.resetTiles()
         if menu and menu.visible then
             logger:debug("Resetting tiles in %s", menuId)
             local scrollPane = menu:findChild(ids.scrollPane)
+            if not scrollPane then
+                logger:error("Scroll pane not found in %s", menuId)
+                return
+            end
             logger:debug("Found scroll pane %s", scrollPane.id)
             for _, column in ipairs(scrollPane:getContentElement().children) do
                 for _, element in ipairs(column.children) do
@@ -262,6 +266,10 @@ function TileDropper.getInventoryTiles(actor)
         local menu = tes3ui.findMenu(menuId)
         if menu and menu.visible then
             local scrollPane = menu:findChild(ids.scrollPane)
+            if not scrollPane then
+                logger:error("Scroll pane not found in %s", menuId)
+                return {}
+            end
             for _, column in ipairs(scrollPane:getContentElement().children) do
                 for _, element in ipairs(column.children) do
                     local tile = element:getPropertyObject(ids.propertyObject, "tes3inventoryTile")

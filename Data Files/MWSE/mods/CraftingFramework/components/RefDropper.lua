@@ -67,7 +67,7 @@ function RefDropper:drop(reference)
             logger:debug("Returning excess items")
             refStack:returnExcess()
         end
-        Util.deleteRef(reference)
+        reference:delete()
         reference = newRef
     else
         logger:debug("Setting %s scale to %s", reference, self.scale)

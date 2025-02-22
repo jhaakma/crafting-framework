@@ -34,6 +34,7 @@ local config = require("CraftingFramework.config")
 ---@field materials nil|CraftingFramework.MaterialRequirement[] A table with the materials required by this recipe.
 ---@field timeTaken nil|number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
 ---@field knownByDefault nil|boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
+---@field customRequirements nil|CraftingFramework.CustomRequirement.data[] A table with the custom requirements needed to craft the associated item.
 ---@field knowledgeRequirement nil|fun(self: CraftingFramework.Recipe): boolean A callback which determines whether the player should know how to craft this recipe at the time the menu is opened. This is an alternative approach to using the knownByDefault/learn/unlearn params, and will override their functionality.
 ---@field skillRequirements nil|CraftingFramework.SkillRequirement.data[] A table with the skill requirements needed to craft the associated item.
 ---@field toolRequirements nil|CraftingFramework.ToolRequirement.data[] A table with the tool requirements needed to craft the associated item.
@@ -219,6 +220,7 @@ function Recipe:craft()
     self.craftable:craft(materialsUsed)
     --progress skills
     for _, skillRequirement in ipairs(self.skillRequirements) do
+        log:debug("Progressing skill %s", skillRequirement.skill)
         skillRequirement:progressSkill()
     end
 end

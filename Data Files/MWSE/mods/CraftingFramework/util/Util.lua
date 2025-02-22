@@ -139,9 +139,7 @@ function Util.deleteRef(ref, no)
     if no then
         error("You called deleteRef() with a colon, didn't you?")
     end
-    ref:disable()
-    ---@diagnostic disable-next-line: deprecated
-    mwscript.setDelete{ reference = ref}
+    ref:delete()
 end
 
 function Util.isShiftDown()
@@ -212,6 +210,7 @@ end
 function Util.forceInstance(reference)
     local object = reference.object
     if (object.isInstance == false) then
+        logger:debug("Forcing instance of %s", object.id)
         ---@diagnostic disable-next-line
         object:clone(reference)
         reference.modified = true

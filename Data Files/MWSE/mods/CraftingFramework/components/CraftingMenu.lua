@@ -24,7 +24,8 @@ local log = Util.createLogger("CraftingMenu")
 ---@field categories CraftingFramework.CraftingMenu.category[] The categories in the menu
 ---@field currentFilter CraftingFramework.MenuActivator.Filter The current filter
 ---@field currentSorter CraftingFramework.MenuActivator.Sorter The current sorter
-local CraftingMenu = {}
+local CraftingMenu = {
+}
 
 ---@class CraftingMenu.uiids
 local uiids = {
@@ -397,6 +398,10 @@ function CraftingMenu:updateToolsPane()
     if not craftingMenu then return end
     local toolRequirementsBlock = craftingMenu:findChild(uiids.toolRequirementsBlock)
     local list = craftingMenu:findChild(uiids.toolRequirementsPane)
+    if not list then
+        log:error("Tool Requirements Pane not found")
+        return
+    end
     list:getContentElement():destroyChildren()
     if #self.selectedRecipe.toolRequirements < 1 then
         toolRequirementsBlock.visible = false
@@ -433,6 +438,10 @@ function CraftingMenu:updateCustomRequirementsPane()
     if not craftingMenu then return end
     local customRequirementsBlock = craftingMenu:findChild(uiids.customRequirementsBlock)
     local list = craftingMenu:findChild(uiids.customRequirementsPane)
+    if not list then
+        log:error("Custom Requirements Pane not found")
+        return
+    end
     list:getContentElement():destroyChildren()
     local customRequirements = self.selectedRecipe.customRequirements
     customRequirementsBlock.visible = false
@@ -498,6 +507,10 @@ function CraftingMenu:updateSkillsRequirementsPane()
 
     local skillRequirementsPane = craftingMenu:findChild(uiids.skillRequirementsPane)
     local skillsBlock = craftingMenu:findChild(uiids.skillRequirementsBlock)
+    if not skillRequirementsPane then
+        log:error("Skill Requirements Pane not found")
+        return
+    end
     skillRequirementsPane:getContentElement():destroyChildren()
     if #self.selectedRecipe.skillRequirements < 1 then
         skillsBlock.visible = false
@@ -597,6 +610,10 @@ function CraftingMenu:updateMaterialsRequirementsPane()
     if not craftingMenu then return end
     local materialsBlock = craftingMenu:findChild(uiids.materialRequirementsBlock)
     local list = craftingMenu:findChild(uiids.materialRequirementsPane)
+    if not list then
+        log:error("Material Requirements Pane not found")
+        return
+    end
     list:getContentElement():destroyChildren()
 
     if #self.selectedRecipe.materials < 1 then
@@ -695,6 +712,10 @@ function CraftingMenu:updatePreviewPaneImage()
         local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
         if not craftingMenu then return end
         local previewBlock = craftingMenu:findChild(uiids.nifPreviewBlock)
+        if not previewBlock then
+            log:error("Preview Block not found")
+            return
+        end
 
         log:assert(type(self.selectedRecipe.previewImage) == "string", "No preview image found")
         local previewImage = previewBlock:createImage{
@@ -1043,6 +1064,11 @@ function CraftingMenu:populateRecipeList()
     local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
     if not craftingMenu then return end
     local parent = craftingMenu:findChild(uiids.recipeListBlock)
+    if not parent then
+        log:error("No parent found")
+        return
+    end
+
     parent:destroyChildren()
     local title = parent:createLabel()
     title.color = tes3ui.getPalette("header_color")
@@ -1325,6 +1351,11 @@ end
 
 function CraftingMenu:openCraftingMenu()
     log:debug("CraftingMenu:openCraftingMenu()")
+
+    if self.openCallback then
+        self:openCallback()
+    end
+
     tes3.playSound{sound="Menu Click", reference=tes3.player}
     self.menu = tes3ui.findMenu(uiids.craftingMenu)
     if self.menu then self.menu:destroy() end
@@ -1362,6 +1393,8 @@ function CraftingMenu:openCraftingMenu()
 
     event.unregister("enterFrame", rotateNif)
     event.register("enterFrame", rotateNif)
+
+
 end
 
 local RightClickMenuExit = include("mer.RightClickMenuExit")

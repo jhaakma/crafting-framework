@@ -178,6 +178,7 @@ function Container.updateCapacityFillbar(carryable)
     if (menu == nil) then return end
     local maxCapacity = menu:getPropertyFloat("MenuContents_containerweight")
     local bar = menu:findChild("CarryableContainers:MenuContents_capacity")
+    if not bar then return end
     bar.widget.max = maxCapacity
     bar.widget.current = carryable:calculateWeight()
     logger:debug("Updating capacity fillbar: %s / %s", bar.widget.current, bar.widget.max)
@@ -276,6 +277,10 @@ function Container.addCarryableButtonsToMenu(e)
 
     --Replace the take all button with our one
     local takeAllButton = menu:findChild("MenuContents_takeallbutton")
+    if not takeAllButton then
+        logger:error("No take all button found")
+        return
+        end
     local buttonBlock = takeAllButton.parent
     local newTakeAllButton = replaceTakeAllButton(menu, carryable)
 

@@ -520,7 +520,6 @@ event.register("mouseWheel", onMouseScroll)
 
 
 local function blockActivation(e)
-    logger:debug("blockActivation")
     if config.persistent.positioningActive then
         logger:debug("Positioning Active")
         return (e.activator ~= tes3.player)

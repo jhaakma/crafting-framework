@@ -188,6 +188,20 @@ function Material:getItemCount(id)
     return 0
 end
 
+function Material:getCount()
+    local count = 0
+    local storedMaterials = MaterialStorage.getNearbyMaterials{
+        maxDistance = 1000,
+        searchAllContainers = false,
+    }
+    for _, storedMaterial in ipairs(storedMaterials) do
+        if self:itemIsMaterial(storedMaterial.item.id) then
+            count = count + storedMaterial.count
+        end
+    end
+    return count
+end
+
 ---@param numRequired number
 ---@return boolean hasEnough
 function Material:checkHasIngredient(numRequired)
@@ -197,4 +211,5 @@ function Material:checkHasIngredient(numRequired)
     end
     return count >= numRequired
 end
+
 return Material

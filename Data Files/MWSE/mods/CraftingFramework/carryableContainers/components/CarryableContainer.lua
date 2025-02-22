@@ -478,8 +478,12 @@ function CarryableContainer:openFromInventory()
     logger:debug("Opening container from inventory %s", (self:getContainerId() or tes3.player))
     local containerRef = self:getCreateContainerRef()
 
+    local oldBlock = self.containerConfig.blockWorldActivate
+    self.containerConfig.blockWorldActivate = false
     tes3.player:activate(containerRef)
     timer.delayOneFrame(function()
+        logger:debug("openFromInventory - Restoring block world activate")
+        self.containerConfig.blockWorldActivate = oldBlock
         self:updateStats()
     end)
 end
@@ -488,7 +492,14 @@ function CarryableContainer:openFromWorld()
     self:replaceInWorld()
     logger:debug("Opening container from world %s", self:getContainerId())
     local containerRef = self:getCreateContainerRef()
+
+    local oldBlock = self.containerConfig.blockWorldActivate
+    self.containerConfig.blockWorldActivate = false
     tes3.player:activate(containerRef)
+    timer.delayOneFrame(function()
+        logger:debug("openFromWorld - Restoring block world activate")
+        self.containerConfig.blockWorldActivate = oldBlock
+    end)
 end
 
 ---Open the container

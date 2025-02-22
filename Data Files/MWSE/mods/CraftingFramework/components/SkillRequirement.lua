@@ -151,7 +151,7 @@ function SkillRequirement:getSkillName()
     local vanillaSkill = self:getVanillaSkill()
     if vanillaSkill then
         local baseGMST = tes3.gmst.sSkillBlock - 1
-        local skillNameGMST = tes3.findGMST(baseGMST + vanillaSkill)
+        local skillNameGMST = tes3.findGMST(baseGMST + vanillaSkill) --[[@as tes3gameSetting]]
         logger:trace("Skill Name: %s", skillNameGMST.value)
         return skillNameGMST.value ---@diagnostic disable-line
     end

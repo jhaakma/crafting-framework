@@ -33,6 +33,7 @@ local log = Util.createLogger("MenuActivator")
 ---@field defaultSort? CraftingFramework.MenuActivator.Sorter *Default*: `"name"`. This controls how the recipe list in the Crafting Menu is sorted.
 ---@field defaultShowCategories? boolean *Default*: `true`. This controls whether by default the recipes will be grouped in categories or not.
 ---@field blockEvent? boolean *Default*: `true`. This controls whether the event callback will be blocked or not (the event being "activate" or "equip" for those MenuActivator types, or the custom event for the "event" MenuActivator type).
+---@field openCallback? fun(self: CraftingFramework.CraftingMenu) *Default*: `nil`. This callback is called when the menu is opened.
 ---@field closeCallback? fun(self: CraftingFramework.CraftingMenu) *Default*: `nil`. This callback is called when the menu is closed.
 ---@field collapseByDefault? boolean *Default*: `false`. This controls whether the categories will be collapsed by default or not.
 ---@field craftButtonText? string *Default*: `"Craft"`. This controls the text of the craft button.

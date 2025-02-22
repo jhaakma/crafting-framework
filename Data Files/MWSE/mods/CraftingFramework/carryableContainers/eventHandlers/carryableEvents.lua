@@ -57,7 +57,7 @@ local function onActivateContainer(e)
     if containerCarryable then
         if containerCarryable.containerConfig.blockWorldActivate then
             logger:debug("Blocking world activate")
-            return
+            return true
         end
         logger:debug("Activating container")
         if util.isQuickModifierDown() then
