@@ -33,4 +33,4 @@ event.register("loaded", function()
             end
         end
     end
-end)
+end, { priority = 500})
