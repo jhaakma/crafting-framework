@@ -25,11 +25,6 @@ local traders = {
     "galtis guvron",
     "naspis apinia",
     "berwen",
-    "tr_m4_felanius_civeran",
-    "tr_m3_anmoleth",
-    "tr_m4_irva_sedrethi",
-    "tr_m4_rivyn_dalvani",
-    "tr_m1_kobin_delas",
 }
 
 TagManager.addIds{

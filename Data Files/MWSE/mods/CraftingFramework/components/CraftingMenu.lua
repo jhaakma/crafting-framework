@@ -52,6 +52,8 @@ local uiids = {
     customRequirementsPane = "Crafting_Menu_CustomRequirementsPane",
     toolRequirementsPane = "Crafting_Menu_ToolsPane",
     toolRequirementsBlock = "Crafting_Menu_ToolsContainer",
+    timeTakenPane = "Crafting_Menu_TimeTakenPane",
+    timeTakenBlock = "Crafting_Menu_TimeTakenBlock",
     createItemButton = "Crafting_Menu_CreateItemButton",
     unlockPackButton = "Crafting_Menu_UnlockPackButton",
     cancelButton = "Crafting_Menu_CancelButton",
@@ -77,6 +79,7 @@ function CraftingMenu:closeMenu()
     if menu then
         log:debug("Destroying Menu")
         menu:destroy()
+        tes3.worldController.flagMenuMode = true
         tes3ui.leaveMenuMode()
         if self.closeCallback then
             self:closeCallback()
@@ -89,16 +92,20 @@ end
 function CraftingMenu:craftItem(button)
     if not self.selectedRecipe then return end
     log:debug("CraftingMenu:craftItem")
-    self.selectedRecipe:craft()
-    log:debug("crafting done, setting widget")
-
-    if self.selectedRecipe.keepMenuOpen or self.selectedRecipe.craftable:isCarryable() then
-        button.widget.state = 2
-        button.disabled = true
-        self:updateMenu()
-    else
-        self:closeMenu()
-    end
+    self.selectedRecipe:craft{
+        defaultCraftTime = self.defaultCraftTime,
+        timePasses = self.doesTimePass and self:doesTimePass(),
+        afterCallback = function()
+            log:debug("crafting done, setting widget")
+            if self.selectedRecipe:doKeepMenuOpen() then
+                button.widget.state = 2
+                button.disabled = true
+                self:updateMenu()
+            else
+                self:closeMenu()
+            end
+        end
+    }
 end
 
 
@@ -450,6 +457,35 @@ function CraftingMenu:updateCustomRequirementsPane()
             customRequirementsBlock.visible = true
             self:createCustomRequirementLabel(customReq, list)
         end
+    end
+end
+
+function CraftingMenu:updateTimeTakenPane()
+    local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
+    if not craftingMenu then return end
+    local timeTakenBlock = craftingMenu:findChild(uiids.timeTakenBlock)
+    local timeTakenPane = craftingMenu:findChild(uiids.timeTakenPane)
+    if not timeTakenPane then
+        log:error("Time Taken Pane not found")
+        return
+    end
+    timeTakenPane:getContentElement():destroyChildren()
+
+    local craftTime = self.selectedRecipe.timeTaken or self.defaultCraftTime or 0
+    if self.doesTimePass and self:doesTimePass() and craftTime > 0 then
+        timeTakenBlock.visible = true
+        local timeTakenLabel = timeTakenPane:createLabel()
+        timeTakenLabel.borderAllSides = 2
+
+        local hoursPlural = craftTime >= 2 and "s" or ""
+        local hoursText = craftTime >= 1 and string.format("%d hour%s ", craftTime, hoursPlural) or ""
+
+        local minutesTaken = (craftTime - math.floor(craftTime)) * 60
+        local minutesPlural = minutesTaken >= 2 and "s" or ""
+        local minutesText = minutesTaken > 0 and string.format("%d minute%s", minutesTaken, minutesPlural) or ""
+        timeTakenLabel.text = string.format("%s%s", hoursText, minutesText)
+    else
+        timeTakenBlock.visible = false
     end
 end
 
@@ -934,32 +970,40 @@ function CraftingMenu:updateButtons()
     end
 end
 
-function CraftingMenu:updateSidebar()
+function CraftingMenu:updateSidebar(withNewRecipe)
     if not self.selectedRecipe then return end
-    self:updatePreviewPane()
+    if withNewRecipe then
+        self:updatePreviewPane()
+    end
     self:updateDescriptionPane()
     self:updateCustomRequirementsPane()
     self:updateSkillsRequirementsPane()
     self:updateMaterialsRequirementsPane()
     self:updateToolsPane()
+    self:updateTimeTakenPane()
 end
 
-function CraftingMenu:updateMenu()
+function CraftingMenu:updateMenu(withNewRecipe)
+    tes3.worldController.flagMenuMode = true
     MaterialStorage.clearNearbyMaterialsCache()
     self:populateRecipeList()
-    self:updateSidebar()
+    self:updateSidebar(withNewRecipe)
     self:updateButtons()
 end
 
 function CraftingMenu:selectRecipe(recipe)
     self.selectedRecipe = recipe
-    self:updateSidebar()
+    self:updateSidebar(true)
     self:updateButtons()
 end
 
 ---@param recipe CraftingFramework.Recipe
 function CraftingMenu:recipeMatchesSearch(recipe)
-    if (not self.searchText) or self.searchText == "" then return true end
+    log:debug("recipeMatchesSearch(): searchText: %s", self.searchText)
+    local isEmpty = self.searchText == nil
+                 or self.searchText == ""
+                 or self.searchText == "Search... "
+    if isEmpty then return true end
     return string.find(recipe.craftable:getName():lower(), self.searchText:lower())
 end
 
@@ -1074,6 +1118,7 @@ function CraftingMenu:populateRecipeList()
     title.color = tes3ui.getPalette("header_color")
     title.text = self.recipeHeaderText .. ":"
     self:createSearchBar(parent)
+
     local scrollBar = parent:createVerticalScrollPane()
     scrollBar.heightProportional = 1.0
     scrollBar.widthProportional = 1.0
@@ -1147,7 +1192,11 @@ function CraftingMenu:createSearchBar(parent)
     searchBar.widthProportional= 1
     searchBar.autoHeight = true
     -- Create the search input itself.
-	local input = searchBar:createTextInput{ id = "ExclusionsSearchInput", placeholderText = "Search... "}
+	local input = searchBar:createTextInput{
+        id = "ExclusionsSearchInput",
+        placeholderText = "Search... ",
+        text = self.searchText,
+    }
 
 	input.borderLeft = 5
 	input.borderRight = 5
@@ -1160,6 +1209,7 @@ function CraftingMenu:createSearchBar(parent)
         self.searchText = input.text
 	end)
     input:register("keyEnter", function(e)
+        self.searchText = input.text
         self:populateRecipeList()
     end)
 
@@ -1170,6 +1220,7 @@ function CraftingMenu:createSearchBar(parent)
 	searchButton.borderAllSides = 0
 	searchButton.paddingAllSides = 2
 	searchButton:register("mouseClick", function()
+        self.searchText = input.text
 		self:populateRecipeList()
 	end)
 
@@ -1304,6 +1355,15 @@ function CraftingMenu:createSkillRequirementsPane(parent)
     )
 end
 
+function CraftingMenu:createTimeTakenPane(parent)
+    self:createRequirementsPane(
+        parent,
+        "Time Taken: ",
+        uiids.timeTakenBlock,
+        uiids.timeTakenPane
+    )
+end
+
 function CraftingMenu:createToolsPane(parent)
     self:createRequirementsPane(
         parent,
@@ -1378,10 +1438,11 @@ function CraftingMenu:openCraftingMenu()
     self:createToolsPane(resultsBlock)
     self:createSkillRequirementsPane(resultsBlock)
     self:createMaterialRequirementsPane(resultsBlock)
+    self:createTimeTakenPane(resultsBlock)
     --Craft and Cancel buttons on the bottom
     local menuButtonBlock = self:createMenuButtonBlock(self.menu)
     self:addMenuButtons(menuButtonBlock)
-    self:updateMenu()
+    self:updateMenu(true)
     self:updateButtons()
 
     local closeButton = menuButtonBlock:createButton({ id = uiids.cancelButton})

@@ -239,6 +239,22 @@ function Util.blockNextSound()
     end
     event.register("addSound", blockSound, {priority = 100000 })
 end
+local function setControlsDisabled(state)
+    tes3.mobilePlayer.controlsDisabled = state
+    tes3.mobilePlayer.jumpingDisabled = state
+    tes3.mobilePlayer.attackDisabled = state
+    tes3.mobilePlayer.magicDisabled = state
+    tes3.mobilePlayer.mouseLookDisabled = state
+end
+
+function Util.disableControls()
+    setControlsDisabled(true)
+end
+
+function Util.enableControls()
+    setControlsDisabled(false)
+    tes3.runLegacyScript{command = "EnableInventoryMenu"} ---@diagnostic disable-line
+end
 
 
 return Util

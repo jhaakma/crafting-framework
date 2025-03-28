@@ -556,7 +556,7 @@ function Craftable:craft(materialsUsed)
             end
         end
     end
-    self:playCraftingSound()
+
     if self.craftCallback then
         logger:debug("Craftable:craft %s calling callback", self.id)
         self:craftCallback{

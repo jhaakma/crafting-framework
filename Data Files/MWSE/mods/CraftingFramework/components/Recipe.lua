@@ -1,4 +1,6 @@
 local Util = require("CraftingFramework.util.Util")
+local PassTime = require("CraftingFramework.util.PassTime")
+local Async = require("CraftingFramework.util.Async")
 local log = Util.createLogger("Recipe")
 local Material = require("CraftingFramework.components.Material")
 local Craftable = require("CraftingFramework.components.Craftable")
@@ -32,7 +34,7 @@ local config = require("CraftingFramework.config")
 ---@field noResult nil|boolean *Defualt*: `false`. If `true`, no object or item will actually be crafted. Instead, use craftCallback to implement a custom result.
 ---@field craftable nil|CraftingFramework.Craftable.data
 ---@field materials nil|CraftingFramework.MaterialRequirement[] A table with the materials required by this recipe.
----@field timeTaken nil|number The time taken to craft the associated object. Currently, doesn't serve a purpose within Crafting Framework, but it can be used to implement custom mechanics.
+---@field timeTaken nil|number The time taken (in hours) to craft the associated object. If not provided, the time taken will be 0.
 ---@field knownByDefault nil|boolean *Default*: `true`. Controls whether the player knows this recipe from the game start.
 ---@field customRequirements nil|CraftingFramework.CustomRequirement.data[] A table with the custom requirements needed to craft the associated item.
 ---@field knowledgeRequirement nil|fun(self: CraftingFramework.Recipe): boolean A callback which determines whether the player should know how to craft this recipe at the time the menu is opened. This is an alternative approach to using the knownByDefault/learn/unlearn params, and will override their functionality.
@@ -72,6 +74,7 @@ local config = require("CraftingFramework.config")
 ---@field pinToWall nil|boolean **Default false** If true, the object will be pinned to the wall when placed. This is useful for objects that are intended to be placed on walls.
 ---@field floats nil|boolean **Default false** If true, the object will float when placed. This is useful for objects that are intended to be placed in water.
 ---@field floatOffset nil|number **Default 0** The offset from the water level that the object will float at. This is useful for objects that are intended to float at a specific height in water.
+
 
 local MaterialRequirementSchema = {
     name = "MaterialRequirement",
@@ -195,33 +198,83 @@ function Recipe:hasPreview()
     or self.noResult ~= true
 end
 
+function Recipe:doKeepMenuOpen()
+    return self.keepMenuOpen
+        or self.craftable:isCarryable()
+end
 
-
-function Recipe:craft()
+---@param e { timePasses: boolean?, defaultCraftTime: number?, afterCallback: function? }
+function Recipe:craft(e)
     log:debug("Crafting %s", self.id)
-    ---@type table<string, number>
-    local materialsUsed = {}
-    for _, materialReq in ipairs(self.materials) do
-        local material = Material.getMaterial(materialReq.material)
-        local itemsUsed = material:use(materialReq.count)
-        for id, count in pairs(itemsUsed) do
-            if count > 0 then
-                materialsUsed[id] = (materialsUsed[id] or 0) + count
+
+    local function doCraft()
+        ---@type table<string, number>
+        local materialsUsed = {}
+        for _, materialReq in ipairs(self.materials) do
+            local material = Material.getMaterial(materialReq.material)
+            local itemsUsed = material:use(materialReq.count)
+            for id, count in pairs(itemsUsed) do
+                if count > 0 then
+                    materialsUsed[id] = (materialsUsed[id] or 0) + count
+                end
             end
         end
-    end
-    for _, toolReq in ipairs(self.toolRequirements) do
-        if toolReq.tool and toolReq.conditionPerUse then
-            log:debug("Has conditionPerUse, using tool")
-            toolReq.tool:use(toolReq.conditionPerUse)
+        for _, toolReq in ipairs(self.toolRequirements) do
+            if toolReq.tool and toolReq.conditionPerUse then
+                log:debug("Has conditionPerUse, using tool")
+                toolReq.tool:use(toolReq.conditionPerUse)
+            end
+        end
+        self.craftable:craft(materialsUsed)
+        --progress skills
+        for _, skillRequirement in ipairs(self.skillRequirements) do
+            log:debug("Progressing skill %s", skillRequirement.skill)
+            skillRequirement:progressSkill()
+        end
+        if e.afterCallback then
+            e.afterCallback()
         end
     end
 
-    self.craftable:craft(materialsUsed)
-    --progress skills
-    for _, skillRequirement in ipairs(self.skillRequirements) do
-        log:debug("Progressing skill %s", skillRequirement.skill)
-        skillRequirement:progressSkill()
+    --play sound immediately whether there's a timer or not
+    self.craftable:playCraftingSound()
+
+    local craftTime = self.timeTaken or e.defaultCraftTime or 0
+    log:debug("Craft time: %s", craftTime)
+    if e.timePasses == true and craftTime > 0 then
+
+        local secondsFadeOut = math.clamp(craftTime * 0.5, 0.25, 1)
+        local secondsWait = math.clamp(craftTime * 0.5, 0.25, 2)
+        local secondsFadeIn = math.clamp(craftTime * 0.5, 0.25, 1)
+
+        Util.disableControls()
+        ---@diagnostic disable-next-line
+        tes3.worldController.flagMenuMode = false
+        tes3.fadeOut{ duration = secondsFadeOut }
+        PassTime.new{
+            duration = secondsFadeOut,
+            hoursPassed = craftTime,
+        }:run()
+
+        local async = Async:new()
+        async:wait{ type = timer.real, duration = secondsFadeOut + secondsWait }
+
+        async:step("fadeIn", function(next)
+            tes3.fadeIn{ duration = secondsFadeIn }
+            next()
+        end)
+
+        async:wait{ type = timer.real, duration = secondsFadeIn }
+        async:step("craft", function(next)
+            ---@diagnostic disable-next-line
+            tes3.worldController.flagMenuMode = self:doKeepMenuOpen()
+            doCraft()
+            Util.enableControls()
+        end)
+        async:start()
+    else
+        log:debug("Crafting immediately %s", self.id)
+        doCraft()
     end
 end
 
