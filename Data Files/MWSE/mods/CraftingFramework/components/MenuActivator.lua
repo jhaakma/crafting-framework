@@ -53,6 +53,7 @@ local log = Util.createLogger("MenuActivator")
 ---@field showSortButton? boolean *Default*: `true`. This controls whether the sort button will be shown or not.
 ---@field doesTimePass? fun(self: CraftingFramework.MenuActivator):boolean *Default*: `nil`. If set, when this function returns true, any recipes with a timeTaken field will take time to craft.
 ---@field defaultCraftTime? number If set, any recipes that don't have a timeTaken field will take this amount of time to craft.
+---@field defaultCraftSoundType? string If set, any recipes that don't have a craftSound field will use this sound when crafting.
 
 ---@class CraftingFramework.MenuActivator : CraftingFramework.MenuActivator.data This object is usually used to represent a Crafting Station. It can be a carriable or a static Station.
 ---@field recipes CraftingFramework.Recipe[] A list of recipes that will appear (if known) when the menu is activated.

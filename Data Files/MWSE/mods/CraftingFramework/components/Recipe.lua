@@ -203,7 +203,7 @@ function Recipe:doKeepMenuOpen()
         or self.craftable:isCarryable()
 end
 
----@param e { timePasses: boolean?, defaultCraftTime: number?, afterCallback: function? }
+---@param e { timePasses: boolean?, defaultCraftTime: number?, afterCallback: function?, defaultSoundType?: string }
 function Recipe:craft(e)
     log:debug("Crafting %s", self.id)
 
@@ -237,7 +237,7 @@ function Recipe:craft(e)
     end
 
     --play sound immediately whether there's a timer or not
-    self.craftable:playCraftingSound()
+    self.craftable:playCraftingSound{ defaultSoundType = e.defaultSoundType}
 
     local craftTime = self.timeTaken or e.defaultCraftTime or 0
     log:debug("Craft time: %s", craftTime)

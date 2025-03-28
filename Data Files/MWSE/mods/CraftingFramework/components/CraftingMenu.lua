@@ -79,6 +79,7 @@ function CraftingMenu:closeMenu()
     if menu then
         log:debug("Destroying Menu")
         menu:destroy()
+        ---@diagnostic disable-next-line
         tes3.worldController.flagMenuMode = true
         tes3ui.leaveMenuMode()
         if self.closeCallback then
@@ -104,7 +105,8 @@ function CraftingMenu:craftItem(button)
             else
                 self:closeMenu()
             end
-        end
+        end,
+        defaultSoundType = self.defaultCraftSoundType
     }
 end
 
@@ -984,6 +986,7 @@ function CraftingMenu:updateSidebar(withNewRecipe)
 end
 
 function CraftingMenu:updateMenu(withNewRecipe)
+    ---@diagnostic disable-next-line
     tes3.worldController.flagMenuMode = true
     MaterialStorage.clearNearbyMaterialsCache()
     self:populateRecipeList()

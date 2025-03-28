@@ -486,19 +486,21 @@ function Craftable:getNameWithCount()
     )
 end
 
-function Craftable:playCraftingSound()
+---@param e? { defaultSoundType?: string }
+function Craftable:playCraftingSound(e)
+    e = e or {}
     if self.soundType then
         logger:trace("playing sound type %s", self.soundType)
         SoundType.play(self.soundType)
-    end
-    if self.soundId then
+    elseif self.soundId then
         logger:trace("playing sound %s", self.soundId)
         tes3.playSound{ sound = self.soundId }
     elseif self.soundPath then
         logger:trace("playing sound %s", self.soundPath)
         tes3.playSound{ reference = tes3.player, soundPath = self.soundPath }
+    elseif e.defaultSoundType then
+        SoundType.play(e.defaultSoundType)
     else
-
         SoundType.play("defaultConstruction")
     end
 end

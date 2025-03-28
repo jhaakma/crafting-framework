@@ -20,8 +20,6 @@ local skilRequirementDataMeta = {
     progress = nil,
 
     --- *Default*: `30`. The maximal amount of experience the player can get, when crafting an item that has this `skillRequirement`.
-    --- Only use if your mod still uses v1 of Skills Module
-    ---@deprecated
     ---@type number?
     maxProgress = nil,
 }
@@ -92,7 +90,8 @@ function SkillRequirement:getV2Progress()
     if self.progress then
         return self.progress
     else
-        return MAX_PROGRESS_DEFAULT * (self.requirement / 100)
+        local maxProgress = self.maxProgress or MAX_PROGRESS_DEFAULT
+        return maxProgress * (self.requirement / 100)
     end
 end
 
