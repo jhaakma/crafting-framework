@@ -90,8 +90,10 @@ function CraftingMenu:closeMenu()
     end
 end
 
-function CraftingMenu:craftItem(button)
+---@param e? { button: tes3uiElement, withNewRecipe: boolean }
+function CraftingMenu:craftItem(e)
     if not self.selectedRecipe then return end
+    e = e or {}
     log:debug("CraftingMenu:craftItem")
     self.selectedRecipe:craft{
         defaultCraftTime = self.defaultCraftTime,
@@ -99,9 +101,11 @@ function CraftingMenu:craftItem(button)
         afterCallback = function()
             log:debug("crafting done, setting widget")
             if self.selectedRecipe:doKeepMenuOpen() then
-                button.widget.state = 2
-                button.disabled = true
-                self:updateMenu()
+                if e.button then
+                    e.button.widget.state = 2
+                    e.button.disabled = true
+                end
+                self:updateMenu(e.withNewRecipe)
             else
                 self:closeMenu()
             end
@@ -272,6 +276,7 @@ local menuButtons = {
     {
         id = "CraftingFramework_Button_CraftItem",
         name = function(self) return self.craftButtonText end,
+        ---@param self CraftingFramework.CraftingMenu
         callback = function(self)
             local craftingMenu = tes3ui.findMenu(uiids.craftingMenu)
             if not craftingMenu then
@@ -279,7 +284,7 @@ local menuButtons = {
                 return
             end
             local button = craftingMenu:findChild('CraftingFramework_Button_CraftItem')
-            self:craftItem(button)
+            self:craftItem{ button = button }
         end,
         requirements = function(self)
             return self.selectedRecipe and self.selectedRecipe:meetsAllRequirements()
@@ -627,19 +632,39 @@ function CraftingMenu:createMaterialButton(materialReq, list)
     requirement:register("help", function()
         self:createMaterialTooltip(material)
     end)
-    requirement.color = (material:checkHasIngredient(materialReq.count) == true)
-        and tes3ui.getPalette("normal_color")
+
+    local hasIngredient = material:checkHasIngredient(materialReq.count) == true
+    local materialRecipe = self:getRecipeForMaterial(material)
+    local canCraftMaterial = materialRecipe and materialRecipe:meetsAllRequirements()
+
+    requirement.color = hasIngredient and tes3ui.getPalette("normal_color")
+        or canCraftMaterial and tes3ui.getPalette("active_color")
         or tes3ui.getPalette("disabled_color")
 
     --if you click on a material and that material is craftable, go to that recipe in the recipe list
-    local materialRecipe = self:getRecipeForMaterial(material)
+
     if materialRecipe then
         log:trace("Material %s is craftable, adding on-click", material:getName())
-        requirement:register("mouseClick", function()
-            log:debug("Material %s clicked, going to recipe", material:getName())
-            tes3.playSound{sound="Menu Click", reference=tes3.player}
-            self:selectRecipe(materialRecipe)
-        end)
+        if canCraftMaterial and not hasIngredient then
+            requirement.text = requirement.text .. " (Click to craft)"
+
+            requirement:register("mouseClick", function()
+                log:debug("Material %s clicked and is craftable, crafting recipe", material:getName())
+                tes3.playSound{sound="Menu Click", reference=tes3.player}
+                local currentRecipe = self.selectedRecipe
+                self.selectedRecipe = materialRecipe
+                self:craftItem()
+
+                self.selectedRecipe = currentRecipe
+                self:updateMenu(true)
+            end)
+        else
+            requirement:register("mouseClick", function()
+                log:debug("Material %s clicked, going to recipe", material:getName())
+                tes3.playSound{sound="Menu Click", reference=tes3.player}
+                self:selectRecipe(materialRecipe)
+            end)
+        end
     end
 end
 
@@ -985,6 +1010,7 @@ function CraftingMenu:updateSidebar(withNewRecipe)
     self:updateTimeTakenPane()
 end
 
+---@param withNewRecipe boolean?
 function CraftingMenu:updateMenu(withNewRecipe)
     ---@diagnostic disable-next-line
     tes3.worldController.flagMenuMode = true
