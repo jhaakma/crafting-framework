@@ -95,12 +95,13 @@ function CraftingMenu:craftItem(e)
     if not self.selectedRecipe then return end
     e = e or {}
     log:debug("CraftingMenu:craftItem")
+    local keepMenuOpen = self.selectedRecipe:doKeepMenuOpen()
     self.selectedRecipe:craft{
         defaultCraftTime = self.defaultCraftTime,
         timePasses = self.doesTimePass and self:doesTimePass(),
         afterCallback = function()
             log:debug("crafting done, setting widget")
-            if self.selectedRecipe:doKeepMenuOpen() then
+            if keepMenuOpen then
                 if e.button then
                     e.button.widget.state = 2
                     e.button.disabled = true
