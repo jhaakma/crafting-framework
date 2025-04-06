@@ -90,6 +90,7 @@ local MaterialRequirementSchema = {
 ---@field customRequirements CraftingFramework.CustomRequirement[]
 ---@field skillRequirements CraftingFramework.SkillRequirement[]
 ---@field toolRequirements CraftingFramework.ToolRequirement[]
+---@field isCrafting boolean True while the object is being crafted when timePasses is enabled
 local Recipe = {
     schema = {
         name = "Recipe",
@@ -242,7 +243,7 @@ function Recipe:craft(e)
     local craftTime = self.timeTaken or e.defaultCraftTime or 0
     log:debug("Craft time: %s", craftTime)
     if e.timePasses == true and craftTime > 0 then
-
+        self.isCrafting = true
         local secondsFadeOut = math.clamp(craftTime * 0.5, 0.25, 1)
         local secondsWait = math.clamp(craftTime * 0.5, 0.25, 2)
         local secondsFadeIn = math.clamp(craftTime * 0.5, 0.25, 1)
@@ -270,6 +271,7 @@ function Recipe:craft(e)
             tes3.worldController.flagMenuMode = self:doKeepMenuOpen()
             doCraft()
             Util.enableControls()
+            self.isCrafting = nil
         end)
         async:start()
     else

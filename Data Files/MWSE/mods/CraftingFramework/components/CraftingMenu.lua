@@ -96,16 +96,17 @@ function CraftingMenu:craftItem(e)
     e = e or {}
     log:debug("CraftingMenu:craftItem")
     local keepMenuOpen = self.selectedRecipe:doKeepMenuOpen()
+    if keepMenuOpen and e.button then
+        e.button.widget.state = 2
+        e.button.disabled = true
+    end
+
     self.selectedRecipe:craft{
         defaultCraftTime = self.defaultCraftTime,
         timePasses = self.doesTimePass and self:doesTimePass(),
         afterCallback = function()
             log:debug("crafting done, setting widget")
             if keepMenuOpen then
-                if e.button then
-                    e.button.widget.state = 2
-                    e.button.disabled = true
-                end
                 self:updateMenu(e.withNewRecipe)
             else
                 self:closeMenu()
@@ -627,7 +628,7 @@ function CraftingMenu:createMaterialButton(materialReq, list)
     log:trace("Creating material button for %s", materialReq.material)
     local material = Material.getMaterial(materialReq.material)
     local materialText = string.format("%s x %G", material:getName(), materialReq.count )
-    local requirement = list:createLabel()
+    local requirement = list:createTextSelect()
     requirement.borderAllSides = 2
     requirement.text = materialText
     requirement:register("help", function()
@@ -650,12 +651,15 @@ function CraftingMenu:createMaterialButton(materialReq, list)
             requirement.text = requirement.text .. " (Click to craft)"
 
             requirement:register("mouseClick", function()
+                if materialRecipe.isCrafting then
+                    log:debug("Material %s is already crafting", material:getName())
+                    return
+                end
                 log:debug("Material %s clicked and is craftable, crafting recipe", material:getName())
                 tes3.playSound{sound="Menu Click", reference=tes3.player}
                 local currentRecipe = self.selectedRecipe
                 self.selectedRecipe = materialRecipe
-                self:craftItem()
-
+                self:craftItem{ button = requirement}
                 self.selectedRecipe = currentRecipe
                 self:updateMenu(true)
             end)
