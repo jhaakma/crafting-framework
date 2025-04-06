@@ -1,0 +1,82 @@
+[1mdiff --git a/Data Files/MWSE/mods/CraftingFramework/components/CraftingMenu.lua b/Data Files/MWSE/mods/CraftingFramework/components/CraftingMenu.lua[m
+[1mindex 47dd6f8..3399c28 100644[m
+[1m--- a/Data Files/MWSE/mods/CraftingFramework/components/CraftingMenu.lua[m	
+[1m+++ b/Data Files/MWSE/mods/CraftingFramework/components/CraftingMenu.lua[m	
+[36m@@ -96,16 +96,17 @@[m [mfunction CraftingMenu:craftItem(e)[m
+     e = e or {}[m
+     log:debug("CraftingMenu:craftItem")[m
+     local keepMenuOpen = self.selectedRecipe:doKeepMenuOpen()[m
+[32m+[m[32m    if keepMenuOpen and e.button then[m
+[32m+[m[32m        e.button.widget.state = 2[m
+[32m+[m[32m        e.button.disabled = true[m
+[32m+[m[32m    end[m
+[32m+[m
+     self.selectedRecipe:craft{[m
+         defaultCraftTime = self.defaultCraftTime,[m
+         timePasses = self.doesTimePass and self:doesTimePass(),[m
+         afterCallback = function()[m
+             log:debug("crafting done, setting widget")[m
+             if keepMenuOpen then[m
+[31m-                if e.button then[m
+[31m-                    e.button.widget.state = 2[m
+[31m-                    e.button.disabled = true[m
+[31m-                end[m
+                 self:updateMenu(e.withNewRecipe)[m
+             else[m
+                 self:closeMenu()[m
+[36m@@ -627,7 +628,7 @@[m [mfunction CraftingMenu:createMaterialButton(materialReq, list)[m
+     log:trace("Creating material button for %s", materialReq.material)[m
+     local material = Material.getMaterial(materialReq.material)[m
+     local materialText = string.format("%s x %G", material:getName(), materialReq.count )[m
+[31m-    local requirement = list:createLabel()[m
+[32m+[m[32m    local requirement = list:createTextSelect()[m
+     requirement.borderAllSides = 2[m
+     requirement.text = materialText[m
+     requirement:register("help", function()[m
+[36m@@ -650,12 +651,15 @@[m [mfunction CraftingMenu:createMaterialButton(materialReq, list)[m
+             requirement.text = requirement.text .. " (Click to craft)"[m
+ [m
+             requirement:register("mouseClick", function()[m
+[32m+[m[32m                if materialRecipe.isCrafting then[m
+[32m+[m[32m                    log:debug("Material %s is already crafting", material:getName())[m
+[32m+[m[32m                    return[m
+[32m+[m[32m                end[m
+                 log:debug("Material %s clicked and is craftable, crafting recipe", material:getName())[m
+                 tes3.playSound{sound="Menu Click", reference=tes3.player}[m
+                 local currentRecipe = self.selectedRecipe[m
+                 self.selectedRecipe = materialRecipe[m
+[31m-                self:craftItem()[m
+[31m-[m
+[32m+[m[32m                self:craftItem{ button = requirement}[m
+                 self.selectedRecipe = currentRecipe[m
+                 self:updateMenu(true)[m
+             end)[m
+[1mdiff --git a/Data Files/MWSE/mods/CraftingFramework/components/Recipe.lua b/Data Files/MWSE/mods/CraftingFramework/components/Recipe.lua[m
+[1mindex bd741f6..8cfc203 100644[m
+[1m--- a/Data Files/MWSE/mods/CraftingFramework/components/Recipe.lua[m	
+[1m+++ b/Data Files/MWSE/mods/CraftingFramework/components/Recipe.lua[m	
+[36m@@ -90,6 +90,7 @@[m [mlocal MaterialRequirementSchema = {[m
+ ---@field customRequirements CraftingFramework.CustomRequirement[][m
+ ---@field skillRequirements CraftingFramework.SkillRequirement[][m
+ ---@field toolRequirements CraftingFramework.ToolRequirement[][m
+[32m+[m[32m---@field isCrafting boolean True while the object is being crafted when timePasses is enabled[m
+ local Recipe = {[m
+     schema = {[m
+         name = "Recipe",[m
+[36m@@ -242,7 +243,7 @@[m [mfunction Recipe:craft(e)[m
+     local craftTime = self.timeTaken or e.defaultCraftTime or 0[m
+     log:debug("Craft time: %s", craftTime)[m
+     if e.timePasses == true and craftTime > 0 then[m
+[31m-[m
+[32m+[m[32m        self.isCrafting = true[m
+         local secondsFadeOut = math.clamp(craftTime * 0.5, 0.25, 1)[m
+         local secondsWait = math.clamp(craftTime * 0.5, 0.25, 2)[m
+         local secondsFadeIn = math.clamp(craftTime * 0.5, 0.25, 1)[m
+[36m@@ -270,6 +271,7 @@[m [mfunction Recipe:craft(e)[m
+             tes3.worldController.flagMenuMode = self:doKeepMenuOpen()[m
+             doCraft()[m
+             Util.enableControls()[m
+[32m+[m[32m            self.isCrafting = nil[m
+         end)[m
+         async:start()[m
+     else[m
