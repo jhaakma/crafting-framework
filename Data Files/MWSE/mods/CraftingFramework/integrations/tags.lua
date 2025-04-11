@@ -25,6 +25,9 @@ local traders = {
     "galtis guvron",
     "naspis apinia",
     "berwen",
+    "Sky_iRe_KW_Tivela",
+    "Sky_iRe_VS_Sorri",
+    "TR_m3_Hamal",
 }
 
 TagManager.addIds{
@@ -51,4 +54,24 @@ local innkeepers = {
 TagManager.addIds{
     tag = "innkeeper",
     ids = innkeepers
+}
+
+TagManager.addIds{
+    tag = "bard",
+    ids = {
+        "bard",
+        "t_sky_bard",
+        "t_cyr_bard",
+        "t_glb_bard",
+    }
+}
+
+TagManager.addIds{
+    tag = "publican",
+    ids = {
+        "publican",
+        "t_sky_publican",
+        "t_cyr_publican",
+        "t_glb_publican",
+    }
 }
