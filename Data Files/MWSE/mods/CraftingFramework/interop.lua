@@ -103,9 +103,9 @@ end
 ]]
 ---@class CraftingFramework.interop.activatePositionerParams
 ---@field reference tes3reference
----@field pinToWall boolean
----@field placementSetting string
----@field blockToggle boolean
+---@field pinToWall? boolean
+---@field placementSetting? string
+---@field blockToggle? boolean
 
 ---@param e CraftingFramework.interop.activatePositionerParams
 function interop.activatePositioner(e)
