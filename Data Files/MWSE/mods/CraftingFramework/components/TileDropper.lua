@@ -34,14 +34,14 @@ local menuElements = {
         scrollPane = "MenuInventory_scrollpane",
         propertyObject = "MenuInventory_Thing",
     },
-    MenuContents = {
-        scrollPane = "MenuContents_scrollpane",
-        propertyObject = "MenuContents_Thing",
-    },
-    MenuBarter = {
-        scrollPane = "MenuBarter_scrollpane",
-        propertyObject = "MenuBarter_Thing",
-    }
+    -- MenuContents = {
+    --     scrollPane = "MenuContents_scrollpane",
+    --     propertyObject = "MenuContents_Thing",
+    -- },
+    -- MenuBarter = {
+    --     scrollPane = "MenuBarter_scrollpane",
+    --     propertyObject = "MenuBarter_Thing",
+    -- }
 }
 
 ---Registers a new TileDropper.
