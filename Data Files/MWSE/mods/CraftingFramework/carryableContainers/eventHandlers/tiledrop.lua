@@ -25,7 +25,9 @@ TileDropper.register{
             itemData = e.target.itemData,
         }
         if not container then return end
-        container:transferPlayerToContainerWithDetails{ items = {
+
+        local doTransfer = function()
+            container:transferPlayerToContainerWithDetails{ items = {
                 {
                     item = e.held.item,
                     itemData = e.held.itemData,
@@ -33,6 +35,15 @@ TileDropper.register{
                 }
             }
         }
+        end
+        if not container:isCopy() then
+            container:replaceInInventory()
+            timer.frame.delayOneFrame(function()
+                doTransfer()
+            end)
+        else
+            doTransfer()
+        end
     end
 }
 

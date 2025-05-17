@@ -544,6 +544,10 @@ function CarryableContainer:calculateWeight(e)
 end
 
 function CarryableContainer:updateStats()
+    if not self:isCopy() then
+        logger:warn("not a copy, skipping updateStats to prevend modifying base object")
+        return
+    end
     local containerRef = self:getCreateContainerRef()
     logger:debug("Updating weight of %s", self.item.id)
     local weightModifier = self:getWeightModifier() or 1.0
@@ -574,6 +578,7 @@ function CarryableContainer:updateStats()
     self.item.value = math.floor(totalValue)
 
     CarryableContainer.recalculateEncumbrance()
+
 end
 
 function CarryableContainer:isCopy()
@@ -738,6 +743,7 @@ function CarryableContainer:replaceInWorld()
 end
 
 function CarryableContainer:replaceInInventory()
+    logger:debug("replaceInInventory")
     if self:isCopy() then
         logger:debug("This is a copy, not replacing")
         return self
@@ -816,6 +822,9 @@ end
 function CarryableContainer:getCreateContainerRef()
     local containerRef = self:getContainerRef()
     if not containerRef then
+        if not self:isCopy() then
+            logger:error("Trying to create container reference for non-copy %s/n%s", self.item.id, debug.traceback())
+        end
         local containerObject = tes3.createObject{
             objectType = tes3.objectType.container,
             name = self.item.name,
@@ -1116,8 +1125,6 @@ function CarryableContainer:transferFiltered(filter)
     local playerInventory = tes3.player.object.inventory
     local weightModifier = self:getWeightModifier() or 1.0
     for _, stack in pairs(playerInventory) do
-
-
         local item = stack.object --[[@as tes3item]]
         local count = stack.count
         local numVariables = stack.variables and #stack.variables or 0
@@ -1257,6 +1264,8 @@ end
 ---Transfer a specific list of items with counts and itemData from the player to the container
 ---@param e { items: CarryableContainer.transferPlayerToContainerWithDetails.items[] }
 function CarryableContainer:transferPlayerToContainerWithDetails(e)
+
+
     local containerRef = self:getCreateContainerRef()
     if not containerRef then
         logger:error("Failed to get container ref")

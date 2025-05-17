@@ -1,0 +1,12 @@
+mod_name: CraftingFramework
+data_files:
+  - MWSE/mods/CraftingFramework
+  - Meshes/craftingFramework
+  - Textures/craftingFramework
+  - Sound/craftingFramework
+  - Icons/craftingFramework
+  - The Crafting Framework-metadata.toml
+metadata_path: Data Files/The Crafting Framework-metadata.toml
+repo_path: F:/Games/_RELEASES/TheCraftingFramework/master
+archive_path: F:/Games/_RELEASES/TheCraftingFramework/CraftingFramework.7z
+morrowind_path: C:/games/Morrowind installs/Vanilla+/Morrowind
